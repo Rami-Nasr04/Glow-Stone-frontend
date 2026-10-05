@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest"
 
-// jsdom has no matchMedia; ThemeProvider and sonner both read it.
+// jsdom has no matchMedia; sonner and the motion components read it.
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string): MediaQueryList => ({

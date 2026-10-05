@@ -1,17 +1,14 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { useTheme } from "@/hooks/useTheme"
 
 export default function Toaster({ ...props }: ToasterProps) {
-  const { theme } = useTheme()
-
   return (
     <Sonner
-      theme={theme}
+      theme="light"
       className="toaster group"
       toastOptions={{
         classNames: {
-          toast: "bg-popover text-popover-foreground border-border",
-          description: "text-muted-foreground",
+          toast: "bg-primary text-primary-foreground border-0 rounded-none",
+          description: "text-primary-foreground/80",
         },
       }}
       {...props}

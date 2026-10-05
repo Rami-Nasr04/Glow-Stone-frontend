@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "start": "vite preview --outDir build/client",
     "lint": "oxlint",
-    "type-check": "tsc -b --noEmit",
-    "preview": "vite preview",
+    "typegen": "react-router typegen",
+    "type-check": "react-router typegen && tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -17,6 +18,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "isbot": "^5.2.2",
     "lucide-react": "^1.48.0",
     "motion": "^13.4.4",
     "radix-ui": "^1.6.7",
@@ -29,6 +31,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@react-router/dev": "8.4.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.2",
@@ -38,7 +41,10 @@
     "jsdom": "^30.1.1",
     "oxlint": "^1.85.0",
     "typescript": "~6.0.3",
-    "vite": "^8.3.1",
+    "vite": "8.3.1",
     "vitest": "^5.0.2"
+  },
+  "overrides": {
+    "rolldown": "1.2.11"
   }
 }

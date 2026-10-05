@@ -30,3 +30,7 @@ dist-ssr
 
 # Private project notes
 /local
+
+# React Router
+/.react-router
+/build

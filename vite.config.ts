@@ -1,21 +1,13 @@
-/// <reference types="vitest/config" />
-import { fileURLToPath } from 'node:url'
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { fileURLToPath } from "node:url"
+import { reactRouter } from "@react-router/dev/vite"
+import tailwindcss from "@tailwindcss/vite"
+import { defineConfig } from "vite"
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [tailwindcss(), reactRouter()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: './src/test/setup.ts',
-    include: ['src/**/*.test.{ts,tsx}'],
   },
 })
