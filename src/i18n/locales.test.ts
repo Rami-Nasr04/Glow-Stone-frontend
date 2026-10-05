@@ -26,9 +26,8 @@ describe("localized paths", () => {
     expect(localizedPath("fr", "/about")).toBe("/fr/about")
   })
 
-  it("prerenders every static page in every locale", async () => {
+  it("prerenders every static page in the published locales only", async () => {
     const paths = await prerenderPaths()
-    expect(paths).toHaveLength(12)
-    expect(paths).toContain("/ar/collection")
+    expect(paths).toEqual(["/", "/collection", "/about", "/contact"])
   })
 })
