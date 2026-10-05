@@ -41,6 +41,13 @@
   --dark-muted-foreground: #a5a4a0; /* 5.7:1 on charcoal */
   --dark-border: #4a4a48;
   --wine-on-dark: #8a4652; /* thin rules on charcoal only — 2.1:1, never text */
+  --primary-hover: #1e1e1e; /* solid buttons darken on hover */
+  --hero-sky: #dde3e9; /* desktop hero: the band behind the header, matched to the photo's sky */
+  --hero-sky-mobile: #d9d7d2;
+  --on-photo: #e2e1de; /* captions on the hero's dark gradient */
+  --photo-dark: #1f1f1f; /* frame behind dark studio and craft photos */
+  /* 7% charcoal noise over Frost Stone, as in the prototype. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .17 0 0 0 0 .17 0 0 0 0 .17 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
 
   /* Per-language values live in variables so the Arabic pass only overrides them under :root:lang(ar). */
   --font-display-family: "Cormorant Garamond", Georgia, serif;
@@ -48,6 +55,7 @@
   --tracking-label-value: 0.3em;
   --tracking-caps-value: 0.26em;
   --text-label-value: 0.6875rem; /* 11px — the minimum text size anywhere */
+  --tracking-display-value: 0.42em; /* hero tagline and the quote-band line */
 }
 
 @theme inline {
@@ -74,6 +82,11 @@
   --color-dark-muted-foreground: var(--dark-muted-foreground);
   --color-dark-border: var(--dark-border);
   --color-wine-on-dark: var(--wine-on-dark);
+  --color-primary-hover: var(--primary-hover);
+  --color-hero-sky: var(--hero-sky);
+  --color-hero-sky-mobile: var(--hero-sky-mobile);
+  --color-on-photo: var(--on-photo);
+  --color-photo-dark: var(--photo-dark);
 
   --font-display: var(--font-display-family);
   --font-sans: var(--font-sans-family);
@@ -96,16 +109,30 @@
   --text-body--line-height: 1.85;
   --text-label: var(--text-label-value);
   --text-label--line-height: 1.5;
+  --text-display-hero: clamp(4rem, 11vw, 11.25rem); /* 64px phone, ~160px at 1440, 180px max */
+  --text-display-hero--line-height: 0.9;
+  --text-quote: clamp(1.75rem, 2.7vw, 2.375rem); /* 28px phone, 38px desktop */
+  --text-quote--line-height: 1.15;
+  --text-small: 0.9375rem; /* 15px secondary copy */
+  --text-small--line-height: 1.8;
+  --text-price: 0.8125rem; /* 13px */
+  --text-price--line-height: 1.5;
 
   --tracking-label: var(--tracking-label-value);
   --tracking-caps: var(--tracking-caps-value);
+  --tracking-display: var(--tracking-display-value);
+  --tracking-price: 0.14em;
 
   --spacing-gutter: clamp(1.25rem, 4.5vw, 4rem);
   --spacing-section: clamp(4rem, 7vw, 6.5rem);
+  --spacing-straddle: clamp(4rem, 8vw, 7.5rem); /* how far a photo crosses a section edge */
   --container-content: 82rem; /* 1312px */
 
   --ease-slow: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
+
+/* Phones, and tablets held upright: the hero switches to its portrait art and layout. */
+@custom-variant upright (@media (max-width: 767px), (max-width: 1024px) and (orientation: portrait));
 
 @layer base {
   * {
@@ -116,6 +143,8 @@
   }
   body {
     @apply bg-background font-sans text-body text-foreground;
+    background-image: var(--grain);
+    background-size: 200px 200px;
   }
   :focus-visible {
     outline: 1px solid var(--ring);

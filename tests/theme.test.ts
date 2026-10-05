@@ -16,4 +16,18 @@ describe("theme", () => {
   it("defines no dark theme", () => {
     expect(css).not.toMatch(/\.dark\s*\{|@custom-variant dark/)
   })
+
+  it("defines the hero portrait variant with the same media query as the hero picture", async () => {
+    const { HERO_PORTRAIT_MEDIA } = await import("../src/components/home/home-config.ts")
+    expect(css).toContain(`@custom-variant upright (@media ${HERO_PORTRAIT_MEDIA});`)
+  })
+
+  it("puts the stone grain on the page background", () => {
+    expect(block(":root")).toContain("--grain: url(")
+    expect(css).toMatch(/body \{[^}]*background-image: var\(--grain\)/)
+  })
+
+  it("draws no jagged section edges", () => {
+    expect(css).not.toContain("strata")
+  })
 })
