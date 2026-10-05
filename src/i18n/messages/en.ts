@@ -33,9 +33,15 @@ export const en = {
   },
   edition: {
     remaining: "Edition of {edition} — {remaining} remaining",
+    remainingCount: "{remaining} remaining",
+    of: "Edition of {edition}",
     soldOut: "Sold out",
     madeToOrder: "Made to order · {weeks} weeks",
     ready: "Ready to deliver",
+  },
+  catalog: {
+    photoAlt: "{name}, photo {n} of {total}",
+    dimensions: "{height} × {width} × {depth} cm",
   },
   notFound: {
     title: "This stone hasn't been carved yet.",

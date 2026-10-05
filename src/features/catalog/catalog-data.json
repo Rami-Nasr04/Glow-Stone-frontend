@@ -1,0 +1,558 @@
+[
+  {
+    "slug": "sannine-sand",
+    "family": "Sannine",
+    "price": 420,
+    "editionSize": 12,
+    "remaining": 3,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 5,
+    "heightCm": 72,
+    "widthCm": 28,
+    "depthCm": 14,
+    "weightKg": 34,
+    "tone": "light",
+    "featured": true,
+    "displayOrder": 1,
+    "translations": {
+      "en": {
+        "name": "Sannine · Sand",
+        "stone": "Warm beige limestone",
+        "color": "Warm beige",
+        "form": "Slab with a hand-broken chiselled top and staggered round holes.",
+        "origin": "Lebanese limestone, Mount Sannine",
+        "finish": "Honed faces, hand-broken top",
+        "placement": "Floor or tabletop",
+        "indoorOutdoor": "Indoor",
+        "care": null,
+        "story": [
+          "Sannine takes its name from the mountain whose limestone it is cut from. The block is squared and honed on five faces, and the sixth is left to the chisel. Omar breaks the top edge by hand, following the grain, so that no two pieces share the same skyline.",
+          "Five holes are bored through the slab at staggered heights, sized for a standard Bordeaux bottle."
+        ],
+        "quote": "The top is the only part I do not plan. The stone decides where it breaks."
+      },
+      "ar": {
+        "name": "صنّين · رملي",
+        "stone": "حجر كلسي بيج دافئ",
+        "form": "لوح بقمّة منحوتة مكسورة يدوياً وثقوب مستديرة متدرّجة."
+      },
+      "fr": {
+        "name": "Sannine · Sand",
+        "stone": "Calcaire beige chaud",
+        "form": "Dalle au sommet éclaté et ciselé à la main, percée de trous ronds décalés."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/sannine-sand/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/sannine-sand/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/sannine-sand/3",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 3,
+        "key": "products/sannine-sand/4",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "sannine-ash",
+    "family": "Sannine",
+    "price": 420,
+    "editionSize": 12,
+    "remaining": 7,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 5,
+    "heightCm": 72,
+    "widthCm": 28,
+    "depthCm": 14,
+    "weightKg": 35,
+    "tone": "dark",
+    "featured": false,
+    "displayOrder": 2,
+    "translations": {
+      "en": {
+        "name": "Sannine · Ash",
+        "stone": "Grey limestone",
+        "color": "Ash grey",
+        "form": "Slab with a hand-broken chiselled top and staggered round holes.",
+        "origin": "Lebanese limestone, Mount Sannine",
+        "finish": "Honed faces, hand-broken top",
+        "placement": "Floor or tabletop",
+        "indoorOutdoor": "Indoor",
+        "care": null,
+        "story": [
+          "The Sannine form, cut from a cooler grey bed of the same mountain. Under raking light the ash limestone shows faint veins of calcite, the traces of water that moved through it long before it was quarried.",
+          "Five staggered holes hold five bottles. The broken crest is shaped last, by hand, and is different on every piece in the edition."
+        ],
+        "quote": "Grey stone is quieter. It asks you to come closer."
+      },
+      "ar": {
+        "name": "صنّين · رمادي",
+        "stone": "حجر كلسي رمادي",
+        "form": "لوح بقمّة منحوتة مكسورة يدوياً وثقوب مستديرة متدرّجة."
+      },
+      "fr": {
+        "name": "Sannine · Ash",
+        "stone": "Calcaire gris",
+        "form": "Dalle au sommet éclaté et ciselé à la main, percée de trous ronds décalés."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/sannine-ash/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/sannine-ash/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/sannine-ash/3",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "qadisha-earth",
+    "family": "Qadisha",
+    "price": 560,
+    "editionSize": 10,
+    "remaining": 2,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 10,
+    "heightCm": 96,
+    "widthCm": 30,
+    "depthCm": 18,
+    "weightKg": 48,
+    "tone": "light",
+    "featured": true,
+    "displayOrder": 3,
+    "translations": {
+      "en": {
+        "name": "Qadisha · Earth",
+        "stone": "Brown limestone",
+        "color": "Earth brown",
+        "form": "Tall column with five half-moon notches on each side.",
+        "origin": "Lebanese limestone, Qadisha Valley",
+        "finish": "Honed, hand-cut notches",
+        "placement": "Floor",
+        "indoorOutdoor": "Indoor or covered outdoor",
+        "care": null,
+        "story": [
+          "Qadisha is named for the holy valley north of the cedars, where monks once cut their hermitages into the cliff. The column rises from a single block of brown limestone, its sides opened by ten half-moon notches that alternate left and right.",
+          "Each notch is roughed out with a point chisel and finished with a claw, then honed until a bottle slides in without a sound. Seen side-on, the column becomes a rhythm of light and shadow.",
+          "It stands on the floor and needs no fixing to the wall. Its weight is what holds it still."
+        ],
+        "quote": "A column should look as if it has always been standing there."
+      },
+      "ar": {
+        "name": "قاديشا · ترابي",
+        "stone": "حجر كلسي بنّي",
+        "form": "عمود طويل بخمس فتحات هلالية على كل جانب."
+      },
+      "fr": {
+        "name": "Qadisha · Earth",
+        "stone": "Calcaire brun",
+        "form": "Haute colonne ouverte de cinq encoches en demi-lune de chaque côté."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/qadisha-earth/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/qadisha-earth/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/qadisha-earth/3",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "qadisha-ash",
+    "family": "Qadisha",
+    "price": 560,
+    "editionSize": 10,
+    "remaining": 5,
+    "status": "published",
+    "leadType": "made_to_order",
+    "leadWeeks": 4,
+    "bottles": 10,
+    "heightCm": 96,
+    "widthCm": 30,
+    "depthCm": 18,
+    "weightKg": 48,
+    "tone": "dark",
+    "featured": false,
+    "displayOrder": 4,
+    "translations": {
+      "en": {
+        "name": "Qadisha · Ash",
+        "stone": "Grey limestone",
+        "color": "Ash grey",
+        "form": "Tall column with five half-moon notches on each side.",
+        "origin": "Lebanese limestone, Mount Lebanon",
+        "finish": "Honed, hand-cut notches",
+        "placement": "Floor",
+        "indoorOutdoor": "Indoor or covered outdoor",
+        "care": null,
+        "story": [
+          "The Qadisha column in grey limestone. Ash stone is harder than the brown and slower to carve, so each piece is begun only once it is ordered.",
+          "Ten notches, five to a side, hold ten bottles in a staggered line. The faces are honed to a soft matte that darkens slightly with touch over the years."
+        ],
+        "quote": "The harder the stone, the longer the conversation."
+      },
+      "ar": {
+        "name": "قاديشا · رمادي",
+        "stone": "حجر كلسي رمادي",
+        "form": "عمود طويل بخمس فتحات هلالية على كل جانب."
+      },
+      "fr": {
+        "name": "Qadisha · Ash",
+        "stone": "Calcaire gris",
+        "form": "Haute colonne ouverte de cinq encoches en demi-lune de chaque côté."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/qadisha-ash/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/qadisha-ash/2",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "byblos",
+    "family": "Byblos",
+    "price": 290,
+    "editionSize": 15,
+    "remaining": 0,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 5,
+    "heightCm": 36,
+    "widthCm": 22,
+    "depthCm": 20,
+    "weightKg": 16,
+    "tone": "dark",
+    "featured": false,
+    "displayOrder": 5,
+    "translations": {
+      "en": {
+        "name": "Byblos",
+        "stone": "Brown limestone",
+        "color": "Earth brown",
+        "form": "Compact brick with five through-holes.",
+        "origin": "Lebanese limestone, Mount Lebanon",
+        "finish": "Honed",
+        "placement": "Tabletop",
+        "indoorOutdoor": "Indoor",
+        "care": null,
+        "story": [
+          "Byblos is the smallest of the racks: a single honed brick of brown limestone, pierced five times straight through. It was drawn from the dressed blocks of the old port city, where stone has been cut and stacked for seven thousand years.",
+          "Set on a table or a shelf, it holds five bottles in a quincunx, the oldest of patterns."
+        ],
+        "quote": "The simplest form took the longest to get right."
+      },
+      "ar": {
+        "name": "جبيل",
+        "stone": "حجر كلسي بنّي",
+        "form": "قالب صغير بخمسة ثقوب نافذة."
+      },
+      "fr": {
+        "name": "Byblos",
+        "stone": "Calcaire brun",
+        "form": "Bloc compact percé de cinq trous traversants."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/byblos/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/byblos/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/byblos/3",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 3,
+        "key": "products/byblos/4",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "batroun",
+    "family": "Batroun",
+    "price": 890,
+    "editionSize": 8,
+    "remaining": 4,
+    "status": "published",
+    "leadType": "made_to_order",
+    "leadWeeks": 6,
+    "bottles": 14,
+    "heightCm": 118,
+    "widthCm": 36,
+    "depthCm": 20,
+    "weightKg": 72,
+    "tone": "dark",
+    "featured": true,
+    "displayOrder": 6,
+    "translations": {
+      "en": {
+        "name": "Batroun",
+        "stone": "Cream limestone",
+        "color": "Cream",
+        "form": "Tall slab with edge notches and central holes.",
+        "origin": "Lebanese limestone, Batroun coast",
+        "finish": "Honed",
+        "placement": "Floor",
+        "indoorOutdoor": "Indoor or outdoor",
+        "care": null,
+        "story": [
+          "Batroun is the largest piece in the collection, a tall slab of cream limestone from the coast north of Byblos. Notches are cut into both edges and a second row of holes is bored through the centre, so fourteen bottles sit in a loose lattice.",
+          "Cream limestone weathers well, and Batroun is equally at home on a terrace wall as in a cellar. Each piece is carved to order over six weeks."
+        ],
+        "quote": "I wanted a piece that could stand outside and face the valley."
+      },
+      "ar": {
+        "name": "البترون",
+        "stone": "حجر كلسي كريمي",
+        "form": "لوح طويل بفتحات جانبية وثقوب وسطية."
+      },
+      "fr": {
+        "name": "Batroun",
+        "stone": "Calcaire crème",
+        "form": "Haute dalle à encoches latérales et trous centraux."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/batroun/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/batroun/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/batroun/3",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 3,
+        "key": "products/batroun/4",
+        "width": 2048,
+        "height": 1365
+      }
+    ]
+  },
+  {
+    "slug": "nahr",
+    "family": "Nahr",
+    "price": 180,
+    "editionSize": 15,
+    "remaining": 9,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 1,
+    "heightCm": 26,
+    "widthCm": 18,
+    "depthCm": 18,
+    "weightKg": 9,
+    "tone": "dark",
+    "featured": true,
+    "displayOrder": 7,
+    "translations": {
+      "en": {
+        "name": "Nahr",
+        "stone": "Taupe limestone",
+        "color": "Taupe",
+        "form": "Single-bottle holder with carved leaf strokes.",
+        "origin": "Lebanese limestone, Mount Lebanon",
+        "finish": "Honed, carved leaf strokes",
+        "placement": "Tabletop",
+        "indoorOutdoor": "Indoor",
+        "care": null,
+        "story": [
+          "Nahr means river. A block of taupe limestone is hollowed to hold a single bottle upright, and two of its faces are cut with long leaf strokes, like reeds bent by moving water.",
+          "The strokes are made freehand with a flat chisel, in one pass each. Nahr stays on the table as an object when the bottle is gone."
+        ],
+        "quote": "Each stroke is made once. There is no going back over it."
+      },
+      "ar": {
+        "name": "نهر",
+        "stone": "حجر كلسي رمادي بنّي",
+        "form": "حامل لزجاجة واحدة بضربات إزميل على شكل أوراق."
+      },
+      "fr": {
+        "name": "Nahr",
+        "stone": "Calcaire taupe",
+        "form": "Porte-bouteille individuel gravé de traits en forme de feuilles."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/nahr/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/nahr/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/nahr/3",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 3,
+        "key": "products/nahr/4",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  },
+  {
+    "slug": "arz",
+    "family": "Arz",
+    "price": 640,
+    "editionSize": 10,
+    "remaining": 6,
+    "status": "published",
+    "leadType": "ready",
+    "leadWeeks": null,
+    "bottles": 5,
+    "heightCm": null,
+    "widthCm": null,
+    "depthCm": null,
+    "weightKg": null,
+    "tone": "light",
+    "featured": true,
+    "displayOrder": 8,
+    "translations": {
+      "en": {
+        "name": "Arz",
+        "stone": "Grey limestone",
+        "color": "Grey",
+        "form": "Carved rack with leaf-like chisel strokes, round openings and a notch at the top.",
+        "origin": "Lebanese limestone",
+        "finish": "Hand-carved chisel strokes",
+        "placement": "Tabletop",
+        "indoorOutdoor": "Indoor",
+        "care": null,
+        "story": [],
+        "quote": null
+      },
+      "ar": {
+        "name": "أرز",
+        "stone": "حجر كلسي رمادي",
+        "form": "رفّ منحوت بضربات إزميل كأوراق الشجر، بفتحات مستديرة وتجويف في الأعلى."
+      },
+      "fr": {
+        "name": "Arz",
+        "stone": "Calcaire gris",
+        "form": "Casier sculpté de traits de ciseau en forme de feuilles, aux ouvertures rondes et à l’encoche sommitale."
+      }
+    },
+    "images": [
+      {
+        "position": 0,
+        "key": "products/arz/1",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 1,
+        "key": "products/arz/2",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 2,
+        "key": "products/arz/3",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 3,
+        "key": "products/arz/4",
+        "width": 2048,
+        "height": 3072
+      },
+      {
+        "position": 4,
+        "key": "products/arz/5",
+        "width": 2048,
+        "height": 3072
+      }
+    ]
+  }
+]
