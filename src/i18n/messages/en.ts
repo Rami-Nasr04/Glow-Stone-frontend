@@ -15,6 +15,8 @@ export const en = {
     close: "Close",
     language: "Language",
     home: "Glowstone home",
+    main: "Main",
+    skipToContent: "Skip to content",
   },
   footer: {
     newEditions: "New editions",
