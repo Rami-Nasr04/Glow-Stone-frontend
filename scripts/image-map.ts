@@ -44,5 +44,12 @@ export function widthsFor(key: string): readonly number[] {
   return key.startsWith("craft/") ? CRAFT_WIDTHS : PRODUCT_WIDTHS
 }
 
+// Edited hero composites (not camera originals), generated with: node scripts/build-images.ts --hero "<folder>".
+// Widths must match src/config/images.ts (tests/images.test.ts checks the files).
+export const HERO_MAP: Record<string, { file: string; widths: readonly number[] }> = {
+  "hero/desktop": { file: "hero desktop.png", widths: [480, 960, 1376] },
+  "hero/mobile": { file: "hero mobile.png", widths: [480, 768] },
+}
+
 // WebP quality: high enough to keep chisel marks and stone grain crisp.
 export const WEBP_QUALITY = 82
