@@ -19,14 +19,20 @@ export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
   const [shown, setShown] = useState(false)
 
   useEffect(() => {
-    const button = target.current
-    if (!button || typeof IntersectionObserver === "undefined") return
-    // Shown when the button is out of view above; hidden again as soon as it is back (or still below).
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry) setShown(!entry.isIntersecting && entry.boundingClientRect.top < 0)
-    })
-    observer.observe(button)
-    return () => observer.disconnect()
+    // Shown while the button is above the screen; hidden again as soon as it is back (or still below).
+    // A scroll listener, not an IntersectionObserver: a jump or fast fling past the button never "intersects",
+    // so an observer would miss it.
+    const update = () => {
+      const button = target.current
+      if (button) setShown(button.getBoundingClientRect().bottom < 0)
+    }
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
   }, [target])
 
   return (

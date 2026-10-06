@@ -9,15 +9,21 @@ function renderPiece(slug: string) {
 }
 
 describe("Product", () => {
-  beforeEach(() => {
-    window.IntersectionObserver = vi.fn(function () {
-      return { observe: vi.fn(), disconnect: vi.fn(), unobserve: vi.fn() }
-    }) as unknown as typeof IntersectionObserver
-  })
-
   it("shows the piece under one h1", () => {
     renderPiece("batroun")
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Batroun"])
+  })
+
+  it("offers related pieces and, for available pieces, the sticky bar", () => {
+    const { container } = renderPiece("batroun")
+    expect(screen.getByRole("heading", { level: 2, name: "You may also like" })).toBeInTheDocument()
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3)
+    expect(container.querySelector("[data-sticky-bar]")).not.toBeNull()
+  })
+
+  it("has no sticky bar for a sold-out piece", () => {
+    const { container } = renderPiece("byblos")
+    expect(container.querySelector("[data-sticky-bar]")).toBeNull()
   })
 
   it("shows the missing page for a piece that doesn't exist", () => {

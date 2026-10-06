@@ -43,6 +43,8 @@ describe("BuyBox", () => {
     renderAt(<BuyBox piece={piece("byblos")} />)
     expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument()
     expect(screen.queryByText(/0 remaining/)).not.toBeInTheDocument()
+    expect(screen.getByText("Edition of 15 — sold out")).toBeInTheDocument()
+    expect(screen.getAllByText("Sold out")).toHaveLength(1)
     expect(screen.getByText(/This edition has found its homes/)).toBeInTheDocument()
     expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email")
     expect(screen.getByRole("button", { name: "Notify me" })).toBeInTheDocument()

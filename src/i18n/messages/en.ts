@@ -36,6 +36,7 @@ export const en = {
     remainingCount: "{remaining} remaining",
     of: "Edition of {edition}",
     soldOut: "Sold out",
+    editionSoldOut: "Edition of {edition} — sold out",
     madeToOrder: "Made to order · {weeks} weeks",
     ready: "Ready to deliver",
   },

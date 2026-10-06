@@ -49,8 +49,13 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
       <p className="mt-7 text-small tracking-price">{formatPrice(piece.price)}</p>
 
       <div className="mt-6 border-t border-border">
+        {/* Sold out has its own box below, so this row names the edition instead of repeating "Sold out". */}
         <div className={ruledRow}>
-          <EditionLine product={piece} />
+          {piece.soldOut ? (
+            <p className={caps}>{interpolate(m.edition.editionSoldOut, { edition: piece.editionSize })}</p>
+          ) : (
+            <EditionLine product={piece} />
+          )}
         </div>
         {!piece.soldOut && <p className={cn(ruledRow, caps, "text-muted-foreground")}>{lead}</p>}
       </div>

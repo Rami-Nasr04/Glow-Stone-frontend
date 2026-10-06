@@ -1,44 +1,37 @@
-import { act, screen } from "@testing-library/react"
+import { fireEvent, screen } from "@testing-library/react"
 import { getProduct } from "@/features/catalog/catalog"
 import { renderAt } from "@/test/render"
 import StickyAddBar from "./StickyAddBar"
 
-type Callback = (entries: Partial<IntersectionObserverEntry>[]) => void
-let report: Callback = () => {}
-
-function seeButton(isIntersecting: boolean, top: number) {
-  act(() => report([{ isIntersecting, boundingClientRect: { top } as DOMRectReadOnly }]))
+// Puts the main button at `bottom` px from the top of the viewport and scrolls, the way a jump or a fast fling does.
+function scrollButtonTo(button: HTMLButtonElement, bottom: number) {
+  button.getBoundingClientRect = () => ({ top: bottom - 60, bottom }) as DOMRect
+  fireEvent.scroll(window)
 }
 
 describe("StickyAddBar", () => {
-  beforeEach(() => {
-    window.IntersectionObserver = vi.fn(function (callback: Callback) {
-      report = callback
-      return { observe: vi.fn(), disconnect: vi.fn(), unobserve: vi.fn() }
-    }) as unknown as typeof IntersectionObserver
-  })
-
   function setup() {
-    const target = { current: document.createElement("button") }
-    const { container } = renderAt(<StickyAddBar piece={getProduct("batroun", "en")!} target={target} />)
-    return container.querySelector<HTMLElement>("[data-sticky-bar]")!
+    const button = document.createElement("button")
+    button.getBoundingClientRect = () => ({ top: 1200, bottom: 1260 }) as DOMRect
+    const { container } = renderAt(<StickyAddBar piece={getProduct("batroun", "en")!} target={{ current: button }} />)
+    return { bar: container.querySelector<HTMLElement>("[data-sticky-bar]")!, button }
   }
 
   it("stays hidden and out of the tab order while the main button is in view or still below", () => {
-    const bar = setup()
+    const { bar, button } = setup()
     expect(bar).toHaveAttribute("aria-hidden", "true")
     expect(bar).toHaveAttribute("inert")
-    seeButton(false, 1200)
+    scrollButtonTo(button, 400)
     expect(bar).toHaveAttribute("aria-hidden", "true")
   })
 
-  it("slides in once the main button has scrolled above, and hides again when it is back", () => {
-    const bar = setup()
-    seeButton(false, -80)
+  it("appears even after a jump straight past the button, and hides again when it is back", () => {
+    const { bar, button } = setup()
+    scrollButtonTo(button, -1100)
     expect(bar).toHaveAttribute("aria-hidden", "false")
     expect(bar).not.toHaveAttribute("inert")
     expect(screen.getByRole("button", { name: "Add to cart" })).toBeInTheDocument()
-    seeButton(true, 300)
+    scrollButtonTo(button, 300)
     expect(bar).toHaveAttribute("aria-hidden", "true")
   })
 })
