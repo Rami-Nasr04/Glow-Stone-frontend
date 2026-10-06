@@ -12,7 +12,7 @@ export default function AboutClose() {
     <>
       {/* Crosses from the stone page into the charcoal close: About's straddling photo (build notes 1.5). */}
       <div className="relative z-10 -mb-straddle px-gutter">
-        <div className="mx-auto aspect-3/2 max-w-224 bg-photo-dark">
+        <div className="mx-auto aspect-3/2 max-w-224 overflow-hidden bg-photo-dark">
           <Picture
             imageKey={photo.key}
             width={photo.width}

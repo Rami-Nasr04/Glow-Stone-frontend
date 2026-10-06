@@ -22,7 +22,7 @@ export default function PieceSpotlight() {
     <section aria-labelledby="spotlight-title" className="overflow-hidden pb-section pt-[calc(var(--spacing-straddle)+var(--spacing-section))]">
       <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center">
         {/* Duplicate of the "View the piece" link for pointer users; hidden from keyboard and screen readers. */}
-        <Link to={href} tabIndex={-1} aria-hidden="true" className="block aspect-2/3 bg-photo-dark lg:h-[85vh] lg:min-h-150">
+        <Link to={href} tabIndex={-1} aria-hidden="true" className="block aspect-2/3 overflow-hidden bg-photo-dark lg:h-[85vh] lg:min-h-150">
           <Picture imageKey={piece.cover.key} width={piece.cover.width} height={piece.cover.height} alt="" sizes="(min-width: 1024px) 57vh, 100vw" />
         </Link>
 

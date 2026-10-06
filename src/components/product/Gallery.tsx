@@ -11,7 +11,7 @@ interface GalleryProps {
 }
 
 // 4:5 frame, never taller than the viewport minus the header; the photo is contained on stone, never cropped.
-const frame = "relative mx-auto block aspect-4/5 h-[min(70vh,760px,calc(100svh-9rem))] max-w-full bg-background"
+const frame = "relative mx-auto block aspect-4/5 overflow-hidden h-[min(70vh,760px,calc(100svh-9rem))] max-w-full bg-background"
 
 export default function Gallery({ piece }: GalleryProps) {
   const { m } = useLocale()
@@ -60,7 +60,7 @@ export default function Gallery({ piece }: GalleryProps) {
                   aria-pressed={i === selected}
                   onClick={() => setSelected(i)}
                   className={cn(
-                    "block aspect-4/5 w-14 border-b bg-background transition-[opacity,border-color] duration-500",
+                    "block aspect-4/5 w-14 overflow-hidden border-b bg-background transition-[opacity,border-color] duration-500",
                     i === selected ? "border-accent opacity-100" : "border-transparent opacity-60 hover:opacity-100",
                   )}
                 >
@@ -82,7 +82,7 @@ export default function Gallery({ piece }: GalleryProps) {
           className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, i) => (
-            <li key={image.key} className="aspect-2/3 w-full shrink-0 snap-start bg-background">
+            <li key={image.key} className="aspect-2/3 w-full shrink-0 snap-start overflow-hidden bg-background">
               <Picture
                 imageKey={image.key}
                 width={image.width}

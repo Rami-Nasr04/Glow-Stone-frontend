@@ -32,7 +32,7 @@ function Interlude() {
     <li data-cell="interlude" className="relative col-span-full flex flex-col gap-8 lg:flex-row lg:items-end lg:gap-[clamp(2.5rem,6vw,6rem)]">
       {/* Full-bleed charcoal band starting partway down the photo, so the photo straddles the edge. */}
       <div aria-hidden="true" className="absolute start-[calc(50%-50vw)] end-[calc(50%-50vw)] top-straddle bottom-0 bg-dark-section" />
-      <div className="relative aspect-video bg-photo-dark lg:w-[65%]">
+      <div className="relative aspect-video overflow-hidden bg-photo-dark lg:w-[65%]">
         <Picture
           imageKey={photo.key}
           width={photo.width}

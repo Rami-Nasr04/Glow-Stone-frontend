@@ -72,7 +72,7 @@ export default function Chapters() {
                 className="flex flex-col justify-center gap-7 border-t border-border py-[clamp(2.5rem,5vw,4rem)] lg:min-h-[70vh]"
               >
                 {photo && (
-                  <div className="aspect-3/2 bg-dark-section lg:hidden">
+                  <div className="aspect-3/2 overflow-hidden bg-dark-section lg:hidden">
                     <Picture
                       imageKey={photo.key}
                       width={photo.width}
