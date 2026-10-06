@@ -6,11 +6,13 @@ describe("PieceSpotlight", () => {
   it("presents Batroun with its placard, stock, lead time and price", () => {
     renderAt(<PieceSpotlight />)
     expect(screen.getByRole("heading", { level: 2, name: "Batroun" })).toBeInTheDocument()
+    // Two lines as in the prototype, never a dot left hanging at a line end.
     const placard = screen.getByText("Edition of 8").parentElement
-    expect(placard).toHaveTextContent("Cream limestone · 118 × 36 × 20 cm · Edition of 8")
+    expect(placard?.firstChild?.textContent).toBe("Cream limestone · 118 × 36 × 20 cm")
+    expect(placard?.querySelector("br")).not.toBeNull()
     expect(screen.getByText("Edition of 8")).toHaveClass("whitespace-nowrap")
     expect(screen.getByText("4")).toHaveClass("text-accent")
-    expect(screen.getByText(/Made to order · 6 weeks/)).toBeInTheDocument()
+    expect(screen.getByText("Made to order · 6 weeks")).toHaveClass("whitespace-nowrap")
     expect(screen.getByText("$890")).toBeInTheDocument()
   })
 
@@ -22,6 +24,18 @@ describe("PieceSpotlight", () => {
 
   it("never crops the piece", () => {
     renderAt(<PieceSpotlight />)
-    expect(document.querySelector("img")?.className).toContain("object-contain")
+    for (const img of document.querySelectorAll("img")) expect(img.className).toContain("object-contain")
+  })
+
+  it("composes the landscape detail with a framed full view on desktop, as in the prototype", () => {
+    renderAt(<PieceSpotlight />)
+    const detail = document.querySelector('img[src*="products/batroun/4-"]')
+    const frame = detail?.closest("a")
+    expect(frame?.className).toContain("aspect-3/2")
+    expect(frame?.className).toMatch(/hidden.*lg:block|lg:block.*hidden/)
+    expect(frame?.className).toContain("lg:col-span-8")
+    // Phones keep the cover; desktop frames the bright full view over the detail's corner.
+    expect(document.querySelector('img[src*="products/batroun/1-"]')?.closest("a")?.className).toContain("lg:hidden")
+    expect(document.querySelector('img[src*="products/batroun/3-"]')?.closest("a")?.className).toContain("lg:col-start-7")
   })
 })
