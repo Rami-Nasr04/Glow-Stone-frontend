@@ -2,7 +2,7 @@ import { interpolate } from "@/i18n/format"
 import type { Locale } from "@/i18n/locales"
 import { MESSAGES } from "@/i18n/useLocale"
 import seed from "./catalog-data.json"
-import type { ProductDetail, ProductImage, ProductSummary } from "./types"
+import { STONE_KEYS, type ProductDetail, type ProductImage, type ProductSummary, type StoneKey } from "./types"
 
 // Until the catalog API is deployed (AWS-1), pages read the backend seed bundled at build time.
 // These functions return exactly what GET /products and GET /products/{slug} return, so the switch stays in this file.
@@ -67,6 +67,12 @@ function photos(p: SeedProduct, name: string, locale: Locale): ProductImage[] {
   }))
 }
 
+// Provisional (see STONE_KEYS): read from the English stone name so the filter works in every language.
+function stoneKeyOf(p: SeedProduct): StoneKey | null {
+  const english = p.translations.en.stone.toLowerCase()
+  return STONE_KEYS.find((key) => english.includes(key)) ?? null
+}
+
 function toSummary(p: SeedProduct, locale: Locale): ProductSummary {
   const t = localized(p, locale)
   const images = photos(p, t.name, locale)
@@ -75,6 +81,7 @@ function toSummary(p: SeedProduct, locale: Locale): ProductSummary {
     family: p.family,
     name: t.name,
     stone: t.stone,
+    stoneKey: stoneKeyOf(p),
     form: t.form,
     price: p.price,
     editionSize: p.editionSize,

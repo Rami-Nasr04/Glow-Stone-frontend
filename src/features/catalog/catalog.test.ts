@@ -49,6 +49,10 @@ describe("catalog", () => {
     expect(getProduct("arz", "en")?.quote).toBeNull()
   })
 
+  it("gives every piece a language-independent stone key for filtering", () => {
+    expect(listProducts("ar").map((p) => p.stoneKey)).toEqual(["beige", "grey", "brown", "grey", "brown", "cream", "taupe", "grey"])
+  })
+
   it("returns null for an unknown piece", () => {
     expect(getProduct("granite", "en")).toBeNull()
   })

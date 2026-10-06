@@ -9,11 +9,17 @@ export interface ProductImage {
 
 export type Lead = { type: "ready" } | { type: "made_to_order"; weeks: number }
 
+// Provisional: the Collection's stone filter. The real key comes from the agreed schema (stones/names discussion);
+// until then it is derived from the English stone name in catalog.ts. Not yet part of the backend contract.
+export const STONE_KEYS = ["beige", "grey", "brown", "cream", "taupe"] as const
+export type StoneKey = (typeof STONE_KEYS)[number]
+
 export interface ProductSummary {
   slug: string
   family: string
   name: string
   stone: string
+  stoneKey: StoneKey | null
   form: string
   price: number
   editionSize: number
