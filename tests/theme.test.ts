@@ -29,6 +29,15 @@ describe("theme", () => {
     expect(css).toMatch(/body \{[^}]*background-image: var\(--grain\)/)
   })
 
+  it("registers every custom size and tracking token with the class merger", async () => {
+    const { cn } = await import("../src/lib/utils.ts")
+    const theme = block("@theme inline")
+    const sizes = [...theme.matchAll(/--text-([a-z-]+):/g)].map((match) => match[1]).filter((name) => !name.endsWith("-line-height"))
+    const trackings = [...theme.matchAll(/--tracking-([a-z-]+):/g)].map((match) => match[1])
+    for (const size of sizes) expect(cn(`text-${size}`, "text-accent"), size).toContain(`text-${size}`)
+    for (const tracking of trackings) expect(cn(`tracking-${tracking}`, "tracking-wide"), tracking).toBe("tracking-wide")
+  })
+
   it("draws no jagged section edges", () => {
     expect(css).not.toContain("strata")
   })
