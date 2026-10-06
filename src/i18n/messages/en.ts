@@ -65,11 +65,41 @@ export const en = {
     spotlightText: "The largest piece in the collection. Edge notches and a central row of holes hold fourteen bottles.",
     viewThePiece: "View the piece",
   },
+  collection: {
+    metaTitle: "The Collection — Glowstone",
+    metaDescription: "Wine racks and bottle holders hand-carved from Lebanese limestone, each in a small numbered edition.",
+    title: "The Collection",
+    intro: "{count} pieces in Lebanese limestone, each carved by hand in a small numbered edition.",
+    introOne: "One piece in Lebanese limestone, carved by hand in a small numbered edition.",
+    numberWords: ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"],
+    pieces: "{count} pieces",
+    piece: "1 piece",
+    filter: "Filter",
+    filters: "Filters",
+    clear: "Clear",
+    clearAll: "Clear filters",
+    close: "Close",
+    show: "Show {count}",
+    stone: "Stone",
+    capacity: "Capacity",
+    availability: "Availability",
+    stones: { all: "All stones", beige: "Beige", grey: "Grey", brown: "Brown", cream: "Cream", taupe: "Taupe" },
+    capacities: { all: "Any capacity", "1": "1 bottle", "5": "5 bottles", "10": "10 bottles or more" },
+    availabilities: { all: "All pieces", ready: "Ready to deliver", made_to_order: "Made to order", sold_out: "Sold out" },
+    none: "No pieces match these filters.",
+    interludeLine: "The marks of the chisel stay in the stone.",
+    interludeBy: "The craft",
+    interludeAlt: "Light passing through a hole bored in limestone",
+    bespoke: "For bespoke pieces or commissions, write to us.",
+    contact: "Contact",
+  },
   notFound: {
     title: "This stone hasn't been carved yet.",
     back: "Back to the collection",
   },
 } as const
 
-type Widen<T> = { -readonly [K in keyof T]: T[K] extends string ? string : Widen<T[K]> }
+type Widen<T> = {
+  -readonly [K in keyof T]: T[K] extends string ? string : T[K] extends readonly string[] ? readonly string[] : Widen<T[K]>
+}
 export type Messages = Widen<typeof en>
