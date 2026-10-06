@@ -6,7 +6,9 @@ describe("PieceSpotlight", () => {
   it("presents Batroun with its placard, stock, lead time and price", () => {
     renderAt(<PieceSpotlight />)
     expect(screen.getByRole("heading", { level: 2, name: "Batroun" })).toBeInTheDocument()
-    expect(screen.getByText("Cream limestone · 118 × 36 × 20 cm · Edition of 8")).toBeInTheDocument()
+    const placard = screen.getByText("Edition of 8").parentElement
+    expect(placard).toHaveTextContent("Cream limestone · 118 × 36 × 20 cm · Edition of 8")
+    expect(screen.getByText("Edition of 8")).toHaveClass("whitespace-nowrap")
     expect(screen.getByText("4")).toHaveClass("text-accent")
     expect(screen.getByText(/Made to order · 6 weeks/)).toBeInTheDocument()
     expect(screen.getByText("$890")).toBeInTheDocument()

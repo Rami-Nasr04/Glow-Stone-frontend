@@ -13,9 +13,13 @@ export function dimensionsLabel(specs: ProductSpecs, m: Messages): string | null
   return interpolate(m.catalog.dimensions, { height: heightCm, width: widthCm, depth: depthCm })
 }
 
-// "Cream limestone · 118 × 36 × 20 cm · Edition of 8"; unknown parts are left out.
+// ["Cream limestone", "118 × 36 × 20 cm", "Edition of 8"]; unknown parts are left out.
+export function placardParts(product: ProductDetail, m: Messages): string[] {
+  return [product.stone, dimensionsLabel(product.specs, m), interpolate(m.edition.of, { edition: product.editionSize })].filter(
+    (part): part is string => Boolean(part),
+  )
+}
+
 export function placard(product: ProductDetail, m: Messages): string {
-  return [product.stone, dimensionsLabel(product.specs, m), interpolate(m.edition.of, { edition: product.editionSize })]
-    .filter((part): part is string => Boolean(part))
-    .join(" · ")
+  return placardParts(product, m).join(" · ")
 }

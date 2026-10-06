@@ -1,6 +1,6 @@
 import { en } from "@/i18n/messages/en"
 import { getProduct } from "./catalog"
-import { dimensionsLabel, noBreak, placard } from "./format"
+import { dimensionsLabel, noBreak, placard, placardParts } from "./format"
 
 describe("catalog format", () => {
   it("keeps two-part names on one line", () => {
@@ -11,6 +11,10 @@ describe("catalog format", () => {
   it("formats dimensions, or nothing when any is missing", () => {
     expect(dimensionsLabel(getProduct("batroun", "en")!.specs, en)).toBe("118 × 36 × 20 cm")
     expect(dimensionsLabel(getProduct("arz", "en")!.specs, en)).toBeNull()
+  })
+
+  it("gives the placard as parts, so a line only breaks between them", () => {
+    expect(placardParts(getProduct("batroun", "en")!, en)).toEqual(["Cream limestone", "118 × 36 × 20 cm", "Edition of 8"])
   })
 
   it("builds the placard and skips missing parts", () => {

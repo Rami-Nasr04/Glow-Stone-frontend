@@ -1,10 +1,11 @@
+import { Fragment } from "react"
 import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
 import { ActionLink } from "@/components/ui/action-link"
 import { Rule } from "@/components/ui/rule"
 import { getProduct } from "@/features/catalog/catalog"
 import EditionLine from "@/features/catalog/EditionLine"
-import { noBreak, placard } from "@/features/catalog/format"
+import { noBreak, placardParts } from "@/features/catalog/format"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { HOME_PIECE } from "./home-config"
@@ -32,8 +33,15 @@ export default function PieceSpotlight() {
           >
             {noBreak(piece.name)}
           </h2>
-          <div className="mt-8 flex max-w-100 flex-col gap-4.5 lg:mt-12">
-            <p className="text-label uppercase leading-loose tracking-label text-muted-foreground">{placard(piece, m)}</p>
+          <div className="mt-8 flex max-w-100 flex-col gap-4.5 lg:ms-12 lg:mt-12">
+            <p className="text-label uppercase leading-loose tracking-label text-muted-foreground">
+              {placardParts(piece, m).map((part, i) => (
+                <Fragment key={part}>
+                  {i > 0 && " · "}
+                  <span className="whitespace-nowrap">{part}</span>
+                </Fragment>
+              ))}
+            </p>
             <Rule />
             <p className="text-small text-pretty text-muted-foreground">{m.home.spotlightText}</p>
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2.5 border-t border-border pt-4">

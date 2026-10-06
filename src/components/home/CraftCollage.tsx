@@ -9,7 +9,7 @@ export default function CraftCollage() {
   const { crest, bore } = CRAFT_IMAGES
 
   return (
-    <section aria-labelledby="craft-title" className="relative bg-dark-section text-dark-section-foreground">
+    <section aria-labelledby="craft-title" className="relative flow-root bg-dark-section text-dark-section-foreground">
       <div className="lg:grid lg:grid-cols-[60%_minmax(0,1fr)] lg:items-center">
         {/* Rises out of the stone section above: one of the two photos that cross a section edge. */}
         <figure className="relative z-10 -mt-straddle aspect-4/5 bg-photo-dark lg:aspect-auto lg:h-[80vh] lg:min-h-140">
@@ -36,7 +36,7 @@ export default function CraftCollage() {
       </div>
 
       {/* Overlaps the bottom of the crest and crosses down into the next stone section. */}
-      <figure className="relative z-10 ms-auto me-5 mt-10 -mb-straddle w-3/5 lg:ms-[42%] lg:me-0 lg:-mt-[16vh] lg:w-[30%]">
+      <figure className="relative z-10 ms-auto me-5 mt-10 -mb-straddle w-3/5 lg:ms-[42%] lg:me-0 lg:-mt-[12vh] lg:w-[30%]">
         <div className="aspect-3/2 bg-photo-dark">
           <Picture imageKey={bore.key} width={bore.width} height={bore.height} alt={m.home.boreAlt} sizes="(min-width: 1024px) 30vw, 60vw" fit="cover" />
         </div>
