@@ -8,4 +8,5 @@ export const HERO_IMAGES = {
 export const CRAFT_IMAGES = {
   crest: { key: "craft/crest", width: 2880, height: 4317 },
   bore: { key: "craft/bore", width: 2880, height: 1921 },
+  boreThrough: { key: "craft/bore-through", width: 2880, height: 1921 },
 } as const
