@@ -131,8 +131,13 @@
   --ease-slow: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-/* Phones, and tablets held upright: the hero switches to its portrait art and layout. */
-@custom-variant upright (@media (max-width: 767px), (max-width: 1024px) and (orientation: portrait));
+/* Phones, and tablets held upright: the hero switches to its portrait art and layout.
+   Block form on purpose: the one-line form splits this comma-separated media list into a broken selector. */
+@custom-variant upright {
+  @media (max-width: 767px), (max-width: 1024px) and (orientation: portrait) {
+    @slot;
+  }
+}
 
 @layer base {
   * {

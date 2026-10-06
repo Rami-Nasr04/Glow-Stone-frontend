@@ -19,7 +19,9 @@ describe("theme", () => {
 
   it("defines the hero portrait variant with the same media query as the hero picture", async () => {
     const { HERO_PORTRAIT_MEDIA } = await import("../src/components/home/home-config.ts")
-    expect(css).toContain(`@custom-variant upright (@media ${HERO_PORTRAIT_MEDIA});`)
+    // Block form: the one-line form splits the comma-separated media list into a broken selector.
+    expect(css).toMatch(/@custom-variant upright \{\s*@media ([^{]+)\{\s*@slot;/)
+    expect(css.match(/@custom-variant upright \{\s*@media ([^{]+)\{/)?.[1].trim()).toBe(HERO_PORTRAIT_MEDIA)
   })
 
   it("puts the stone grain on the page background", () => {
