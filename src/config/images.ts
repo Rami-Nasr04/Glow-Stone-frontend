@@ -9,4 +9,5 @@ export const CRAFT_IMAGES = {
   crest: { key: "craft/crest", width: 2880, height: 4317 },
   bore: { key: "craft/bore", width: 2880, height: 1921 },
   boreThrough: { key: "craft/bore-through", width: 2880, height: 1921 },
+  notch: { key: "craft/notch", width: 2880, height: 4318 },
 } as const

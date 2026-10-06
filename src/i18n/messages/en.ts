@@ -145,13 +145,60 @@ export const en = {
     ],
     alsoLike: "You may also like",
   },
+  // Placeholder biography until Omar sends his story (build notes 3). Shaped like the future `site_content` rows (B6).
+  about: {
+    metaTitle: "About — Glowstone",
+    metaDescription: "Glowstone is the work of one stonemason in the mountains of Lebanon.",
+    label: "About",
+    title: "Omar, and the patience of",
+    titleEmphasis: "stone.",
+    intro:
+      "Glowstone is the work of one stonemason in the mountains of Lebanon. Every rack and holder is carved by his hands, from stone he chooses himself, in editions small enough that he knows each piece by name.",
+    // Follows the chapter number on the photo panel: "01 / 04 · The stone".
+    chapterOf: "/ {total} · {title}",
+    chapters: [
+      {
+        title: "The stone",
+        lead: "Omar grew up in a village above the Qadisha Valley, where houses, terraces and chapels are all made of the same pale limestone.",
+        body: [
+          "His grandfather cut it for walls. His father cut it for thresholds and fountains. Omar learned to read it before he learned to carve it: where the grain runs, where a block will split cleanly, and where it will not.",
+          "He still chooses every block himself, from small quarries on the slopes of Sannine and along the coast near Batroun. Cream, ash, earth and taupe each come from a different bed of the mountain, laid down by a sea that disappeared long before the cedars.",
+        ],
+      },
+      {
+        title: "The carving",
+        lead: "A single rack can take two weeks.",
+        body: [
+          "The block is squared and marked, roughed out with a point chisel, brought slowly to its form with claw and flat chisels, then honed by hand. Because each is shaped by hand, no two pieces are the same.",
+        ],
+      },
+      {
+        title: "The edition",
+        lead: "This is why every form is made in a small numbered edition.",
+        body: ["[Placeholder: how each piece is marked and documented.]"],
+      },
+      {
+        title: "Time",
+        lead: "We think the rarest thing an object can carry is time: the time the stone took to form, the time it took to carve, and the time it will spend with you.",
+        body: ["A Glowstone piece is made to be kept, and to outlast its first owner. It asks for nothing but a place to stand."],
+      },
+    ],
+    photoAlts: [
+      "The hand-broken crest of a Sannine piece, showing the grain of the limestone",
+      "The ringed wall of a hole bored through limestone",
+      "A bottle resting in a hand-cut notch",
+      "Light passing through a hole bored in limestone",
+    ],
+    quote: "Stone keeps its own time. My work is to wait for it.",
+    closing: "Made in Lebanon.",
+    viewCollection: "View the collection",
+  },
   notFound: {
     title: "This stone hasn't been carved yet.",
     back: "Back to the collection",
   },
 } as const
 
-type Widen<T> = {
-  -readonly [K in keyof T]: T[K] extends string ? string : T[K] extends readonly string[] ? readonly string[] : Widen<T[K]>
-}
+type WidenValue<V> = V extends string ? string : V extends readonly (infer Item)[] ? readonly WidenValue<Item>[] : Widen<V>
+type Widen<T> = { -readonly [K in keyof T]: WidenValue<T[K]> }
 export type Messages = Widen<typeof en>
