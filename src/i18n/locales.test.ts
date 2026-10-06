@@ -26,8 +26,19 @@ describe("localized paths", () => {
     expect(localizedPath("fr", "/about")).toBe("/fr/about")
   })
 
-  it("prerenders every static page in the published locales only", async () => {
+  it("prerenders every static page and every published piece, in the published locales only", async () => {
     const paths = await prerenderPaths()
-    expect(paths).toEqual(["/", "/collection", "/about", "/contact"])
+    expect(paths.slice(0, 4)).toEqual(["/", "/collection", "/about", "/contact"])
+    expect(paths.filter((p) => p.startsWith("/collection/"))).toEqual([
+      "/collection/sannine-sand",
+      "/collection/sannine-ash",
+      "/collection/qadisha-earth",
+      "/collection/qadisha-ash",
+      "/collection/byblos",
+      "/collection/batroun",
+      "/collection/nahr",
+      "/collection/arz",
+    ])
+    expect(paths.some((p) => p.startsWith("/ar"))).toBe(false)
   })
 })
