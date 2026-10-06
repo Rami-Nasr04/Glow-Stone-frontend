@@ -7,6 +7,7 @@ export default [
     route("collection/:slug", "routes/product.tsx"),
     route("about", "routes/about.tsx"),
     route("contact", "routes/contact.tsx"),
+    route("legal/:doc", "routes/legal.tsx"),
     route("*", "routes/not-found.tsx"),
   ]),
 ] satisfies RouteConfig

@@ -39,6 +39,7 @@ describe("localized paths", () => {
       "/collection/nahr",
       "/collection/arz",
     ])
+    expect(paths).toEqual(expect.arrayContaining(["/legal/terms", "/legal/privacy", "/legal/delivery"]))
     expect(paths.some((p) => p.startsWith("/ar"))).toBe(false)
   })
 })

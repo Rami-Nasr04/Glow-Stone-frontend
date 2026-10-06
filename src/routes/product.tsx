@@ -12,7 +12,7 @@ export function meta({ params }: Route.MetaArgs) {
   const locale = toLocale(params.lang)
   const m = MESSAGES[locale]
   const piece = getProduct(params.slug, locale)
-  if (!piece) return [{ title: m.notFound.title }]
+  if (!piece) return [{ title: m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
   return pageMeta({
     title: interpolate(m.product.metaTitle, { name: piece.name }),
     description: piece.form,

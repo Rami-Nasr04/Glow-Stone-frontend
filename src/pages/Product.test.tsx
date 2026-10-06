@@ -28,6 +28,6 @@ describe("Product", () => {
 
   it("shows the missing page for a piece that doesn't exist", () => {
     renderPiece("granite")
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("404")
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
   })
 })

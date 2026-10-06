@@ -214,9 +214,60 @@ export const en = {
     sentTitle: "Thank you. Your message is ready.",
     sentBody: "Your email app has opened with your message. Send it from there, and we will reply as soon as we can.",
   },
+  // Legal texts are placeholders until Omar sends real ones (ideally checked by a Lebanese lawyer); `site_content` in B6.
+  legal: {
+    documents: "Documents",
+    contents: "Contents",
+    lastUpdated: "Last updated",
+    lastUpdatedValue: "[Placeholder: date]",
+    questions: "Questions? Write to",
+    metaDescription: "{title} for Glowstone, hand-carved Lebanese limestone.",
+    docs: {
+      terms: {
+        title: "Terms",
+        sections: [
+          { heading: "About these terms", paragraphs: ["[Placeholder: who operates the site and how these terms apply.]"] },
+          { heading: "Orders", paragraphs: ["[Placeholder: how an order is formed and confirmed by phone.]"] },
+          { heading: "Pieces and natural variation", paragraphs: ["Each piece is carved by hand. Natural variations in the stone are part of its character."] },
+          { heading: "Prices", paragraphs: ["Prices are in US dollars.", "[Placeholder: currency and pricing terms.]"] },
+          { heading: "Governing law", paragraphs: ["[Placeholder.]"] },
+        ],
+      },
+      privacy: {
+        title: "Privacy",
+        sections: [
+          { heading: "What we collect", paragraphs: ["[Placeholder: account, order and contact data collected.]"] },
+          { heading: "How we use it", paragraphs: ["[Placeholder.]"] },
+          { heading: "Who we share it with", paragraphs: ["[Placeholder: delivery partners, if any.]"] },
+          { heading: "Your choices", paragraphs: ["[Placeholder: access, correction and deletion.]"] },
+          { heading: "Contact", paragraphs: ["[Placeholder: data contact.]"] },
+        ],
+      },
+      delivery: {
+        title: "Delivery & Returns",
+        sections: [
+          { heading: "Where we deliver", paragraphs: ["We deliver within Lebanon only.", "[Placeholder: any areas with special arrangements.]"] },
+          { heading: "Cost", paragraphs: ["Delivery is free for now."] },
+          {
+            heading: "Timing",
+            paragraphs: [
+              "[Placeholder: delivery times for ready pieces.]",
+              "Made-to-order pieces are delivered once carving is complete; the lead time is shown on each piece.",
+            ],
+          },
+          { heading: "Payment", paragraphs: ["Payment is cash on delivery. We call to confirm every order before it leaves the workshop."] },
+          { heading: "Returns", paragraphs: ["[Placeholder: returns policy, including made-to-order pieces.]"] },
+        ],
+      },
+    },
+  },
   notFound: {
+    metaTitle: "Not found — Glowstone",
+    label: "404",
     title: "This stone hasn't been carved yet.",
-    back: "Back to the collection",
+    lead: "The page you were looking for doesn't exist, or has moved.",
+    viewCollection: "View the collection",
+    home: "Home",
   },
 } as const
 

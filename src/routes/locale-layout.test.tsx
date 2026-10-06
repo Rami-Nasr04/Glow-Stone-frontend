@@ -14,9 +14,10 @@ function renderAt(path: string) {
 }
 
 describe("LocaleLayout", () => {
-  it("renders the page for a known locale", () => {
+  it("shows the missing page for Arabic and French until they are published", () => {
     renderAt("/ar")
-    expect(screen.getByRole("heading", { name: "Home page" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Home page" })).not.toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
   })
 
   it("renders the page with no locale prefix", () => {
@@ -27,7 +28,7 @@ describe("LocaleLayout", () => {
   it("treats an unknown first segment as a missing page", () => {
     renderAt("/de")
     expect(screen.queryByRole("heading", { name: "Home page" })).not.toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "404" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
   })
 
   it("keeps the site header and footer on the missing page", () => {
