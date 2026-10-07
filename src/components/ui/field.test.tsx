@@ -46,6 +46,12 @@ describe("PasswordInput", () => {
     expect(screen.getByRole("button", { name: "Hide" })).toHaveAttribute("aria-pressed", "true")
   })
 
+  it("turns the line wine when the field is invalid, as on focus", () => {
+    render(<PasswordInput aria-label="Password" aria-invalid showLabel="Show" hideLabel="Hide" />)
+    expect(screen.getByLabelText("Password").parentElement?.className).toContain("has-aria-invalid:border-accent")
+    expect(inputClass).toContain("aria-invalid:border-accent")
+  })
+
   it("hides the browser's own reveal button so there is only one", () => {
     render(<PasswordInput aria-label="Password" showLabel="Show" hideLabel="Hide" />)
     expect(screen.getByLabelText("Password").className).toContain("[&::-ms-reveal]:hidden")

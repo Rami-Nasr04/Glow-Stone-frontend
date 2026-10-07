@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 // The prototype's underlined input: the line turns wine on focus.
 export const inputClass =
-  "w-full min-w-0 border-b border-primary bg-transparent pt-1.5 pb-3 text-base transition-[border-color,box-shadow] duration-500 focus:border-accent focus:shadow-[0_1px_0_var(--accent)] focus:outline-none"
+  "w-full min-w-0 border-b border-primary bg-transparent pt-1.5 pb-3 text-base transition-[border-color,box-shadow] duration-500 focus:border-accent focus:shadow-[0_1px_0_var(--accent)] focus:outline-none aria-invalid:border-accent"
 
 export interface ControlProps {
   id: string
@@ -58,7 +58,7 @@ interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 export function PasswordInput({ showLabel, hideLabel, className, ...props }: PasswordInputProps) {
   const [shown, setShown] = useState(false)
   return (
-    <div className="flex items-center border-b border-primary transition-[border-color,box-shadow] duration-500 focus-within:border-accent focus-within:shadow-[0_1px_0_var(--accent)]">
+    <div className="flex items-center border-b border-primary transition-[border-color,box-shadow] duration-500 focus-within:border-accent focus-within:shadow-[0_1px_0_var(--accent)] has-aria-invalid:border-accent">
       <input type={shown ? "text" : "password"} className={cn("min-w-0 flex-1 bg-transparent pt-1.5 pb-3 text-base focus:outline-none [&::-ms-reveal]:hidden", className)} {...props} />
       <button
         type="button"
