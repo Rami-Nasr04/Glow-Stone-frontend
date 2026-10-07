@@ -2,6 +2,7 @@ import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
+import { takePendingPassword } from "@/features/auth/pending-password"
 import { renderAt } from "@/test/render"
 import SignIn from "./SignIn"
 
@@ -9,7 +10,7 @@ function Probe() {
   const { pathname, search } = useLocation()
   return <p>landed: {pathname + search}</p>
 }
-const probes = ["/account", "/checkout", "/verify"].map((path) => ({ path, Component: Probe }))
+const probes = ["/", "/account", "/checkout", "/verify"].map((path) => ({ path, Component: Probe }))
 
 async function signIn(email: string, password: string) {
   const user = userEvent.setup()
@@ -50,10 +51,10 @@ describe("SignIn", () => {
     expect(await screen.findByText("landed: /checkout")).toBeInTheDocument()
   })
 
-  it("ignores a ?next= that leaves the site and goes to the account", async () => {
+  it("ignores a ?next= that leaves the site and goes home (the account page comes later)", async () => {
     renderAt(<SignIn />, "/sign-in?next=%2F%2Fevil.com", { auth: createMockAuth(null), routes: probes })
     await signIn(DEMO_USER.email, DEMO_USER.password)
-    expect(await screen.findByText("landed: /account")).toBeInTheDocument()
+    expect(await screen.findByText("landed: /")).toBeInTheDocument()
   })
 
   it("sends an unverified account to the verify step with a fresh code", async () => {
@@ -64,6 +65,8 @@ describe("SignIn", () => {
     await signIn("rana@example.com", "Cedar2026")
     expect(await screen.findByText("landed: /verify?email=rana%40example.com")).toBeInTheDocument()
     expect(resend).toHaveBeenCalledWith("rana@example.com")
+    // Verifying then signs them straight in: the password waits in memory.
+    expect(takePendingPassword("rana@example.com")).toBe("Cedar2026")
   })
 
   it("pre-fills the email from the link and shows the demo note", () => {

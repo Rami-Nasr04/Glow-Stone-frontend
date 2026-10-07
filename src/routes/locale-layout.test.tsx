@@ -75,4 +75,17 @@ describe("LocaleLayout", () => {
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument()
     expect(screen.getByRole("main").className).not.toContain("pt-16")
   })
+
+  it("keeps the missing page, inside the site frame, for full-screen pages in unpublished languages", () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/:lang?",
+        Component: LocaleLayout,
+        children: [{ path: "sign-in", Component: () => <h1>Sign in</h1>, handle: { bare: true } }],
+      },
+    ])
+    render(<Stub initialEntries={["/ar/sign-in"]} />)
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
+    expect(screen.getByRole("banner")).toBeInTheDocument()
+  })
 })

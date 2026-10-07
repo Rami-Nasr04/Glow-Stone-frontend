@@ -1,11 +1,14 @@
 import { useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router"
+import { toast } from "sonner"
 import { actionVariants } from "@/components/ui/action-link"
 import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
-import { safeNext } from "@/features/auth/next-path"
+import { AFTER_SIGN_IN, safeNext } from "@/features/auth/next-path"
+import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { AuthError } from "@/features/auth/types"
+import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import { isEmail } from "@/lib/validation"
@@ -40,12 +43,15 @@ export default function SignIn() {
     }
     setBusy(true)
     try {
-      await signIn(email.trim(), password)
-      navigate(safeNext(next, to("/account")), { replace: true })
+      const user = await signIn(email.trim(), password)
+      toast.success(interpolate(t.welcome, { name: user.name.split(" ")[0] }))
+      navigate(safeNext(next, to(AFTER_SIGN_IN)), { replace: true })
     } catch (error) {
       setBusy(false)
       const code = error instanceof AuthError ? error.code : "unavailable"
       if (code === "not_confirmed") {
+        // Verifying signs them straight in, so they don't type the password twice.
+        rememberPendingPassword(email, password)
         await client.resendCode(email.trim()).catch(() => undefined)
         navigate(`${to("/verify")}?email=${encodeURIComponent(email.trim())}${next ? `&next=${encodeURIComponent(next)}` : ""}`)
         return

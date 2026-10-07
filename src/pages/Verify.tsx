@@ -6,7 +6,7 @@ import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import { emptyCode } from "@/features/auth/code"
 import CodeInput from "@/features/auth/CodeInput"
-import { safeNext } from "@/features/auth/next-path"
+import { AFTER_SIGN_IN, safeNext } from "@/features/auth/next-path"
 import { takePendingPassword } from "@/features/auth/pending-password"
 import { AuthError } from "@/features/auth/types"
 import { interpolate } from "@/i18n/format"
@@ -56,7 +56,7 @@ export default function Verify() {
       const password = takePendingPassword(email)
       if (password) {
         await signIn(email, password)
-        navigate(safeNext(next, to("/account")), { replace: true })
+        navigate(safeNext(next, to(AFTER_SIGN_IN)), { replace: true })
         return
       }
       toast.success(t.verified)

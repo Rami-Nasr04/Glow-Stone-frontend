@@ -295,6 +295,7 @@ export const en = {
       submit: "Sign in",
       submitting: "Signing in…",
       wrongCredentials: "That password doesn't match this email. Try again, or reset it below.",
+      welcome: "Welcome back, {name}.",
       forgot: "Forgot password?",
       newHere: "New to Glowstone?",
       createAccount: "Create an account",

@@ -10,7 +10,7 @@ function Probe() {
   const { pathname, search } = useLocation()
   return <p>landed: {pathname + search}</p>
 }
-const probes = ["/sign-up", "/sign-in", "/account", "/checkout"].map((path) => ({ path, Component: Probe }))
+const probes = ["/", "/sign-up", "/sign-in", "/checkout"].map((path) => ({ path, Component: Probe }))
 
 const newcomer = { name: "Rana Khoury", email: "rana@example.com", phone: "+96171000000", password: "Cedar2026" }
 
@@ -65,6 +65,14 @@ describe("Verify", () => {
     await enter(DEMO_CODE)
     expect(await screen.findByText("landed: /checkout")).toBeInTheDocument()
     expect(await auth.currentUser()).toMatchObject({ email: "rana@example.com" })
+  })
+
+  it("goes home after signing a new customer in when no destination was given", async () => {
+    const auth = await newAccount()
+    rememberPendingPassword(newcomer.email, newcomer.password)
+    renderAt(<Verify />, "/verify?email=rana%40example.com", { auth, routes: probes })
+    await enter(DEMO_CODE)
+    expect(await screen.findByText("landed: /")).toBeInTheDocument()
   })
 
   it("asks to sign in when the page was reloaded after creating the account", async () => {

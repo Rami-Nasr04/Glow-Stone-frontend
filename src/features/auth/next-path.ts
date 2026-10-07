@@ -1,3 +1,7 @@
+// Where signing in leads when no page asked for it. Becomes "/account" once the account page is built (held until
+// the customers and addresses tables are agreed).
+export const AFTER_SIGN_IN = "/"
+
 // Any origin that can't be a real one: a destination is kept only if it resolves to this same origin.
 const HERE = "https://glowstone.invalid"
 
