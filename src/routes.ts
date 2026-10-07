@@ -11,6 +11,7 @@ export default [
     route("sign-in", "routes/sign-in.tsx"),
     route("sign-up", "routes/sign-up.tsx"),
     route("verify", "routes/verify.tsx"),
+    route("forgot-password", "routes/forgot-password.tsx"),
     route("*", "routes/not-found.tsx"),
   ]),
 ] satisfies RouteConfig

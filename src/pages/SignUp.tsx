@@ -41,7 +41,7 @@ export default function SignUp() {
     if (!fields.phone.trim()) found.phone = m.auth.required
     else if (!phone) found.phone = m.auth.invalidPhone
     if (!fields.password) found.password = m.auth.required
-    else if (!passwordOk(fields.password)) found.password = t.weakPassword
+    else if (!passwordOk(fields.password)) found.password = m.auth.weakPassword
     setErrors(found)
     setEmailTaken(false)
     const first = ORDER.find((key) => found[key])

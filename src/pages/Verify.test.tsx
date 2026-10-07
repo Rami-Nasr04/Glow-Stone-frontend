@@ -39,6 +39,7 @@ describe("Verify", () => {
     renderAt(<Verify />, "/verify?email=rana%40example.com", { auth: await newAccount() })
     expect(screen.getByRole("heading", { level: 1, name: "Check your email" })).toBeInTheDocument()
     expect(screen.getByText("rana@example.com")).toBeInTheDocument()
+    expect(screen.getByLabelText("Digit 1")).toHaveFocus()
     const button = screen.getByRole("button", { name: "Verify" })
     expect(button).toBeDisabled()
     const user = userEvent.setup()

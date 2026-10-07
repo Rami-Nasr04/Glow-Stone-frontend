@@ -29,6 +29,11 @@ export default function Verify() {
   const [wait, setWait] = useState(RESEND_WAIT_SECONDS)
   const t = m.auth.verify
 
+  // Visitors arrive from sign-up or sign-in: start them on the first box.
+  useEffect(() => {
+    document.getElementById("verify-code-0")?.focus()
+  }, [])
+
   const counting = wait > 0
   useEffect(() => {
     if (!counting) return
