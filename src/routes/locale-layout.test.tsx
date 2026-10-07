@@ -60,4 +60,19 @@ describe("LocaleLayout", () => {
     render(<Stub initialEntries={["/"]} />)
     expect(screen.getByRole("main").className).not.toContain("pt-16")
   })
+
+  it("shows full-screen pages without the site header and footer", () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/:lang?",
+        Component: LocaleLayout,
+        children: [{ path: "sign-in", Component: () => <h1>Sign in</h1>, handle: { bare: true } }],
+      },
+    ])
+    render(<Stub initialEntries={["/sign-in"]} />)
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument()
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument()
+    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument()
+    expect(screen.getByRole("main").className).not.toContain("pt-16")
+  })
 })

@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { createRoutesStub } from "react-router"
 import SiteHeader from "./SiteHeader"
 
-function renderAt(path: string) {
-  const Stub = createRoutesStub([{ path: "/:lang?/*", Component: () => <SiteHeader /> }])
+function renderAt(path: string, accountsOpen = true) {
+  const Stub = createRoutesStub([{ path: "/:lang?/*", Component: () => <SiteHeader accountsOpen={accountsOpen} /> }])
   render(<Stub initialEntries={[path]} />)
 }
 
@@ -41,5 +41,13 @@ describe("SiteHeader", () => {
     await user.click(screen.getByRole("button", { name: "Menu" }))
     await user.keyboard("{Escape}")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("hides the account links while accounts are not open yet", async () => {
+    const user = userEvent.setup()
+    renderAt("/", false)
+    expect(screen.queryByRole("link", { name: "Account" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Menu" }))
+    expect(within(screen.getByRole("dialog")).queryByRole("link", { name: "Account" })).not.toBeInTheDocument()
   })
 })

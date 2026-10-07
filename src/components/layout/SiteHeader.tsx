@@ -3,12 +3,15 @@ import { ShoppingBag, User } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Link, NavLink } from "react-router"
 import { CONTACT_EMAIL } from "@/config/site"
+import { ACCOUNTS_OPEN } from "@/features/auth/client"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
 interface SiteHeaderProps {
   /** Transparent while over the home hero; turns solid stone once the page scrolls. */
   overHero?: boolean
+  /** Account icon and menu link; hidden until customer accounts are live. */
+  accountsOpen?: boolean
 }
 
 const NAV = [
@@ -24,7 +27,7 @@ function Wordmark() {
   return <img src="/brand/glowstone-wordmark-header.svg" alt="" width={192} height={15} className="h-2.75 w-auto lg:h-3.75" />
 }
 
-export default function SiteHeader({ overHero = false }: SiteHeaderProps) {
+export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_OPEN }: SiteHeaderProps) {
   const { m, to } = useLocale()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -70,9 +73,11 @@ export default function SiteHeader({ overHero = false }: SiteHeaderProps) {
         </nav>
 
         <div className="flex items-center justify-end gap-1 lg:gap-5">
-          <Link to={to("/account")} aria-label={m.nav.account} className={cn(iconLink, "hidden lg:flex")}>
-            <User className="size-5" strokeWidth={1.1} />
-          </Link>
+          {accountsOpen && (
+            <Link to={to("/account")} aria-label={m.nav.account} className={cn(iconLink, "hidden lg:flex")}>
+              <User className="size-5" strokeWidth={1.1} />
+            </Link>
+          )}
           <Link to={to("/cart")} aria-label={m.nav.cart} className={iconLink}>
             <ShoppingBag className="size-5" strokeWidth={1.1} />
           </Link>
@@ -111,9 +116,11 @@ export default function SiteHeader({ overHero = false }: SiteHeaderProps) {
 
                 <div className="mt-auto flex flex-col gap-7">
                   <span aria-hidden="true" className="h-px w-12 bg-accent" />
-                  <Link to={to("/account")} onClick={closeMenu} className={cn(navLabel, "w-max")}>
-                    {m.nav.account}
-                  </Link>
+                  {accountsOpen && (
+                    <Link to={to("/account")} onClick={closeMenu} className={cn(navLabel, "w-max")}>
+                      {m.nav.account}
+                    </Link>
+                  )}
                   <div className="flex flex-col gap-1 text-muted-foreground">
                     <a href={`mailto:${CONTACT_EMAIL}`} className="flex min-h-11 w-max items-center">
                       {CONTACT_EMAIL}

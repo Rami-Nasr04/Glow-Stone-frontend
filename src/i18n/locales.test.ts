@@ -42,4 +42,9 @@ describe("localized paths", () => {
     expect(paths).toEqual(expect.arrayContaining(["/legal/terms", "/legal/privacy", "/legal/delivery"]))
     expect(paths.some((p) => p.startsWith("/ar"))).toBe(false)
   })
+
+  it("never prerenders the private account and sign-in pages", async () => {
+    const paths = await prerenderPaths()
+    for (const page of ["/sign-in", "/sign-up", "/verify", "/forgot-password", "/account"]) expect(paths).not.toContain(page)
+  })
 })
