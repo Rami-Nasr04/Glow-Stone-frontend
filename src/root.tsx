@@ -1,5 +1,6 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useParams } from "react-router"
 import Toaster from "@/components/ui/sonner"
+import AuthProvider from "@/features/auth/AuthProvider"
 import { directionOf, toLocale } from "@/i18n/locales"
 import "./index.css"
 
@@ -25,5 +26,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root() {
-  return <Outlet />
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  )
 }

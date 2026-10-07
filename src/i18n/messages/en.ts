@@ -269,6 +269,9 @@ export const en = {
     viewCollection: "View the collection",
     home: "Home",
   },
+  auth: {
+    checking: "Checking your session…",
+  },
 } as const
 
 type WidenValue<V> = V extends string ? string : V extends readonly (infer Item)[] ? readonly WidenValue<Item>[] : Widen<V>
