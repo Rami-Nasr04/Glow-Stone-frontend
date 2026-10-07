@@ -24,6 +24,7 @@ describe("SignIn", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/sign-up?next=%2Fcheckout")
     expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password")
+    expect(screen.getByRole("link", { name: "Glowstone home" }).className).toContain("min-h-11")
   })
 
   it("explains an empty form without sending it", async () => {

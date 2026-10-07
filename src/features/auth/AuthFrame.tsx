@@ -15,7 +15,7 @@ export default function AuthFrame({ title, intro, children }: AuthFrameProps) {
   const { client } = useAuth()
   return (
     <div className="flex min-h-svh flex-col items-center px-5">
-      <Link to={to("/")} aria-label={m.nav.home} className="mt-[clamp(3.5rem,9vh,6.5rem)] block w-[min(260px,70vw)]">
+      <Link to={to("/")} aria-label={m.nav.home} className="mt-[clamp(3.5rem,9vh,6.5rem)] flex min-h-11 w-[min(260px,70vw)] items-center">
         <img src="/brand/glowstone-wordmark.svg" alt="" width={1004} height={137} className="block h-auto w-full" />
       </Link>
 
