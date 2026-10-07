@@ -305,6 +305,7 @@ export const en = {
       submit: "Create account",
       submitting: "Creating account…",
       emailTaken: "An account already exists for this email.",
+      weakPassword: "Choose a password that meets all three rules below.",
       signInInstead: "Sign in instead",
       haveAccount: "Already have an account?",
       signIn: "Sign in",

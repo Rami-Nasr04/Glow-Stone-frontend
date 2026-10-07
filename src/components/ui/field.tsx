@@ -59,7 +59,7 @@ export function PasswordInput({ showLabel, hideLabel, className, ...props }: Pas
   const [shown, setShown] = useState(false)
   return (
     <div className="flex items-center border-b border-primary transition-[border-color,box-shadow] duration-500 focus-within:border-accent focus-within:shadow-[0_1px_0_var(--accent)]">
-      <input type={shown ? "text" : "password"} className={cn("min-w-0 flex-1 bg-transparent pt-1.5 pb-3 text-base focus:outline-none", className)} {...props} />
+      <input type={shown ? "text" : "password"} className={cn("min-w-0 flex-1 bg-transparent pt-1.5 pb-3 text-base focus:outline-none [&::-ms-reveal]:hidden", className)} {...props} />
       <button
         type="button"
         aria-pressed={shown}

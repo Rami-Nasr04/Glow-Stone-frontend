@@ -45,4 +45,9 @@ describe("PasswordInput", () => {
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text")
     expect(screen.getByRole("button", { name: "Hide" })).toHaveAttribute("aria-pressed", "true")
   })
+
+  it("hides the browser's own reveal button so there is only one", () => {
+    render(<PasswordInput aria-label="Password" showLabel="Show" hideLabel="Hide" />)
+    expect(screen.getByLabelText("Password").className).toContain("[&::-ms-reveal]:hidden")
+  })
 })
