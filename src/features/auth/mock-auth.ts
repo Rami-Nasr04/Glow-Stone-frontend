@@ -1,11 +1,16 @@
-import { AuthError, type AuthClient, type AuthUser, type SignUpInput } from "./types"
+import { AuthError, type AuthClient, type AuthUser } from "./types"
 
 // Stand-in for the customer pool until B3: accounts live in this browser only, and every emailed code is DEMO_CODE.
 export const DEMO_CODE = "123456"
 export const DEMO_USER = { email: "demo@glowstone.test", password: "Stone2026", name: "Nour Haddad", phone: "+96171234567" }
 
-interface StoredUser extends SignUpInput {
+interface StoredUser {
   id: string
+  name: string
+  email: string
+  phone: string
+  /** SHA-256 of the password: visitors may type a real one, so it is never kept readable. */
+  passwordHash: string
   confirmed: boolean
 }
 
@@ -24,10 +29,15 @@ function browserStorage(): Storage | null {
   }
 }
 
+async function hash(password: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`glowstone-demo:${password}`))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")
+}
+
 export function createMockAuth(storage: Storage | null = browserStorage()): AuthClient {
   let state: DemoState | null = null
 
-  const load = (): DemoState => {
+  const load = async (): Promise<DemoState> => {
     if (state) return state
     try {
       const saved = storage?.getItem(STORAGE_KEY)
@@ -35,7 +45,10 @@ export function createMockAuth(storage: Storage | null = browserStorage()): Auth
     } catch {
       state = null
     }
-    state ??= { users: [{ ...DEMO_USER, id: "demo-user", confirmed: true }], session: null }
+    if (!state) {
+      const { password, ...demo } = DEMO_USER
+      state = { users: [{ ...demo, id: "demo-user", passwordHash: await hash(password), confirmed: true }], session: null }
+    }
     return state
   }
 
@@ -48,34 +61,43 @@ export function createMockAuth(storage: Storage | null = browserStorage()): Auth
     }
   }
 
-  const find = (email: string) => load().users.find((user) => user.email === email.trim().toLowerCase())
-  const update = (id: string, change: Partial<StoredUser>) =>
-    save({ ...load(), users: load().users.map((user) => (user.id === id ? { ...user, ...change } : user)) })
+  const find = async (email: string) => (await load()).users.find((user) => user.email === email.trim().toLowerCase())
+  const update = async (id: string, change: Partial<StoredUser>) => {
+    const current = await load()
+    save({ ...current, users: current.users.map((user) => (user.id === id ? { ...user, ...change } : user)) })
+  }
   const toUser = ({ id, email, name }: StoredUser): AuthUser => ({ id, email, name })
 
   return {
     mode: "demo",
     async currentUser() {
-      const { users, session } = load()
+      const { users, session } = await load()
       const user = users.find((candidate) => candidate.id === session)
       return user ? toUser(user) : null
     },
     async signIn(email, password) {
-      const user = find(email)
-      if (!user || user.password !== password) throw new AuthError("wrong_credentials")
+      const user = await find(email)
+      if (!user || user.passwordHash !== (await hash(password))) throw new AuthError("wrong_credentials")
       if (!user.confirmed) throw new AuthError("not_confirmed")
-      save({ ...load(), session: user.id })
+      save({ ...(await load()), session: user.id })
       return toUser(user)
     },
-    async signUp(input) {
-      if (find(input.email)) throw new AuthError("email_taken")
-      const user: StoredUser = { ...input, email: input.email.trim().toLowerCase(), id: crypto.randomUUID(), confirmed: false }
-      save({ ...load(), users: [...load().users, user] })
+    async signUp({ password, ...input }) {
+      if (await find(input.email)) throw new AuthError("email_taken")
+      const user: StoredUser = {
+        ...input,
+        email: input.email.trim().toLowerCase(),
+        id: crypto.randomUUID(),
+        passwordHash: await hash(password),
+        confirmed: false,
+      }
+      const current = await load()
+      save({ ...current, users: [...current.users, user] })
     },
     async confirmSignUp(email, code) {
-      const user = find(email)
+      const user = await find(email)
       if (!user || code !== DEMO_CODE) throw new AuthError("wrong_code")
-      update(user.id, { confirmed: true })
+      await update(user.id, { confirmed: true })
     },
     async resendCode() {
       // Nothing to send in the demo: the code is always DEMO_CODE.
@@ -84,12 +106,12 @@ export function createMockAuth(storage: Storage | null = browserStorage()): Auth
       // Nothing to send in the demo: the code is always DEMO_CODE.
     },
     async confirmForgotPassword(email, code, password) {
-      const user = find(email)
+      const user = await find(email)
       if (!user || code !== DEMO_CODE) throw new AuthError("wrong_code")
-      update(user.id, { password, confirmed: true })
+      await update(user.id, { passwordHash: await hash(password), confirmed: true })
     },
     async signOut() {
-      save({ ...load(), session: null })
+      save({ ...(await load()), session: null })
     },
   }
 }

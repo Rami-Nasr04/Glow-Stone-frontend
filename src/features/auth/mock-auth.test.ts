@@ -77,6 +77,18 @@ describe("demo auth client", () => {
     expect(await createMockAuth(storage).currentUser()).toMatchObject({ email: "rana@example.com" })
   })
 
+  it("never keeps a password in readable form in the browser", async () => {
+    const storage = memoryStorage()
+    const auth = createMockAuth(storage)
+    await auth.signUp(newcomer)
+    await auth.confirmForgotPassword(newcomer.email, DEMO_CODE, "Granite2027")
+    const saved = storage.getItem("glowstone.demo-auth") ?? ""
+    expect(saved).not.toContain(newcomer.password)
+    expect(saved).not.toContain("Granite2027")
+    expect(saved).not.toContain(DEMO_USER.password)
+    expect(await code(auth.signIn(newcomer.email, "Granite2027"))).toBe("ok")
+  })
+
   it("still works when the browser blocks storage", async () => {
     const blocked = memoryStorage()
     blocked.getItem = () => {
