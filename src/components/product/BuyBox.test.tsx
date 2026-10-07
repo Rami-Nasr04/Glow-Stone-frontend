@@ -47,6 +47,8 @@ describe("BuyBox", () => {
     expect(screen.getAllByText("Sold out")).toHaveLength(1)
     expect(screen.getByText(/This edition has found its homes/)).toBeInTheDocument()
     expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email")
+    // Keyboard users see where they are: the line turns wine while the field has focus.
+    expect(screen.getByLabelText("Email").closest("form")?.className).toContain("focus-within:border-accent")
     expect(screen.getByRole("button", { name: "Notify me" })).toBeInTheDocument()
   })
 

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 // The prototype's underlined input: the line turns wine on focus.
 export const inputClass =
-  "w-full min-w-0 border-b border-primary bg-transparent pt-1.5 pb-3 text-base transition-[border-color,box-shadow] duration-500 focus:border-accent focus:shadow-[0_1px_0_var(--accent)] focus:outline-none aria-invalid:border-accent"
+  "min-h-11 w-full min-w-0 border-b border-primary bg-transparent pt-1.5 pb-3 text-base transition-[border-color,box-shadow] duration-500 focus:border-accent focus:shadow-[0_1px_0_var(--accent)] focus:outline-none aria-invalid:border-accent"
 
 export interface ControlProps {
   id: string

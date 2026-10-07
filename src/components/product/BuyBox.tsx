@@ -68,7 +68,7 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
               <Eyebrow>{m.product.newEditions}</Eyebrow>
               <p className="font-display text-2xl leading-snug font-light">{m.product.soldOutReissue}</p>
               {/* New-editions signup: wired to POST /subscribers in phase B7, like the footer form. */}
-              <form className="flex items-end gap-5 border-b border-primary" onSubmit={(e) => e.preventDefault()}>
+              <form className="flex items-end gap-5 border-b border-primary transition-[border-color,box-shadow] duration-500 focus-within:border-accent focus-within:shadow-[0_1px_0_var(--accent)]" onSubmit={(e) => e.preventDefault()}>
                 <label className="flex flex-1 flex-col gap-1.5">
                   <span className={cn(caps, "text-muted-foreground")}>{m.product.email}</span>
                   <input type="email" required autoComplete="email" className="min-w-0 bg-transparent pt-1.5 pb-3 text-base focus:outline-none" />

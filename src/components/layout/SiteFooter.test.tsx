@@ -13,6 +13,8 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/legal/terms")
     expect(screen.getByRole("link", { name: "Delivery & Returns" })).toHaveAttribute("href", "/legal/delivery")
     expect(screen.getByLabelText("Your email, for new editions")).toHaveAttribute("type", "email")
+    // Visible focus on charcoal: the line turns Frost Stone (wine is too dark there).
+    expect(screen.getByLabelText("Your email, for new editions").parentElement?.className).toContain("focus-within:border-dark-section-foreground")
   })
 
   it("links the wordmark home and offers the contact email", () => {

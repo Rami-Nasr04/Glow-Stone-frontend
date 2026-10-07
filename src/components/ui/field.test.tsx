@@ -50,6 +50,7 @@ describe("PasswordInput", () => {
     render(<PasswordInput aria-label="Password" aria-invalid showLabel="Show" hideLabel="Hide" />)
     expect(screen.getByLabelText("Password").parentElement?.className).toContain("has-aria-invalid:border-accent")
     expect(inputClass).toContain("aria-invalid:border-accent")
+    expect(inputClass).toContain("min-h-11")
   })
 
   it("hides the browser's own reveal button so there is only one", () => {

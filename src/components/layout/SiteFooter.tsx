@@ -41,7 +41,7 @@ export default function SiteFooter() {
           {/* New-editions signup: wired to POST /subscribers in phase B7. */}
           <form className="flex w-full max-w-105 flex-col gap-3.5" onSubmit={(e) => e.preventDefault()}>
             <p className={heading}>{m.footer.newEditions}</p>
-            <div className="flex items-center gap-5 border-b border-dark-border">
+            <div className="flex items-center gap-5 border-b border-dark-border transition-[border-color,box-shadow] duration-500 focus-within:border-dark-section-foreground focus-within:shadow-[0_1px_0_var(--dark-section-foreground)]">
               <label htmlFor="footer-email" className="sr-only">
                 {m.footer.emailPlaceholder}
               </label>
