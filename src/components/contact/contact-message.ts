@@ -1,5 +1,6 @@
 import { interpolate } from "@/i18n/format"
 import type { Messages } from "@/i18n/messages/en"
+import { isEmail } from "@/lib/validation"
 
 export interface ContactFields {
   name: string
@@ -10,13 +11,11 @@ export interface ContactFields {
 
 export type FieldErrors = Partial<Record<keyof ContactFields, string>>
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 export function validateContact(fields: ContactFields, m: Messages): FieldErrors {
   const errors: FieldErrors = {}
   if (!fields.name.trim()) errors.name = m.contact.required
   if (!fields.email.trim()) errors.email = m.contact.required
-  else if (!EMAIL.test(fields.email.trim())) errors.email = m.contact.invalidEmail
+  else if (!isEmail(fields.email)) errors.email = m.contact.invalidEmail
   if (!fields.message.trim()) errors.message = m.contact.required
   return errors
 }
