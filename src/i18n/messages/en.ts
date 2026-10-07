@@ -344,6 +344,8 @@ export const en = {
       save: "Save new password",
       saving: "Saving…",
       codeMissing: "Please enter the 6-digit code from the email.",
+      wrongEmail: "Wrong email?",
+      changeIt: "Change it",
       changed: "Password changed. Sign in with your new password.",
       backToSignIn: "Back to sign in",
     },

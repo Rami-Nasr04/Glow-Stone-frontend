@@ -73,6 +73,23 @@ describe("ForgotPassword", () => {
     expect(await auth.signIn(DEMO_USER.email, "Granite2027")).toMatchObject({ email: DEMO_USER.email })
   })
 
+  it("lets a mistyped email be changed from the code step, keeping what was typed", async () => {
+    const auth = createMockAuth(null)
+    const spy = vi.spyOn(auth, "forgotPassword")
+    renderAt(<ForgotPassword />, "/forgot-password", { auth })
+    const user = await requestCode("nour@exmaple.com")
+    await user.click(await screen.findByRole("button", { name: "Change it" }))
+    expect(screen.getByRole("heading", { level: 1, name: "Reset your password" })).toBeInTheDocument()
+    const email = screen.getByLabelText("Email")
+    expect(email).toHaveValue("nour@exmaple.com")
+    expect(email).toHaveFocus()
+    await user.clear(email)
+    await user.type(email, "nour@example.com")
+    await user.click(screen.getByRole("button", { name: "Send code" }))
+    expect(spy).toHaveBeenLastCalledWith("nour@example.com")
+    expect(await screen.findByText("nour@example.com")).toBeInTheDocument()
+  })
+
   it("starts from the email in the link", () => {
     renderAt(<ForgotPassword />, "/forgot-password?email=nour%40example.com", { auth: createMockAuth(null) })
     expect(screen.getByLabelText("Email")).toHaveValue("nour@example.com")

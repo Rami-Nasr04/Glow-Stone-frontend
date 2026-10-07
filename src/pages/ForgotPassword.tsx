@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { actionVariants } from "@/components/ui/action-link"
@@ -31,10 +31,24 @@ export default function ForgotPassword() {
   const [busy, setBusy] = useState(false)
   const t = m.auth.forgot
 
-  // The send button is gone once the code step appears; keyboard and screen-reader focus moves to the first box.
+  const changingEmail = useRef(false)
+
+  // Each step replaces the other's controls, so focus follows: to the first code box, or back to the email.
   useEffect(() => {
     if (sentTo) document.getElementById("reset-code-0")?.focus()
+    else if (changingEmail.current) {
+      changingEmail.current = false
+      document.getElementById("reset-email")?.focus()
+    }
   }, [sentTo])
+
+  const changeEmail = () => {
+    changingEmail.current = true
+    setSentTo(null)
+    setCode(emptyCode())
+    setPassword("")
+    setErrors({})
+  }
 
   const fail = (failure: unknown, codeStep: boolean) => {
     setBusy(false)
@@ -127,6 +141,12 @@ export default function ForgotPassword() {
       }
     >
       <form noValidate onSubmit={save} className="flex flex-col gap-8">
+        <p className="-mt-4 text-center text-sm text-muted-foreground">
+          {t.wrongEmail}{" "}
+          <button type="button" onClick={changeEmail} className="inline-flex min-h-11 items-center text-accent underline underline-offset-4">
+            {t.changeIt}
+          </button>
+        </p>
         <div className="flex flex-col items-center gap-3">
           <CodeInput
             idPrefix="reset-code"
