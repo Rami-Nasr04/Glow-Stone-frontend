@@ -2,6 +2,7 @@ import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
+import { takePendingPassword } from "@/features/auth/pending-password"
 import { renderAt } from "@/test/render"
 import SignUp from "./SignUp"
 
@@ -54,13 +55,15 @@ describe("SignUp", () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
-  it("creates the account with the full phone number and goes to the verify step", async () => {
+  it("creates the account and hands the password to the verify step in memory, never in history", async () => {
     const auth = createMockAuth(null)
     const spy = vi.spyOn(auth, "signUp")
     renderAt(<SignUp />, "/sign-up?next=%2Fcheckout", { auth, routes: probes })
     await fill(valid)
     expect(spy).toHaveBeenCalledWith({ name: "Rana Khoury", email: "rana@example.com", phone: "+96171000000", password: "Cedar2026" })
-    expect(await screen.findByText("landed: /verify?email=rana%40example.com&next=%2Fcheckout with password")).toBeInTheDocument()
+    expect(await screen.findByText("landed: /verify?email=rana%40example.com&next=%2Fcheckout without password")).toBeInTheDocument()
+    expect(takePendingPassword("rana@example.com")).toBe("Cedar2026")
+    expect(takePendingPassword("rana@example.com")).toBeNull()
   })
 
   it("offers to sign in when the email already has an account", async () => {

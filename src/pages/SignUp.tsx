@@ -5,6 +5,7 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import PasswordRules from "@/features/auth/PasswordRules"
+import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { lebanesePhone, passwordOk } from "@/features/auth/rules"
 import { AuthError } from "@/features/auth/types"
 import { useLocale } from "@/i18n/useLocale"
@@ -53,8 +54,9 @@ export default function SignUp() {
     try {
       await client.signUp({ name: fields.name.trim(), email, phone, password: fields.password })
       const nextParam = next ? `&next=${encodeURIComponent(next)}` : ""
-      // The password travels in router state (never the URL) so the verify step can sign in straight away.
-      navigate(`${to("/verify")}?email=${encodeURIComponent(email)}${nextParam}`, { state: { password: fields.password } })
+      // Held in memory for the verify step, so the new customer is signed in straight after verifying.
+      rememberPendingPassword(email, fields.password)
+      navigate(`${to("/verify")}?email=${encodeURIComponent(email)}${nextParam}`)
     } catch (error) {
       setBusy(false)
       const code = error instanceof AuthError ? error.code : "unavailable"
