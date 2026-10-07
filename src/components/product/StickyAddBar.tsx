@@ -3,13 +3,14 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import Picture from "@/components/media/Picture"
 import { noBreak } from "@/features/catalog/format"
-import type { ProductDetail } from "@/features/catalog/types"
+import { coverOf } from "@/features/catalog/photos"
+import type { Product } from "@/features/catalog/types"
 import { formatPrice } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
 interface StickyAddBarProps {
-  piece: ProductDetail
+  piece: Product
   /** The main ADD TO CART button; the bar shows only while it has scrolled above the screen. */
   target: React.RefObject<HTMLButtonElement | null>
 }
@@ -17,6 +18,7 @@ interface StickyAddBarProps {
 export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
   const { m } = useLocale()
   const [shown, setShown] = useState(false)
+  const cover = coverOf(piece)
 
   useEffect(() => {
     // Shown while the button is above the screen; hidden again as soon as it is back (or still below).
@@ -47,9 +49,9 @@ export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
     >
       <div className="mx-auto flex max-w-content items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          {piece.cover && (
+          {cover && (
             <div className="hidden h-12 w-8 shrink-0 lg:block">
-              <Picture imageKey={piece.cover.key} width={piece.cover.width} height={piece.cover.height} alt="" sizes="32px" />
+              <Picture imageKey={cover.key} width={cover.width} height={cover.height} alt="" sizes="32px" />
             </div>
           )}
           <span className="truncate font-display text-lg lg:text-2xl">{noBreak(piece.name)}</span>

@@ -1,59 +1,68 @@
-import { getProduct, listProducts, productSlugs } from "./catalog"
+import { getProduct, listProducts, newestFirst } from "./catalog"
+import type { ProductSummary } from "./types"
+
+// Field names of GET /products and GET /products/{id}, as agreed with the backend.
+const SUMMARY_FIELDS = [
+  "bottles",
+  "color",
+  "createdAt",
+  "depthCm",
+  "editionSize",
+  "featured",
+  "heightCm",
+  "id",
+  "name",
+  "price",
+  "remaining",
+  "soldOut",
+  "stoneType",
+  "summary",
+  "weightKg",
+  "widthCm",
+]
 
 describe("catalog", () => {
-  it("lists the eight published pieces in display order", () => {
-    expect(listProducts("en").map((p) => p.slug)).toEqual([
-      "sannine-sand",
-      "sannine-ash",
-      "qadisha-earth",
-      "qadisha-ash",
-      "byblos",
-      "batroun",
-      "nahr",
-      "arz",
+  it("lists the published pieces newest first, like GET /products", () => {
+    expect(listProducts().map((p) => p.name)).toEqual([
+      "Sannine · Sand",
+      "Sannine · Ash",
+      "Qadisha · Earth",
+      "Qadisha · Ash",
+      "Byblos",
+      "Batroun",
+      "Nahr",
+      "Arz",
     ])
-    expect(productSlugs()).toHaveLength(8)
+    expect(listProducts().map((p) => p.id)).toEqual([8, 7, 6, 5, 4, 3, 2, 1])
   })
 
-  it("derives sold out from the remaining stock", () => {
-    const byblos = listProducts("en").find((p) => p.slug === "byblos")
-    expect(byblos).toMatchObject({ remaining: 0, soldOut: true })
-    expect(listProducts("en").filter((p) => p.soldOut)).toHaveLength(1)
+  it("returns exactly the contract's fields, with no story in the list", () => {
+    for (const piece of listProducts()) expect(Object.keys(piece).sort()).toEqual(SUMMARY_FIELDS)
+    expect(Object.keys(getProduct(3)!).sort()).toEqual([...SUMMARY_FIELDS, "story"].sort())
   })
 
-  it("maps the lead time", () => {
-    expect(getProduct("batroun", "en")?.lead).toEqual({ type: "made_to_order", weeks: 6 })
-    expect(getProduct("nahr", "en")?.lead).toEqual({ type: "ready" })
+  it("finds a piece by id, with its story as paragraphs separated by a blank line", () => {
+    const batroun = getProduct(3)
+    expect(batroun).toMatchObject({ name: "Batroun", stoneType: "Limestone", color: "Cream", price: 890, editionSize: 8, remaining: 4 })
+    expect(getProduct(6)?.story?.split("\n\n")).toHaveLength(3)
+    expect(getProduct(99)).toBeNull()
   })
 
-  it("treats every piece as re-issuable until the admin says otherwise", () => {
-    expect(listProducts("en").every((p) => p.reissuable)).toBe(true)
+  it("keeps unknown values as null", () => {
+    expect(getProduct(1)).toMatchObject({ name: "Arz", heightCm: null, widthCm: null, depthCm: null, weightKg: null, story: null })
   })
 
-  it("falls back to English field by field", () => {
-    const ar = getProduct("qadisha-earth", "ar")
-    expect(ar?.name).toBe("قاديشا · ترابي")
-    expect(ar?.story[0]).toBe(getProduct("qadisha-earth", "en")?.story[0])
+  it("marks a piece with nothing remaining as sold out", () => {
+    expect(listProducts().filter((p) => p.soldOut).map((p) => p.name)).toEqual(["Byblos"])
   })
 
-  it("uses the first two photos as cover and hover, and every photo in order on the detail", () => {
-    const ash = getProduct("qadisha-ash", "en")
-    expect(ash?.images.map((i) => i.key)).toEqual(["products/qadisha-ash/1", "products/qadisha-ash/2"])
-    expect(ash?.cover?.key).toBe("products/qadisha-ash/1")
-    expect(ash?.hover?.key).toBe("products/qadisha-ash/2")
-    expect(ash?.images[1].alt).toBe("Qadisha · Ash, photo 2 of 2")
+  it("orders by creation date, then by id, both newest first", () => {
+    const at = (id: number, createdAt: string) => ({ id, createdAt }) as ProductSummary
+    const sorted = [at(1, "2026-01-01T00:00:00Z"), at(3, "2026-02-01T00:00:00Z"), at(2, "2026-02-01T00:00:00Z")].sort(newestFirst)
+    expect(sorted.map((p) => p.id)).toEqual([3, 2, 1])
   })
 
-  it("keeps missing specs as null", () => {
-    expect(getProduct("arz", "en")?.specs).toMatchObject({ heightCm: null, widthCm: null, depthCm: null, weightKg: null })
-    expect(getProduct("arz", "en")?.quote).toBeNull()
-  })
-
-  it("gives every piece a language-independent stone key for filtering", () => {
-    expect(listProducts("ar").map((p) => p.stoneKey)).toEqual(["beige", "grey", "brown", "grey", "brown", "cream", "taupe", "grey"])
-  })
-
-  it("returns null for an unknown piece", () => {
-    expect(getProduct("granite", "en")).toBeNull()
+  it("promises no lead time and no outdoor use in any story (both dropped or unconfirmed)", () => {
+    for (const piece of listProducts()) expect(getProduct(piece.id)?.story ?? "").not.toMatch(/to order|weeks|terrace|weathers/i)
   })
 })

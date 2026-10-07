@@ -3,10 +3,12 @@ import { DropdownMenu } from "radix-ui"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import { ALL, countLabel, filterGroups, setFilter } from "./filter-groups"
-import { activeCount, NO_FILTERS, type Filters } from "./filters"
+import { activeCount, NO_FILTERS, type FilterOptions, type Filters } from "./filters"
 
 interface FilterBarProps {
   filters: Filters
+  /** Stone and colour choices, built from the pieces. */
+  options: FilterOptions
   /** Pieces shown with the current filters. */
   count: number
   onChange: (next: Filters) => void
@@ -16,13 +18,13 @@ interface FilterBarProps {
 const label = "text-label uppercase tracking-label"
 
 // From 768px: one menu per filter in a ruled bar.
-export default function FilterBar({ filters, count, onChange, className }: FilterBarProps) {
+export default function FilterBar({ filters, options, count, onChange, className }: FilterBarProps) {
   const { m } = useLocale()
 
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-x-6 border-y border-border", className)}>
       <div className="flex flex-wrap items-center gap-x-[clamp(1.25rem,3vw,2.75rem)]">
-        {filterGroups(m).map((group) => {
+        {filterGroups(m, options).map((group) => {
           const current = filters[group.key]
           const chosen = current ? group.options.find((o) => o.value === current)?.label : undefined
           return (
@@ -39,7 +41,7 @@ export default function FilterBar({ filters, count, onChange, className }: Filte
                   alignOffset={-20}
                   className="z-30 min-w-55 border border-border bg-popover py-2.5 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-500"
                 >
-                  <DropdownMenu.RadioGroup value={current ?? ALL} onValueChange={(value) => onChange(setFilter(filters, group.key, value))}>
+                  <DropdownMenu.RadioGroup value={current ?? ALL} onValueChange={(value) => onChange(setFilter(filters, group.key, value, options))}>
                     {group.options.map((option) => (
                       <DropdownMenu.RadioItem
                         key={option.value}

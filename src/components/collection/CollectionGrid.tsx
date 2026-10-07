@@ -94,7 +94,7 @@ export default function CollectionGrid({ pieces, onClear }: CollectionGridProps)
     <ul className="grid grid-cols-1 gap-x-[clamp(1.5rem,3.4vw,3rem)] gap-y-[clamp(4.5rem,7vw,7rem)] md:grid-cols-2 lg:grid-cols-3">
       {pieces.flatMap((piece, i) => {
         const card = (
-          <li key={piece.slug} data-cell="piece">
+          <li key={piece.id} data-cell="piece">
             <PieceCard product={piece} sizes={CARD_SIZES} headingLevel={2} />
           </li>
         )

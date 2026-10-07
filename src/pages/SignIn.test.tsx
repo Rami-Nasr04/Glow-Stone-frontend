@@ -13,7 +13,7 @@ function Probe() {
 const probes = ["/", "/account", "/checkout", "/verify"].map((path) => ({ path, Component: Probe }))
 
 async function signIn(email: string, password: string) {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   await user.type(screen.getByLabelText("Email"), email)
   await user.type(screen.getByLabelText("Password"), password)
   await user.click(screen.getByRole("button", { name: "Sign in" }))
@@ -41,7 +41,7 @@ describe("SignIn", () => {
     const auth = createMockAuth(null)
     const spy = vi.spyOn(auth, "signIn")
     renderAt(<SignIn />, "/sign-in", { auth })
-    await userEvent.setup().click(screen.getByRole("button", { name: "Sign in" }))
+    await userEvent.setup({ delay: null }).click(screen.getByRole("button", { name: "Sign in" }))
     expect(screen.getAllByText("Please fill this in.")).toHaveLength(2)
     expect(screen.getByLabelText("Email")).toHaveFocus()
     expect(spy).not.toHaveBeenCalled()

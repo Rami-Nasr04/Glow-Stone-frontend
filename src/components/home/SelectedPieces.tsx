@@ -20,8 +20,9 @@ interface DragState {
 }
 
 export default function SelectedPieces() {
-  const { m, to, locale } = useLocale()
-  const pieces = listProducts(locale).filter((p) => p.featured)
+  const { m, to } = useLocale()
+  // Featured pieces, newest first like the collection.
+  const pieces = listProducts().filter((p) => p.featured)
   const railRef = useRef<HTMLUListElement>(null)
   const drag = useRef<DragState | null>(null)
   const swallowClick = useRef(false)
@@ -114,7 +115,7 @@ export default function SelectedPieces() {
         )}
       >
         {pieces.map((piece) => (
-          <li key={piece.slug} className="w-[72vw] shrink-0 snap-start md:w-[clamp(280px,25vw,360px)]">
+          <li key={piece.id} className="w-[72vw] shrink-0 snap-start md:w-[clamp(280px,25vw,360px)]">
             <PieceCard product={piece} sizes={CARD_SIZES} compact />
           </li>
         ))}

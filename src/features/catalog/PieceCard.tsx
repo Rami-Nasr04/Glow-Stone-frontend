@@ -1,10 +1,12 @@
 import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
-import { formatPrice, interpolate } from "@/i18n/format"
+import { formatPrice } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import EditionLine from "./EditionLine"
-import { noBreak } from "./format"
+import { noBreak, stoneLabel } from "./format"
+import { coverOf, hoverOf } from "./photos"
+import { productPath } from "./product-path"
 import type { ProductSummary } from "./types"
 
 interface PieceCardProps {
@@ -18,22 +20,22 @@ interface PieceCardProps {
 }
 
 export default function PieceCard({ product, sizes, compact = false, headingLevel = 3, className }: PieceCardProps) {
-  const { m, to } = useLocale()
+  const { to } = useLocale()
   const Heading = headingLevel === 2 ? "h2" : "h3"
-  const madeToOrder = !product.soldOut && product.lead.type === "made_to_order" ? product.lead.weeks : null
+  const cover = coverOf(product)
+  const hover = hoverOf(product)
+  const stone = stoneLabel(product)
 
   return (
-    <Link to={to(`/collection/${product.slug}`)} draggable={false} className={cn("group flex flex-col", compact ? "gap-4.5" : "gap-6", className)}>
+    <Link to={to(productPath(product))} draggable={false} className={cn("group flex flex-col", compact ? "gap-4.5" : "gap-6", className)}>
       <div className={cn("relative aspect-2/3 overflow-hidden bg-background", product.soldOut && "opacity-55 grayscale-70")}>
         {/* The name is in the link text, so the photos are decorative here. */}
-        {product.cover && (
-          <Picture imageKey={product.cover.key} width={product.cover.width} height={product.cover.height} alt="" sizes={sizes} draggable={false} />
-        )}
-        {product.hover && (
+        {cover && <Picture imageKey={cover.key} width={cover.width} height={cover.height} alt="" sizes={sizes} draggable={false} />}
+        {hover && (
           <Picture
-            imageKey={product.hover.key}
-            width={product.hover.width}
-            height={product.hover.height}
+            imageKey={hover.key}
+            width={hover.width}
+            height={hover.height}
             alt=""
             aria-hidden="true"
             sizes={sizes}
@@ -49,18 +51,11 @@ export default function PieceCard({ product, sizes, compact = false, headingLeve
           <span className="text-price tracking-price">{formatPrice(product.price)}</span>
         </div>
         {compact ? (
-          <EditionLine product={product} prefix={product.stone} className="text-muted-foreground" />
+          <EditionLine product={product} prefix={stone} className="text-muted-foreground" />
         ) : (
           <>
-            <span className="text-label uppercase tracking-caps text-muted-foreground">{product.stone}</span>
-            <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-2">
-              <EditionLine product={product} />
-              {madeToOrder !== null && (
-                <span className="border border-border px-2.25 py-1.25 text-label uppercase tracking-caps text-muted-foreground">
-                  {interpolate(m.edition.madeToOrder, { weeks: madeToOrder })}
-                </span>
-              )}
-            </div>
+            <span className="text-label uppercase tracking-caps text-muted-foreground">{stone}</span>
+            <EditionLine product={product} className="mt-1" />
           </>
         )}
       </div>

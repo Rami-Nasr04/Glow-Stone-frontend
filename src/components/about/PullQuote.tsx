@@ -10,7 +10,7 @@ export default function PullQuote() {
       <blockquote className="mx-auto flex max-w-275 flex-col items-center gap-10 text-center">
         <Rule />
         <p className="font-display text-display-l leading-[1.08] font-light italic text-balance lg:text-display-xl">“{m.about.quote}”</p>
-        <footer className="text-label uppercase tracking-label text-muted-foreground">{m.product.stonemason}</footer>
+        <footer className="text-label uppercase tracking-label text-muted-foreground">{m.about.quoteBy}</footer>
       </blockquote>
     </section>
   )

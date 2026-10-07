@@ -1,27 +1,53 @@
-import { STONE_KEYS, type ProductSummary, type StoneKey } from "@/features/catalog/types"
+import { readableName } from "@/features/catalog/product-path"
+import type { ProductSummary } from "@/features/catalog/types"
 
 export const CAPACITIES = ["1", "5", "10"] as const
 export type Capacity = (typeof CAPACITIES)[number]
 
-export const AVAILABILITIES = ["ready", "made_to_order", "sold_out"] as const
+export const AVAILABILITIES = ["available", "sold_out"] as const
 export type Availability = (typeof AVAILABILITIES)[number]
 
 export interface Filters {
-  stone: StoneKey | null
+  /** Readable stone type, e.g. "limestone". */
+  stone: string | null
+  /** Readable colour, e.g. "ash-grey". */
+  color: string | null
   capacity: Capacity | null
   availability: Availability | null
 }
 
-export const NO_FILTERS: Filters = { stone: null, capacity: null, availability: null }
+export const NO_FILTERS: Filters = { stone: null, color: null, capacity: null, availability: null }
+
+export interface FilterOption {
+  value: string
+  label: string
+}
+
+// Stone and colour choices come from the pieces themselves, so a new stone or colour in the admin appears here.
+export interface FilterOptions {
+  stone: FilterOption[]
+  color: FilterOption[]
+}
+
+function distinct(labels: string[]): FilterOption[] {
+  const byValue = new Map(labels.map((label) => [readableName(label), label]))
+  return [...byValue].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label))
+}
+
+export function filterOptions(pieces: ProductSummary[]): FilterOptions {
+  return { stone: distinct(pieces.map((p) => p.stoneType)), color: distinct(pieces.map((p) => p.color)) }
+}
 
 function pick<T extends string>(allowed: readonly T[], value: string | null): T | null {
   return allowed.find((option) => option === value) ?? null
 }
 
-// Filters live in the address (?stone=grey&capacity=5&availability=ready) so a filtered view can be shared.
-export function readFilters(params: URLSearchParams): Filters {
+// Filters live in the address (?color=ash-grey&capacity=5) so a filtered view can be shared; a value that no piece
+// has (an old link) is ignored rather than showing an empty page.
+export function readFilters(params: URLSearchParams, options: FilterOptions): Filters {
   return {
-    stone: pick(STONE_KEYS, params.get("stone")),
+    stone: pick(options.stone.map((o) => o.value), params.get("stone")),
+    color: pick(options.color.map((o) => o.value), params.get("color")),
     capacity: pick(CAPACITIES, params.get("capacity")),
     availability: pick(AVAILABILITIES, params.get("availability")),
   }
@@ -37,17 +63,13 @@ function matchesCapacity(bottles: number, capacity: Capacity): boolean {
   return capacity === "10" ? bottles >= 10 : bottles === Number(capacity)
 }
 
-function availabilityOf(piece: ProductSummary): Availability {
-  if (piece.soldOut) return "sold_out"
-  return piece.lead.type === "made_to_order" ? "made_to_order" : "ready"
-}
-
 export function filterPieces(pieces: ProductSummary[], filters: Filters): ProductSummary[] {
   return pieces.filter(
     (piece) =>
-      (!filters.stone || piece.stoneKey === filters.stone) &&
+      (!filters.stone || readableName(piece.stoneType) === filters.stone) &&
+      (!filters.color || readableName(piece.color) === filters.color) &&
       (!filters.capacity || matchesCapacity(piece.bottles, filters.capacity)) &&
-      (!filters.availability || availabilityOf(piece) === filters.availability),
+      (!filters.availability || (filters.availability === "sold_out") === piece.soldOut),
   )
 }
 

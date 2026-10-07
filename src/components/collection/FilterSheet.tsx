@@ -6,10 +6,12 @@ import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import { ALL, countLabel, filterGroups, setFilter } from "./filter-groups"
-import { activeCount, NO_FILTERS, type Filters } from "./filters"
+import { activeCount, NO_FILTERS, type FilterOptions, type Filters } from "./filters"
 
 interface FilterSheetProps {
   filters: Filters
+  /** Stone and colour choices, built from the pieces. */
+  options: FilterOptions
   /** Pieces shown with the current filters. */
   count: number
   onChange: (next: Filters) => void
@@ -19,7 +21,7 @@ interface FilterSheetProps {
 const label = "text-label uppercase tracking-label"
 
 // Below 768px: a FILTER button opening a bottom sheet. The sheet is unmounted while closed, so it is never focusable.
-export default function FilterSheet({ filters, count, onChange, className }: FilterSheetProps) {
+export default function FilterSheet({ filters, options, count, onChange, className }: FilterSheetProps) {
   const { m } = useLocale()
   const [open, setOpen] = useState(false)
   const active = activeCount(filters)
@@ -45,7 +47,7 @@ export default function FilterSheet({ filters, count, onChange, className }: Fil
             </div>
 
             <div className="overflow-y-auto px-5 pt-2">
-              {filterGroups(m).map((group) => (
+              {filterGroups(m, options).map((group) => (
                 <div key={group.key} role="radiogroup" aria-labelledby={`sheet-${group.key}`} className="border-b border-border pt-6 pb-3">
                   <p id={`sheet-${group.key}`} className={cn(label, "text-muted-foreground")}>
                     {group.label}
@@ -59,7 +61,7 @@ export default function FilterSheet({ filters, count, onChange, className }: Fil
                           name={`sheet-${group.key}`}
                           value={option.value}
                           checked={(filters[group.key] ?? ALL) === option.value}
-                          onChange={() => onChange(setFilter(filters, group.key, option.value))}
+                          onChange={() => onChange(setFilter(filters, group.key, option.value, options))}
                           className="size-3.5 cursor-pointer appearance-none rounded-full border border-primary/40 transition-colors duration-500 checked:border-primary checked:bg-accent checked:shadow-[inset_0_0_0_3px_var(--background)]"
                         />
                       </label>

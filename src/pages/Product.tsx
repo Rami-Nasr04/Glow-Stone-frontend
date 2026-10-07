@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { useParams } from "react-router"
+import { Navigate, useParams } from "react-router"
 import BuyBox from "@/components/product/BuyBox"
 import Gallery from "@/components/product/Gallery"
 import ProductTabs from "@/components/product/ProductTabs"
@@ -7,19 +7,23 @@ import { relatedPieces } from "@/components/product/related"
 import StickyAddBar from "@/components/product/StickyAddBar"
 import { getProduct, listProducts } from "@/features/catalog/catalog"
 import PieceCard from "@/features/catalog/PieceCard"
+import { parseProductId, productPath, readableName } from "@/features/catalog/product-path"
 import { useLocale } from "@/i18n/useLocale"
 import NotFound from "@/pages/NotFound"
 
 const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 640px) 50vw, 100vw"
 
 export default function Product() {
-  const { slug = "" } = useParams()
-  const { m, locale } = useLocale()
+  const { id: rawId, name } = useParams()
+  const { m, to } = useLocale()
   const addButton = useRef<HTMLButtonElement>(null)
-  const piece = getProduct(slug, locale)
+  const id = parseProductId(rawId)
+  const piece = id === null ? null : getProduct(id)
   if (!piece) return <NotFound />
+  // Found by id only: a missing or outdated name in the address is corrected in place, never a 404.
+  if (name !== readableName(piece.name)) return <Navigate replace to={to(productPath(piece))} />
 
-  const related = relatedPieces(listProducts(locale), piece.slug)
+  const related = relatedPieces(listProducts(), piece.id)
 
   return (
     <>
@@ -44,7 +48,7 @@ export default function Product() {
             </h2>
             <ul className="grid gap-x-[clamp(1.5rem,3vw,2.5rem)] gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((other) => (
-                <li key={other.slug}>
+                <li key={other.id}>
                   <PieceCard product={other} sizes={CARD_SIZES} />
                 </li>
               ))}

@@ -1,10 +1,12 @@
 import { fireEvent, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { getProduct } from "@/features/catalog/catalog"
+import { piecePhotos } from "@/features/catalog/photos"
 import { renderAt } from "@/test/render"
 import Gallery from "./Gallery"
 
-const piece = (slug: string) => getProduct(slug, "en")!
+const IDS = { batroun: 3, byblos: 4, "qadisha-ash": 5, nahr: 2 } as const
+const piece = (name: keyof typeof IDS) => getProduct(IDS[name])!
 const desktop = (container: HTMLElement) => within(container.querySelector<HTMLElement>("[data-gallery=desktop]")!)
 const mobile = (container: HTMLElement) => container.querySelector<HTMLElement>("[data-gallery=mobile]")!
 
@@ -42,8 +44,8 @@ describe("Gallery", () => {
   })
 
   it("shows no thumbnails or counter for a single photo, and never crops", () => {
-    const single = { ...piece("nahr"), images: piece("nahr").images.slice(0, 1) }
-    const { container } = renderAt(<Gallery piece={single} />)
+    const single = piecePhotos(piece("nahr")).slice(0, 1)
+    const { container } = renderAt(<Gallery piece={piece("nahr")} photos={single} />)
     expect(screen.queryByRole("button", { name: /photo/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/ \/ /)).not.toBeInTheDocument()
     for (const img of container.querySelectorAll("img")) expect(img.className).toContain("object-contain")

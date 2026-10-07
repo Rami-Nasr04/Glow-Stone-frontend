@@ -13,7 +13,7 @@ describe("StickyAddBar", () => {
   function setup() {
     const button = document.createElement("button")
     button.getBoundingClientRect = () => ({ top: 1200, bottom: 1260 }) as DOMRect
-    const { container } = renderAt(<StickyAddBar piece={getProduct("batroun", "en")!} target={{ current: button }} />)
+    const { container } = renderAt(<StickyAddBar piece={getProduct(3)!} target={{ current: button }} />)
     return { bar: container.querySelector<HTMLElement>("[data-sticky-bar]")!, button }
   }
 

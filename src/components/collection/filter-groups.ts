@@ -1,22 +1,25 @@
-import { STONE_KEYS } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
 import type { Messages } from "@/i18n/messages/en"
-import { AVAILABILITIES, CAPACITIES, readFilters, writeFilters, type Filters } from "./filters"
+import { AVAILABILITIES, CAPACITIES, readFilters, writeFilters, type FilterOption, type FilterOptions, type Filters } from "./filters"
 
 // Value of the "All stones" / "Any capacity" / "All pieces" choice.
 export const ALL = "all"
 
+// A group needs at least two real choices; with one (every piece is limestone today) it would filter nothing.
+const MIN_CHOICES = 2
+
 export interface FilterGroup {
   key: keyof Filters
   label: string
-  options: { value: string; label: string }[]
+  options: FilterOption[]
 }
 
-// The three filters as the bar and the sheet show them, with "all" first.
-export function filterGroups(m: Messages): FilterGroup[] {
+// The filters as the bar and the sheet show them, each with "all" first.
+export function filterGroups(m: Messages, options: FilterOptions): FilterGroup[] {
   const c = m.collection
-  return [
-    { key: "stone", label: c.stone, options: [{ value: ALL, label: c.stones.all }, ...STONE_KEYS.map((v) => ({ value: v, label: c.stones[v] }))] },
+  const groups: FilterGroup[] = [
+    { key: "stone", label: c.stone, options: [{ value: ALL, label: c.stones.all }, ...options.stone] },
+    { key: "color", label: c.color, options: [{ value: ALL, label: c.colors.all }, ...options.color] },
     {
       key: "capacity",
       label: c.capacity,
@@ -28,14 +31,15 @@ export function filterGroups(m: Messages): FilterGroup[] {
       options: [{ value: ALL, label: c.availabilities.all }, ...AVAILABILITIES.map((v) => ({ value: v, label: c.availabilities[v] }))],
     },
   ]
+  return groups.filter((group) => group.options.length > MIN_CHOICES)
 }
 
 // Goes through the address format so an unexpected value can never reach the filter state.
-export function setFilter(filters: Filters, key: keyof Filters, value: string): Filters {
+export function setFilter(filters: Filters, key: keyof Filters, value: string, options: FilterOptions): Filters {
   const params = writeFilters(filters)
   if (value === ALL) params.delete(key)
   else params.set(key, value)
-  return readFilters(params)
+  return readFilters(params, options)
 }
 
 export function countLabel(count: number, m: Messages): string {

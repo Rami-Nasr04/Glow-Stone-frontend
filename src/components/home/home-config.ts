@@ -1,5 +1,6 @@
-// The piece in the hero photo and in the home spotlight (its copy is m.home.spotlightText).
-export const HOME_PIECE = "batroun"
+// The piece in the hero photo and in the home spotlight (its copy is m.home.spotlightText): Batroun, by its
+// provisional id until the database gives it its real one.
+export const HOME_PIECE = 3
 
 // The spotlight's desktop pair: a landscape close-up, with the full piece framed over its corner.
 // Either falls back to the cover if the piece no longer has that photo.

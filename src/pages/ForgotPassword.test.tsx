@@ -12,7 +12,7 @@ function Probe() {
 const probes = [{ path: "/sign-in", Component: Probe }]
 
 async function requestCode(email: string) {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   if (email) await user.type(screen.getByLabelText("Email"), email)
   await user.click(screen.getByRole("button", { name: "Send code" }))
   return user

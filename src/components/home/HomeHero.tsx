@@ -3,7 +3,8 @@ import { Link } from "react-router"
 import { ActionLink } from "@/components/ui/action-link"
 import { HERO_IMAGES } from "@/config/images"
 import { getProduct } from "@/features/catalog/catalog"
-import { noBreak } from "@/features/catalog/format"
+import { noBreak, stoneLabel } from "@/features/catalog/format"
+import { productPath } from "@/features/catalog/product-path"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { imageUrl, srcSetFromWidths } from "@/lib/images"
@@ -14,8 +15,8 @@ const captionLink = "flex min-h-11 items-center text-label uppercase text-on-pho
 const arrow = "shrink-0 rtl:-scale-x-100"
 
 export default function HomeHero() {
-  const { m, to, locale } = useLocale()
-  const piece = getProduct(HOME_PIECE, locale)
+  const { m, to } = useLocale()
+  const piece = getProduct(HOME_PIECE)
   const { desktop, mobile } = HERO_IMAGES
   const edition = piece ? interpolate(m.edition.of, { edition: piece.editionSize }) : ""
 
@@ -60,8 +61,8 @@ export default function HomeHero() {
       </div>
 
       {piece && (
-        <Link to={to(`/collection/${piece.slug}`)} className={cn(captionLink, "absolute bottom-6.5 end-12 gap-3.5 tracking-label upright:hidden")}>
-          {[noBreak(piece.name), piece.stone, edition].join(" · ")}
+        <Link to={to(productPath(piece))} className={cn(captionLink, "absolute bottom-6.5 end-12 gap-3.5 tracking-label upright:hidden")}>
+          {[noBreak(piece.name), stoneLabel(piece), edition].join(" · ")}
           <MoveRight aria-hidden="true" strokeWidth={1.1} className={cn("size-4.5", arrow)} />
         </Link>
       )}
@@ -71,7 +72,7 @@ export default function HomeHero() {
           {m.home.shopCollection}
         </ActionLink>
         {piece && (
-          <Link to={to(`/collection/${piece.slug}`)} className={cn(captionLink, "gap-2.5 self-center tracking-caps min-[600px]:self-start")}>
+          <Link to={to(productPath(piece))} className={cn(captionLink, "gap-2.5 self-center tracking-caps min-[600px]:self-start")}>
             {[noBreak(piece.name), edition].join(" · ")}
             <MoveRight aria-hidden="true" strokeWidth={1.1} className={cn("size-3.5", arrow)} />
           </Link>

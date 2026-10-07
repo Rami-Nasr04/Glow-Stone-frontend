@@ -7,21 +7,30 @@ import BuyBox from "./BuyBox"
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
 
-const piece = (slug: string) => getProduct(slug, "en")!
+const QADISHA_EARTH = 6
+const BATROUN = 3
+const BYBLOS = 4
+const piece = (id: number) => getProduct(id)!
 
 describe("BuyBox", () => {
-  it("names the piece under a breadcrumb back to the collection", () => {
-    renderAt(<BuyBox piece={piece("qadisha-earth")} />)
+  it("names the piece, its stone and its summary under a breadcrumb back to the collection", () => {
+    renderAt(<BuyBox piece={piece(QADISHA_EARTH)} />)
     const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" })
     expect(crumbs.querySelector("a")).toHaveAttribute("href", "/collection")
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Qadisha · Earth")
+    expect(screen.getByText("Earth brown limestone")).toBeInTheDocument()
+    expect(screen.getByText("Tall column with five half-moon notches on each side.")).toBeInTheDocument()
     expect(screen.getByText("$560")).toBeInTheDocument()
-    expect(screen.getByText("Ready to deliver")).toBeInTheDocument()
+  })
+
+  it("never mentions a lead time", () => {
+    renderAt(<BuyBox piece={piece(BATROUN)} />)
+    expect(screen.queryByText(/made to order|weeks|ready to deliver/i)).not.toBeInTheDocument()
   })
 
   it("caps the quantity at the pieces remaining", async () => {
     const user = userEvent.setup()
-    renderAt(<BuyBox piece={piece("qadisha-earth")} />)
+    renderAt(<BuyBox piece={piece(QADISHA_EARTH)} />)
     const less = screen.getByRole("button", { name: "One fewer" })
     const more = screen.getByRole("button", { name: "One more" })
     expect(less).toBeDisabled()
@@ -33,28 +42,19 @@ describe("BuyBox", () => {
 
   it("confirms the piece was added", async () => {
     const user = userEvent.setup()
-    renderAt(<BuyBox piece={piece("batroun")} />)
-    expect(screen.getByText("Made to order · 6 weeks")).toBeInTheDocument()
+    renderAt(<BuyBox piece={piece(BATROUN)} />)
     await user.click(screen.getByRole("button", { name: "Add to cart" }))
     expect(toast.success).toHaveBeenCalledWith("Added to your selection")
   })
 
-  it("invites a new-edition signup when a re-issuable piece is sold out", () => {
-    renderAt(<BuyBox piece={piece("byblos")} />)
+  it("invites people to ask Omar for a similar piece when it is sold out", () => {
+    renderAt(<BuyBox piece={piece(BYBLOS)} />)
     expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument()
     expect(screen.queryByText(/0 remaining/)).not.toBeInTheDocument()
     expect(screen.getByText("Edition of 15 — sold out")).toBeInTheDocument()
     expect(screen.getAllByText("Sold out")).toHaveLength(1)
-    expect(screen.getByText(/This edition has found its homes/)).toBeInTheDocument()
-    expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email")
-    // Keyboard users see where they are: the line turns wine while the field has focus.
-    expect(screen.getByLabelText("Email").closest("form")?.className).toContain("focus-within:border-accent")
-    expect(screen.getByRole("button", { name: "Notify me" })).toBeInTheDocument()
-  })
-
-  it("says a one-of-a-kind piece won't be carved again", () => {
-    renderAt(<BuyBox piece={{ ...piece("byblos"), reissuable: false }} />)
-    expect(screen.getByText("One of a kind. This piece won't be carved again.")).toBeInTheDocument()
-    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument()
+    expect(screen.getByText("This edition has found its homes. For a similar piece, write to Omar.")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Contact Omar" })).toHaveAttribute("href", "/contact")
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
   })
 })

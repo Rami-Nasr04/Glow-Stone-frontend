@@ -24,8 +24,8 @@ describe("photo frames", () => {
   })
 
   it("clips every aspect-ratio frame on a product page", () => {
-    const Stub = createRoutesStub([{ path: "/:lang?/collection/:slug", Component: Product }])
-    expectClippedFrames(render(<Stub initialEntries={["/collection/batroun"]} />).container)
+    const Stub = createRoutesStub([{ path: "/:lang?/collection/:id/:name?", Component: Product }])
+    expectClippedFrames(render(<Stub initialEntries={["/collection/3/batroun"]} />).container)
   })
 })
 

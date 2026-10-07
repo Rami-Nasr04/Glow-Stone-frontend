@@ -5,7 +5,7 @@ import { renderAt } from "@/test/render"
 import CollectionGrid from "./CollectionGrid"
 import { tileSpans } from "./grid-layout"
 
-const all = listProducts("en")
+const all = listProducts()
 
 describe("CollectionGrid", () => {
   it("shows every piece as a card under the page title", () => {

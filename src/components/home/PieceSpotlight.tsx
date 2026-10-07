@@ -6,19 +6,21 @@ import { Rule } from "@/components/ui/rule"
 import { getProduct } from "@/features/catalog/catalog"
 import EditionLine from "@/features/catalog/EditionLine"
 import { noBreak, placardParts } from "@/features/catalog/format"
-import { formatPrice, interpolate } from "@/i18n/format"
+import { coverOf, piecePhotos } from "@/features/catalog/photos"
+import { productPath } from "@/features/catalog/product-path"
+import { formatPrice } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { HOME_PIECE, SPOTLIGHT_PHOTOS } from "./home-config"
 
 export default function PieceSpotlight() {
-  const { m, to, locale } = useLocale()
-  const piece = getProduct(HOME_PIECE, locale)
-  if (!piece?.cover) return null
+  const { m, to } = useLocale()
+  const piece = getProduct(HOME_PIECE)
+  const cover = piece && coverOf(piece)
+  if (!piece || !cover) return null
 
-  const href = to(`/collection/${piece.slug}`)
-  const lead = piece.lead.type === "made_to_order" ? interpolate(m.edition.madeToOrder, { weeks: piece.lead.weeks }) : m.edition.ready
-  const { cover } = piece
-  const photo = (key: string) => piece.images.find((img) => img.key === key) ?? cover
+  const href = to(productPath(piece))
+  const photos = piecePhotos(piece)
+  const photo = (key: string) => photos.find((img) => img.key === key) ?? cover
   const detail = photo(SPOTLIGHT_PHOTOS.detail)
   const full = photo(SPOTLIGHT_PHOTOS.full)
   const parts = placardParts(piece, m)
@@ -73,12 +75,6 @@ export default function PieceSpotlight() {
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2.5 border-t border-border pt-4">
               <span className="text-label uppercase tracking-caps">
                 <EditionLine product={piece} template={m.edition.remainingCount} />
-                {!piece.soldOut && (
-                  <>
-                    {" · "}
-                    <span className="whitespace-nowrap">{lead}</span>
-                  </>
-                )}
               </span>
               <span className="text-price tracking-price">{formatPrice(piece.price)}</span>
             </div>

@@ -17,7 +17,7 @@ function Probe() {
 const probes = [{ path: "/verify", Component: Probe }]
 
 async function fill(fields: Partial<Record<"name" | "email" | "phone" | "password", string>>) {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   if (fields.name) await user.type(screen.getByLabelText("Full name"), fields.name)
   if (fields.email) await user.type(screen.getByLabelText("Email"), fields.email)
   if (fields.phone) await user.type(screen.getByLabelText("Phone"), fields.phone)
@@ -39,7 +39,7 @@ describe("SignUp", () => {
     renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null) })
     const rules = screen.getByRole("list")
     expect(within(rules).getAllByText("(not yet met)")).toHaveLength(3)
-    await userEvent.setup().type(screen.getByLabelText("Password"), "Stone")
+    await userEvent.setup({ delay: null }).type(screen.getByLabelText("Password"), "Stone")
     expect(within(rules).getByText("An uppercase letter").closest("li")).toHaveTextContent("(met)")
     expect(within(rules).getByText("A number").closest("li")).toHaveTextContent("(not yet met)")
   })

@@ -1,23 +1,26 @@
 import { useState } from "react"
 import Picture from "@/components/media/Picture"
 import { noBreak, placard } from "@/features/catalog/format"
-import type { ProductDetail } from "@/features/catalog/types"
+import { piecePhotos } from "@/features/catalog/photos"
+import type { Product, ProductImage } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
 interface GalleryProps {
-  piece: ProductDetail
+  piece: Product
+  /** Defaults to the piece's bundled photos (the API's `images` once the product_images slice lands). */
+  photos?: ProductImage[]
 }
 
 // 4:5 frame, never taller than the viewport minus the header; the photo is contained on stone, never cropped.
 const frame = "relative mx-auto block aspect-4/5 overflow-hidden h-[min(70vh,760px,calc(100svh-9rem))] max-w-full bg-background"
 
-export default function Gallery({ piece }: GalleryProps) {
+export default function Gallery({ piece, photos }: GalleryProps) {
   const { m } = useLocale()
   const [selected, setSelected] = useState(0)
   const [shown, setShown] = useState(0)
-  const { images } = piece
+  const images = photos ?? piecePhotos(piece)
   const current = images[selected] ?? images[0]
   if (!current) return null
 

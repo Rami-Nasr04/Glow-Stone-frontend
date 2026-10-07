@@ -3,7 +3,7 @@ import { renderAt } from "@/test/render"
 import PieceSpotlight from "./PieceSpotlight"
 
 describe("PieceSpotlight", () => {
-  it("presents Batroun with its placard, stock, lead time and price", () => {
+  it("presents Batroun with its placard, stock and price, and no lead time", () => {
     renderAt(<PieceSpotlight />)
     expect(screen.getByRole("heading", { level: 2, name: "Batroun" })).toBeInTheDocument()
     // Two lines as in the prototype, never a dot left hanging at a line end.
@@ -12,13 +12,13 @@ describe("PieceSpotlight", () => {
     expect(placard?.querySelector("br")).not.toBeNull()
     expect(screen.getByText("Edition of 8")).toHaveClass("whitespace-nowrap")
     expect(screen.getByText("4")).toHaveClass("text-accent")
-    expect(screen.getByText("Made to order · 6 weeks")).toHaveClass("whitespace-nowrap")
+    expect(screen.queryByText(/made to order|weeks|ready to deliver/i)).not.toBeInTheDocument()
     expect(screen.getByText("$890")).toBeInTheDocument()
   })
 
   it("links to the piece once for keyboard and screen-reader users", () => {
     renderAt(<PieceSpotlight />)
-    expect(screen.getByRole("link", { name: "View the piece" })).toHaveAttribute("href", "/collection/batroun")
+    expect(screen.getByRole("link", { name: "View the piece" })).toHaveAttribute("href", "/collection/3/batroun")
     expect(screen.getAllByRole("link")).toHaveLength(1)
   })
 

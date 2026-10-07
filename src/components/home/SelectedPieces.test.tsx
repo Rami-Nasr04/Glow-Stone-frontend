@@ -12,7 +12,7 @@ describe("SelectedPieces", () => {
   })
   afterEach(() => vi.restoreAllMocks())
 
-  it("lists the featured pieces in display order under an h2", () => {
+  it("lists the featured pieces newest first under an h2", () => {
     renderAt(<SelectedPieces />)
     expect(screen.getByRole("heading", { level: 2, name: "Selected pieces" })).toBeInTheDocument()
     const names = screen.getAllByRole("listitem").map((li) => within(li).getByRole("heading", { level: 3 }).textContent)

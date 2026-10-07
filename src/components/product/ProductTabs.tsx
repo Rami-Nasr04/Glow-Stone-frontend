@@ -1,15 +1,13 @@
 import { Tabs } from "radix-ui"
-import { Rule } from "@/components/ui/rule"
-import { SHOW_STONEMASON_QUOTES } from "@/config/content"
-import { dimensionsLabel } from "@/features/catalog/format"
-import type { ProductDetail } from "@/features/catalog/types"
+import { dimensionsLabel, storyParagraphs } from "@/features/catalog/format"
+import type { Product } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
 import type { Messages } from "@/i18n/messages/en"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
 interface ProductTabsProps {
-  piece: ProductDetail
+  piece: Product
   className?: string
 }
 
@@ -20,20 +18,16 @@ interface SpecRow {
 
 const TABS = ["story", "details", "care", "delivery"] as const
 
-// Only the details we actually know; an unknown value never shows as an empty row.
-function specRows(piece: ProductDetail, m: Messages): SpecRow[] {
+// The contract's details, in this order; an unknown value never shows as an empty row.
+function specRows(piece: Product, m: Messages): SpecRow[] {
   const s = m.product.specs
-  const dimensions = dimensionsLabel(piece.specs, m)
+  const dimensions = dimensionsLabel(piece, m)
   const rows: [string, string | null][] = [
     [s.dimensions, dimensions && interpolate(s.dimensionsValue, { dimensions })],
-    [s.weight, piece.specs.weightKg === null ? null : interpolate(s.weightValue, { kg: piece.specs.weightKg })],
-    [s.stone, piece.stone],
-    [s.color, piece.specs.color],
-    [s.origin, piece.specs.origin],
-    [s.finish, piece.specs.finish],
+    [s.weight, piece.weightKg === null ? null : interpolate(s.weightValue, { kg: piece.weightKg })],
+    [s.stone, piece.stoneType],
+    [s.color, piece.color],
     [s.capacity, piece.bottles === 1 ? s.bottle : interpolate(s.bottles, { count: piece.bottles })],
-    [s.placement, piece.specs.placement],
-    [s.indoorOutdoor, piece.specs.indoorOutdoor],
     [s.edition, interpolate(m.edition.of, { edition: piece.editionSize })],
   ]
   return rows.filter((row): row is [string, string] => Boolean(row[1])).map(([label, value]) => ({ label, value }))
@@ -54,13 +48,14 @@ function Paragraphs({ items }: ParagraphsProps) {
 
 export default function ProductTabs({ piece, className }: ProductTabsProps) {
   const { m } = useLocale()
-  const [lead, ...rest] = piece.story
-  const quote = SHOW_STONEMASON_QUOTES ? piece.quote : null
+  const [lead, ...rest] = storyParagraphs(piece.story)
+  // A piece without a story opens on its details instead of an empty tab.
+  const tabs = lead ? TABS : TABS.filter((tab) => tab !== "story")
 
   return (
-    <Tabs.Root defaultValue="story" className={cn("flex flex-col", className)}>
+    <Tabs.Root defaultValue={tabs[0]} className={cn("flex flex-col", className)}>
       <Tabs.List className="flex gap-[clamp(1.375rem,2vw,1.75rem)] overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Tabs.Trigger
             key={tab}
             value={tab}
@@ -71,21 +66,16 @@ export default function ProductTabs({ piece, className }: ProductTabsProps) {
         ))}
       </Tabs.List>
 
-      <Tabs.Content value="story" className="flex flex-col gap-5 pt-7">
-        {lead && <p className="font-display text-2xl leading-normal font-light text-pretty">{lead}</p>}
-        {quote && (
-          <blockquote className="my-3 flex flex-col gap-4.5">
-            <Rule />
-            <p className="font-display text-quote font-light italic text-balance">“{quote}”</p>
-            <footer className="text-label uppercase tracking-label text-muted-foreground">{m.product.stonemason}</footer>
-          </blockquote>
-        )}
-        {rest.map((paragraph) => (
-          <p key={paragraph} className="text-small text-pretty">
-            {paragraph}
-          </p>
-        ))}
-      </Tabs.Content>
+      {lead && (
+        <Tabs.Content value="story" className="flex flex-col gap-5 pt-7">
+          <p className="font-display text-2xl leading-normal font-light text-pretty">{lead}</p>
+          {rest.map((paragraph) => (
+            <p key={paragraph} className="text-small text-pretty">
+              {paragraph}
+            </p>
+          ))}
+        </Tabs.Content>
+      )}
 
       <Tabs.Content value="details" className="flex flex-col gap-5 pt-7">
         <dl className="grid grid-cols-2 gap-x-6">
@@ -100,7 +90,7 @@ export default function ProductTabs({ piece, className }: ProductTabsProps) {
       </Tabs.Content>
 
       <Tabs.Content value="care" className="flex flex-col gap-4 pt-7">
-        <Paragraphs items={piece.care ? [piece.care] : m.product.careBody} />
+        <Paragraphs items={m.product.careBody} />
       </Tabs.Content>
 
       <Tabs.Content value="delivery" className="flex flex-col gap-4 pt-7">

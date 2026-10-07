@@ -3,20 +3,28 @@ import { renderAt } from "@/test/render"
 import { listProducts } from "./catalog"
 import PieceCard from "./PieceCard"
 
-const piece = (slug: string) => listProducts("en").find((p) => p.slug === slug)!
+const NAHR = 2
+// Every bundled piece has at least two photos; pretend Nahr has one to check the card without a hover photo.
+vi.mock("./photos", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./photos")>()
+  return { ...actual, hoverOf: (piece: { id: number; name: string }) => (piece.id === NAHR ? null : actual.hoverOf(piece)) }
+})
+
+const piece = (id: number) => listProducts().find((p) => p.id === id)!
 
 describe("PieceCard", () => {
-  it("links to the piece and shows its name and price", () => {
-    renderAt(<PieceCard product={piece("qadisha-earth")} sizes="33vw" />)
+  it("links to the piece by id and readable name, and shows its name and price", () => {
+    renderAt(<PieceCard product={piece(6)} sizes="33vw" />)
     const link = screen.getByRole("link")
-    expect(link).toHaveAttribute("href", "/collection/qadisha-earth")
+    expect(link).toHaveAttribute("href", "/collection/6/qadisha-earth")
     // textContent, not toHaveTextContent: the matcher collapses non-breaking spaces and would hide a regression.
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Qadisha · Earth")
     expect(link).toHaveTextContent("$560")
+    expect(link).toHaveTextContent("Earth brown limestone")
   })
 
   it("cross-fades to the second photo, hidden from screen readers", () => {
-    const { container } = renderAt(<PieceCard product={piece("sannine-sand")} sizes="33vw" />)
+    const { container } = renderAt(<PieceCard product={piece(8)} sizes="33vw" />)
     const imgs = container.querySelectorAll("img")
     expect(imgs).toHaveLength(2)
     expect(imgs[1]).toHaveAttribute("aria-hidden", "true")
@@ -24,26 +32,23 @@ describe("PieceCard", () => {
   })
 
   it("shows a single photo when the piece has only one", () => {
-    const single = { ...piece("nahr"), hover: null }
-    const { container } = renderAt(<PieceCard product={single} sizes="33vw" />)
+    const { container } = renderAt(<PieceCard product={piece(NAHR)} sizes="33vw" />)
     expect(container.querySelectorAll("img")).toHaveLength(1)
   })
 
-  it("marks made-to-order pieces and sold-out pieces", () => {
+  it("marks sold-out pieces and never shows a lead time", () => {
     renderAt(
       <>
-        <PieceCard product={piece("qadisha-ash")} sizes="33vw" />
-        <PieceCard product={piece("byblos")} sizes="33vw" />
+        <PieceCard product={piece(5)} sizes="33vw" />
+        <PieceCard product={piece(4)} sizes="33vw" />
       </>,
     )
-    expect(screen.getByText("Made to order · 4 weeks")).toBeInTheDocument()
     expect(screen.getByText("Sold out")).toBeInTheDocument()
+    expect(screen.queryByText(/made to order|weeks/i)).not.toBeInTheDocument()
   })
 
   it("puts stone and edition on one line in the compact rail card", () => {
-    renderAt(<PieceCard product={piece("sannine-sand")} sizes="25vw" compact />)
-    expect(screen.getByText(/Warm beige limestone · Edition of 12/)).toHaveTextContent(
-      "Warm beige limestone · Edition of 12 — 3 remaining",
-    )
+    renderAt(<PieceCard product={piece(8)} sizes="25vw" compact />)
+    expect(screen.getByText(/Warm beige limestone · Edition of 12/)).toHaveTextContent("Warm beige limestone · Edition of 12 — 3 remaining")
   })
 })

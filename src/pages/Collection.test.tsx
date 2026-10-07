@@ -11,15 +11,21 @@ describe("Collection", () => {
     expect(screen.getAllByText("8 pieces").length).toBeGreaterThan(0)
   })
 
+  it("lists every piece newest first", () => {
+    renderAt(<Collection />, "/collection")
+    expect(screen.getAllByRole("heading", { level: 2 })[0].textContent).toBe("Sannine · Sand")
+    expect(screen.getAllByRole("heading", { level: 2 }).at(-1)?.textContent).toBe("Arz")
+  })
+
   it("reads the filters from the address", () => {
-    renderAt(<Collection />, "/collection?stone=grey&capacity=10")
+    renderAt(<Collection />, "/collection?color=ash-grey&capacity=10")
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Qadisha · Ash"])
     expect(screen.getAllByText("1 piece").length).toBeGreaterThan(0)
   })
 
   it("clears the filters from the empty state", async () => {
     const user = userEvent.setup()
-    renderAt(<Collection />, "/collection?stone=cream&capacity=1")
+    renderAt(<Collection />, "/collection?color=cream&capacity=1")
     await user.click(screen.getByRole("button", { name: "Clear filters" }))
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(8)
   })

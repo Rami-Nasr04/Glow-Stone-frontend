@@ -30,14 +30,14 @@ describe("localized paths", () => {
     const paths = await prerenderPaths()
     expect(paths.slice(0, 4)).toEqual(["/", "/collection", "/about", "/contact"])
     expect(paths.filter((p) => p.startsWith("/collection/"))).toEqual([
-      "/collection/sannine-sand",
-      "/collection/sannine-ash",
-      "/collection/qadisha-earth",
-      "/collection/qadisha-ash",
-      "/collection/byblos",
-      "/collection/batroun",
-      "/collection/nahr",
-      "/collection/arz",
+      "/collection/8/sannine-sand",
+      "/collection/7/sannine-ash",
+      "/collection/6/qadisha-earth",
+      "/collection/5/qadisha-ash",
+      "/collection/4/byblos",
+      "/collection/3/batroun",
+      "/collection/2/nahr",
+      "/collection/1/arz",
     ])
     expect(paths).toEqual(expect.arrayContaining(["/legal/terms", "/legal/privacy", "/legal/delivery"]))
     expect(paths.some((p) => p.startsWith("/ar"))).toBe(false)
