@@ -10,6 +10,7 @@ export default [
     route("legal/:doc", "routes/legal.tsx"),
     route("sign-in", "routes/sign-in.tsx"),
     route("sign-up", "routes/sign-up.tsx"),
+    route("verify", "routes/verify.tsx"),
     route("*", "routes/not-found.tsx"),
   ]),
 ] satisfies RouteConfig
