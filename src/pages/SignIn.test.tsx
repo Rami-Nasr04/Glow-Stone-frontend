@@ -28,6 +28,15 @@ describe("SignIn", () => {
     expect(screen.getByRole("link", { name: "Glowstone home" }).className).toContain("min-h-11")
   })
 
+  it("draws the wordmark from the vector file, large enough that 'Made in Lebanon' stays sharp", () => {
+    renderAt(<SignIn />, "/sign-in", { auth: createMockAuth(null) })
+    const home = screen.getByRole("link", { name: "Glowstone home" })
+    expect(home.querySelector("img")).toHaveAttribute("src", "/brand/glowstone-wordmark.svg")
+    // 420px on desktop keeps the tagline about 8px tall (5px at the prototype's 260px blurred on 1x screens).
+    expect(home.className).toContain("lg:w-105")
+    expect(home.className).toContain("w-[min(340px,86vw)]")
+  })
+
   it("explains an empty form without sending it", async () => {
     const auth = createMockAuth(null)
     const spy = vi.spyOn(auth, "signIn")
