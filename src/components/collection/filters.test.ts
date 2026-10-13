@@ -8,14 +8,14 @@ const ids = (pieces: { id: number }[]) => pieces.map((p) => p.id)
 describe("collection filters", () => {
   it("builds the stone and colour choices from the pieces themselves", () => {
     expect(options.stone).toEqual([{ value: "limestone", label: "Limestone" }])
-    expect(options.color.map((o) => o.label)).toEqual(["Ash grey", "Cream", "Earth brown", "Grey", "Taupe", "Warm beige"])
-    expect(options.color[0].value).toBe("ash-grey")
+    expect(options.color.map((o) => o.label)).toEqual(["Cream", "Earth brown", "Grey", "Taupe", "Warm beige"])
+    expect(options.color[1].value).toBe("earth-brown")
   })
 
   it("reads filters from the address and ignores values no piece has", () => {
-    expect(readFilters(new URLSearchParams("color=ash-grey&capacity=5&availability=available"), options)).toEqual({
+    expect(readFilters(new URLSearchParams("color=earth-brown&capacity=5&availability=available"), options)).toEqual({
       stone: null,
-      color: "ash-grey",
+      color: "earth-brown",
       capacity: "5",
       availability: "available",
     })
@@ -28,18 +28,18 @@ describe("collection filters", () => {
   })
 
   it("filters by colour and by stone", () => {
-    expect(ids(filterPieces(all, { ...NO_FILTERS, color: "ash-grey" }))).toEqual([7, 5])
-    expect(filterPieces(all, { ...NO_FILTERS, stone: "limestone" })).toHaveLength(8)
+    expect(ids(filterPieces(all, { ...NO_FILTERS, color: "earth-brown" }))).toEqual([6, 2])
+    expect(filterPieces(all, { ...NO_FILTERS, stone: "limestone" })).toHaveLength(6)
   })
 
   it("filters by capacity, with 10 meaning ten or more", () => {
-    expect(ids(filterPieces(all, { ...NO_FILTERS, capacity: "1" }))).toEqual([2])
-    expect(ids(filterPieces(all, { ...NO_FILTERS, capacity: "10" }))).toEqual([6, 5, 3])
+    expect(ids(filterPieces(all, { ...NO_FILTERS, capacity: "1" }))).toEqual([3])
+    expect(ids(filterPieces(all, { ...NO_FILTERS, capacity: "10" }))).toEqual([6, 5])
   })
 
   it("filters by availability", () => {
-    expect(ids(filterPieces(all, { ...NO_FILTERS, availability: "sold_out" }))).toEqual([4])
-    expect(ids(filterPieces(all, { ...NO_FILTERS, availability: "available" }))).toEqual([8, 7, 6, 5, 3, 2, 1])
+    expect(ids(filterPieces(all, { ...NO_FILTERS, availability: "sold_out" }))).toEqual([2])
+    expect(ids(filterPieces(all, { ...NO_FILTERS, availability: "available" }))).toEqual([6, 5, 4, 3, 1])
   })
 
   it("combines filters and counts the active ones", () => {

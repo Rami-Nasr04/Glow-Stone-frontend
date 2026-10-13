@@ -33,7 +33,7 @@ export default function HomeHero() {
             sizes="(orientation: landscape) min(100vw, 179svh), 100vw"
             width={desktop.width}
             height={desktop.height}
-            alt={m.home.heroAlt}
+            alt={piece ? interpolate(m.home.heroAlt, { name: piece.name, stone: stoneLabel(piece).toLowerCase() }) : m.home.heroAltPlain}
             fetchPriority="high"
             decoding="async"
             className="block size-full object-cover object-right-bottom upright:object-bottom"

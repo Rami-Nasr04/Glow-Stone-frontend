@@ -3,9 +3,11 @@ import { renderAt } from "@/test/render"
 import PieceSpotlight from "./PieceSpotlight"
 
 describe("PieceSpotlight", () => {
-  it("presents Batroun with its placard, stock and price, and no lead time", () => {
+  it("presents Qadisha with its placard, its own summary and capacity, stock and price, and no lead time", () => {
     renderAt(<PieceSpotlight />)
-    expect(screen.getByRole("heading", { level: 2, name: "Batroun" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 2, name: "Qadisha" })).toBeInTheDocument()
+    // Built from the piece row, so it can never claim what the data does not say.
+    expect(screen.getByText("Tall slab with edge notches and central holes. Holds 14 bottles.")).toBeInTheDocument()
     // Two lines as in the prototype, never a dot left hanging at a line end.
     const placard = screen.getByText("Edition of 8").parentElement
     expect(placard?.firstChild?.textContent).toBe("Cream limestone · 118 × 36 × 20 cm")
@@ -18,7 +20,7 @@ describe("PieceSpotlight", () => {
 
   it("links to the piece once for keyboard and screen-reader users", () => {
     renderAt(<PieceSpotlight />)
-    expect(screen.getByRole("link", { name: "View the piece" })).toHaveAttribute("href", "/collection/3/batroun")
+    expect(screen.getByRole("link", { name: "View the piece" })).toHaveAttribute("href", "/collection/5/qadisha")
     expect(screen.getAllByRole("link")).toHaveLength(1)
   })
 

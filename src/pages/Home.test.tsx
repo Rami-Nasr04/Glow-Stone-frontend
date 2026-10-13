@@ -6,7 +6,7 @@ describe("Home", () => {
   it("follows the agreed order with one h1", () => {
     renderAt(<Home />)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Selected pieces", "The craft", "Batroun"])
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Selected pieces", "The craft", "Qadisha"])
     expect(screen.getByText("From stone, form emerges.")).toBeInTheDocument()
   })
 

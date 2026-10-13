@@ -15,7 +15,7 @@ describe("HomeHero", () => {
     const source = container.querySelector("picture source")
     expect(source).toHaveAttribute("media", HERO_PORTRAIT_MEDIA)
     expect(source?.getAttribute("srcset")).toContain("/images/hero/mobile-768.webp 768w")
-    const photo = screen.getByAltText(/Batroun rack in cream limestone/)
+    const photo = screen.getByAltText(/^Qadisha rack in cream limestone/)
     expect(photo.getAttribute("srcset")).toContain("/images/hero/desktop-1376.webp 1376w")
     expect(photo).toHaveAttribute("fetchpriority", "high")
     expect(photo).not.toHaveAttribute("loading", "lazy")
@@ -27,7 +27,7 @@ describe("HomeHero", () => {
     expect(section.className).toContain("h-svh")
     // The old min-height (photo height + header) pushed the rack's base below the fold on short laptops.
     expect(section.className).not.toContain("55.8vw")
-    const frame = screen.getByAltText(/Batroun rack in cream limestone/).closest("div")!
+    const frame = screen.getByAltText(/^Qadisha rack in cream limestone/).closest("div")!
     expect(frame.className).toContain("h-(--hero-photo-h)")
     expect(frame.className).toContain("aspect-[1376/768]")
     expect(frame.querySelector(".bg-linear-to-r.from-hero-sky")).not.toBeNull()
@@ -40,7 +40,7 @@ describe("HomeHero", () => {
     const shop = screen.getAllByRole("link", { name: "Shop collection" })
     expect(shop).toHaveLength(2)
     for (const link of shop) expect(link).toHaveAttribute("href", "/collection")
-    expect(screen.getByRole("link", { name: "Batroun · Cream limestone · Edition of 8" })).toHaveAttribute("href", "/collection/3/batroun")
-    expect(screen.getByRole("link", { name: "Batroun · Edition of 8" })).toHaveAttribute("href", "/collection/3/batroun")
+    expect(screen.getByRole("link", { name: "Qadisha · Cream limestone · Edition of 8" })).toHaveAttribute("href", "/collection/5/qadisha")
+    expect(screen.getByRole("link", { name: "Qadisha · Edition of 8" })).toHaveAttribute("href", "/collection/5/qadisha")
   })
 })

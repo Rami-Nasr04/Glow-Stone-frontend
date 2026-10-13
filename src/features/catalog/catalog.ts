@@ -1,9 +1,9 @@
 import bundled from "./catalog-data.json"
 import type { Product, ProductSummary } from "./types"
 
-// Until the products API is live, pages read this bundled copy, stored exactly as GET /products/{id} returns each
-// published piece (provisional ids 1–8). Switching to the API changes only this file: listProducts() becomes
-// GET /products and getProduct(id) becomes GET /products/{id}.
+// Until the website reads the products API, pages read this bundled copy of the six real pieces, stored exactly as
+// GET /products/{id} returns them (copied from the database seed, ids 1–6). Switching to
+// the API changes only this file: listProducts() becomes GET /products and getProduct(id) becomes GET /products/{id}.
 const PRODUCTS: Product[] = bundled
 
 // The API's order: created_at desc, id desc.

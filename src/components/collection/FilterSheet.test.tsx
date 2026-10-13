@@ -15,7 +15,7 @@ describe("FilterSheet", () => {
   })
 
   it("shows how many filters are active", () => {
-    renderAt(<FilterSheet filters={{ ...NO_FILTERS, color: "ash-grey", capacity: "5" }} options={options} count={1} onChange={vi.fn()} />)
+    renderAt(<FilterSheet filters={{ ...NO_FILTERS, color: "cream", capacity: "5" }} options={options} count={1} onChange={vi.fn()} />)
     expect(screen.getByRole("button", { name: "Filter (2)" })).toBeInTheDocument()
   })
 

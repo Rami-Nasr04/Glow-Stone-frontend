@@ -8,7 +8,7 @@ import EditionLine from "@/features/catalog/EditionLine"
 import { noBreak, placardParts } from "@/features/catalog/format"
 import { coverOf, piecePhotos } from "@/features/catalog/photos"
 import { productPath } from "@/features/catalog/product-path"
-import { formatPrice } from "@/i18n/format"
+import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { HOME_PIECE, SPOTLIGHT_PHOTOS } from "./home-config"
 
@@ -23,6 +23,9 @@ export default function PieceSpotlight() {
   const photo = (key: string) => photos.find((img) => img.key === key) ?? cover
   const detail = photo(SPOTLIGHT_PHOTOS.detail)
   const full = photo(SPOTLIGHT_PHOTOS.full)
+  // Only what the piece's own row says: its summary and how many bottles it holds.
+  const capacity = piece.bottles === 1 ? m.home.spotlightBottle : interpolate(m.home.spotlightBottles, { count: piece.bottles })
+  const text = [piece.summary, capacity].filter(Boolean).join(" ")
   const parts = placardParts(piece, m)
   const edition = parts.pop()
 
@@ -71,7 +74,7 @@ export default function PieceSpotlight() {
               <span className="whitespace-nowrap">{edition}</span>
             </p>
             <Rule />
-            <p className="text-small text-pretty text-muted-foreground">{m.home.spotlightText}</p>
+            <p className="text-small text-pretty text-muted-foreground">{text}</p>
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2.5 border-t border-border pt-4">
               <span className="text-label uppercase tracking-caps">
                 <EditionLine product={piece} template={m.edition.remainingCount} />

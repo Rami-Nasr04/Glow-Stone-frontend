@@ -26,8 +26,8 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
   const [quantity, setQuantity] = useState(1)
   const name = noBreak(piece.name)
 
-  // Cart storage arrives in F4; until then the button only confirms.
-  const addToCart = () => toast.success(m.product.added)
+  // The cart arrives in F4; until then the button says plainly that ordering isn't open (nothing is stored).
+  const addToCart = () => toast.success(m.product.orderingSoon)
 
   return (
     <div className={cn("flex max-w-130 flex-col", className)}>

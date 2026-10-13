@@ -49,9 +49,9 @@ describe("About sections", () => {
     expect(screen.getByRole("link", { name: "View the collection" })).toHaveAttribute("href", "/collection")
   })
 
-  it("attributes the pull quote", () => {
-    renderAt(<PullQuote />)
-    expect(screen.getByText("“Stone keeps its own time. My work is to wait for it.”")).toBeInTheDocument()
-    expect(screen.getByText("Omar, stonemason")).toBeInTheDocument()
+  it("keeps the invented quote off the page until Omar approves it", () => {
+    const { container } = renderAt(<PullQuote />)
+    expect(container).toBeEmptyDOMElement()
+    expect(screen.queryByText(/Omar, stonemason/)).not.toBeInTheDocument()
   })
 })

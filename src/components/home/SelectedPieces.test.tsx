@@ -16,7 +16,7 @@ describe("SelectedPieces", () => {
     renderAt(<SelectedPieces />)
     expect(screen.getByRole("heading", { level: 2, name: "Selected pieces" })).toBeInTheDocument()
     const names = screen.getAllByRole("listitem").map((li) => within(li).getByRole("heading", { level: 3 }).textContent)
-    expect(names).toEqual(["Sannine · Sand", "Qadisha · Earth", "Batroun", "Nahr", "Arz"])
+    expect(names).toEqual(["Sannine", "Qadisha", "Jbeil", "Batroun", "Arz"])
   })
 
   it("links to the whole collection", () => {

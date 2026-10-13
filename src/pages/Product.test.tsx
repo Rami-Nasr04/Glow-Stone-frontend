@@ -19,26 +19,26 @@ function renderAt(path: string) {
 
 describe("Product", () => {
   it("shows the piece under one h1", () => {
-    renderAt("/collection/3/batroun")
-    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Batroun"])
-    expect(screen.getByText("address: /collection/3/batroun")).toBeInTheDocument()
+    renderAt("/collection/5/qadisha")
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Qadisha"])
+    expect(screen.getByText("address: /collection/5/qadisha")).toBeInTheDocument()
   })
 
-  it.each(["/collection/3", "/collection/3/old-name", "/collection/3/BATROUN"])("corrects the address %s without a 404", async (path) => {
+  it.each(["/collection/5", "/collection/5/old-name", "/collection/5/QADISHA"])("corrects the address %s without a 404", async (path) => {
     renderAt(path)
-    expect(await screen.findByText("address: /collection/3/batroun")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Batroun")
+    expect(await screen.findByText("address: /collection/5/qadisha")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Qadisha")
   })
 
   it("offers related pieces and, for available pieces, the sticky bar", () => {
-    const { container } = renderAt("/collection/3/batroun")
+    const { container } = renderAt("/collection/5/qadisha")
     expect(screen.getByRole("heading", { level: 2, name: "You may also like" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3)
     expect(container.querySelector("[data-sticky-bar]")).not.toBeNull()
   })
 
   it("has no sticky bar for a sold-out piece", () => {
-    const { container } = renderAt("/collection/4/byblos")
+    const { container } = renderAt("/collection/2/nahr")
     expect(container.querySelector("[data-sticky-bar]")).toBeNull()
   })
 

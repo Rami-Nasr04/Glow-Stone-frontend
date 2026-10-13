@@ -1,5 +1,6 @@
 // Which original photo (by camera file id) becomes which site image key.
-// Product keys must match the backend seed (products/<slug>/<position + 1>).
+// Product folder names are the provisional F2 names; src/features/catalog/bundled-photos.ts maps them to the real
+// pieces. The photos move to the API with the backend's product_images slice.
 export const IMAGE_MAP: Record<string, string> = {
   "products/sannine-sand/1": "_ADY9990",
   "products/sannine-sand/2": "_ADY0001",

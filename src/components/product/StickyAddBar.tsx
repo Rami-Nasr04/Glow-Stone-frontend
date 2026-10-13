@@ -59,7 +59,7 @@ export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
         </div>
         <button
           type="button"
-          onClick={() => toast.success(m.product.added)}
+          onClick={() => toast.success(m.product.orderingSoon)}
           className="flex min-h-12 shrink-0 items-center gap-3.5 bg-background px-6 text-label uppercase tracking-label text-foreground transition-colors duration-500 hover:bg-on-photo"
         >
           {m.product.addToCart}

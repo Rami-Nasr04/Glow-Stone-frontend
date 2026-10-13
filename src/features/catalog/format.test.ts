@@ -2,8 +2,8 @@ import { en } from "@/i18n/messages/en"
 import { getProduct } from "./catalog"
 import { dimensionsLabel, noBreak, placard, placardParts, stoneLabel, storyParagraphs } from "./format"
 
-const batroun = getProduct(3)!
-const arz = getProduct(1)!
+const qadisha = getProduct(5)!
+const jbeil = getProduct(4)!
 
 describe("catalog format", () => {
   it("keeps two-part names on one line", () => {
@@ -12,18 +12,18 @@ describe("catalog format", () => {
   })
 
   it("names the stone by its colour and type", () => {
-    expect(stoneLabel(batroun)).toBe("Cream limestone")
-    expect(stoneLabel(getProduct(8)!)).toBe("Warm beige limestone")
+    expect(stoneLabel(qadisha)).toBe("Cream limestone")
+    expect(stoneLabel(getProduct(1)!)).toBe("Warm beige limestone")
   })
 
   it("formats dimensions, or nothing when any is missing", () => {
-    expect(dimensionsLabel(batroun, en)).toBe("118 × 36 × 20 cm")
-    expect(dimensionsLabel(arz, en)).toBeNull()
+    expect(dimensionsLabel(qadisha, en)).toBe("118 × 36 × 20 cm")
+    expect(dimensionsLabel(jbeil, en)).toBeNull()
   })
 
   it("builds the placard and skips missing parts", () => {
-    expect(placard(batroun, en)).toBe("Cream limestone · 118 × 36 × 20 cm · Edition of 8")
-    expect(placardParts(arz, en)).toEqual(["Grey limestone", "Edition of 10"])
+    expect(placard(qadisha, en)).toBe("Cream limestone · 118 × 36 × 20 cm · Edition of 8")
+    expect(placardParts(jbeil, en)).toEqual(["Grey limestone", "Edition of 10"])
   })
 
   it("splits a story into paragraphs on blank lines", () => {

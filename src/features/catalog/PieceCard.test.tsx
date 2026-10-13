@@ -14,17 +14,17 @@ const piece = (id: number) => listProducts().find((p) => p.id === id)!
 
 describe("PieceCard", () => {
   it("links to the piece by id and readable name, and shows its name and price", () => {
-    renderAt(<PieceCard product={piece(6)} sizes="33vw" />)
+    renderAt(<PieceCard product={piece(5)} sizes="33vw" />)
     const link = screen.getByRole("link")
-    expect(link).toHaveAttribute("href", "/collection/6/qadisha-earth")
+    expect(link).toHaveAttribute("href", "/collection/5/qadisha")
     // textContent, not toHaveTextContent: the matcher collapses non-breaking spaces and would hide a regression.
-    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Qadisha · Earth")
-    expect(link).toHaveTextContent("$560")
-    expect(link).toHaveTextContent("Earth brown limestone")
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Qadisha")
+    expect(link).toHaveTextContent("$890")
+    expect(link).toHaveTextContent("Cream limestone")
   })
 
   it("cross-fades to the second photo, hidden from screen readers", () => {
-    const { container } = renderAt(<PieceCard product={piece(8)} sizes="33vw" />)
+    const { container } = renderAt(<PieceCard product={piece(6)} sizes="33vw" />)
     const imgs = container.querySelectorAll("img")
     expect(imgs).toHaveLength(2)
     expect(imgs[1]).toHaveAttribute("aria-hidden", "true")
@@ -40,7 +40,7 @@ describe("PieceCard", () => {
     renderAt(
       <>
         <PieceCard product={piece(5)} sizes="33vw" />
-        <PieceCard product={piece(4)} sizes="33vw" />
+        <PieceCard product={piece(NAHR)} sizes="33vw" />
       </>,
     )
     expect(screen.getByText("Sold out")).toBeInTheDocument()
@@ -48,7 +48,7 @@ describe("PieceCard", () => {
   })
 
   it("puts stone and edition on one line in the compact rail card", () => {
-    renderAt(<PieceCard product={piece(8)} sizes="25vw" compact />)
+    renderAt(<PieceCard product={piece(1)} sizes="25vw" compact />)
     expect(screen.getByText(/Warm beige limestone · Edition of 12/)).toHaveTextContent("Warm beige limestone · Edition of 12 — 3 remaining")
   })
 })
