@@ -1,5 +1,6 @@
 import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { PRODUCTS } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import SelectedPieces from "./SelectedPieces"
 
@@ -13,21 +14,21 @@ describe("SelectedPieces", () => {
   afterEach(() => vi.restoreAllMocks())
 
   it("lists the featured pieces newest first under an h2", () => {
-    renderAt(<SelectedPieces />)
+    renderAt(<SelectedPieces pieces={PRODUCTS} />)
     expect(screen.getByRole("heading", { level: 2, name: "Selected pieces" })).toBeInTheDocument()
     const names = screen.getAllByRole("listitem").map((li) => within(li).getByRole("heading", { level: 3 }).textContent)
     expect(names).toEqual(["Sannine", "Qadisha", "Jbeil", "Batroun", "Arz"])
   })
 
   it("links to the whole collection", () => {
-    renderAt(<SelectedPieces />)
+    renderAt(<SelectedPieces pieces={PRODUCTS} />)
     expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/collection")
   })
 
   it("disables the previous arrow at the start and scrolls one card forward", async () => {
     const user = userEvent.setup()
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ width: 300 } as DOMRect)
-    renderAt(<SelectedPieces />)
+    renderAt(<SelectedPieces pieces={PRODUCTS} />)
     expect(screen.getByRole("button", { name: "Previous pieces" })).toBeDisabled()
     await user.click(screen.getByRole("button", { name: "Next pieces" }))
     expect(Element.prototype.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ left: 300 }))

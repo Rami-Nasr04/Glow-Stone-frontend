@@ -3,7 +3,6 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import Picture from "@/components/media/Picture"
 import { noBreak } from "@/features/catalog/format"
-import { coverOf } from "@/features/catalog/photos"
 import type { Product } from "@/features/catalog/types"
 import { formatPrice } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
@@ -18,7 +17,7 @@ interface StickyAddBarProps {
 export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
   const { m } = useLocale()
   const [shown, setShown] = useState(false)
-  const cover = coverOf(piece)
+  const cover = piece.images[0]
 
   useEffect(() => {
     // Shown while the button is above the screen; hidden again as soon as it is back (or still below).
@@ -51,7 +50,7 @@ export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
         <div className="flex min-w-0 items-center gap-4">
           {cover && (
             <div className="hidden h-12 w-8 shrink-0 lg:block">
-              <Picture imageKey={cover.key} width={cover.width} height={cover.height} alt="" sizes="32px" />
+              <Picture image={cover} alt="" sizes="32px" />
             </div>
           )}
           <span className="truncate font-display text-lg lg:text-2xl">{noBreak(piece.name)}</span>

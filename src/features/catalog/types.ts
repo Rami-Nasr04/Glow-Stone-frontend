@@ -1,4 +1,4 @@
-// Mirror of the products contract agreed with the backend (2026-10-08).
+// Mirror of the products contract agreed with the backend (2026-10-13).
 // Change the contract first, then the backend's src/types/catalog.ts and this file together.
 
 export interface ProductSummary {
@@ -23,6 +23,8 @@ export interface ProductSummary {
   summary: string | null
   /** ISO timestamp; lists are newest first. */
   createdAt: string
+  /** In Omar's order: [0] is the cover, [1] is shown on hover. The list has the first 2, a piece's page has all. */
+  images: ProductImage[]
 }
 
 export interface Product extends ProductSummary {
@@ -30,10 +32,12 @@ export interface Product extends ProductSummary {
   story: string | null
 }
 
-// Not in the contract until the product_images slice: the website's own bundled photos (see photos.ts).
+// One photo: `${url}/${width}.webp` for width 480, 960, 1440, 2048 or 2880 (never wider than the master). No alt text
+// in the API: the website writes it from the piece's name.
 export interface ProductImage {
-  key: string
+  /** Base address without extension. */
+  url: string
+  /** The master's size, for the aspect ratio and the reserved space. */
   width: number
   height: number
-  alt: string
 }

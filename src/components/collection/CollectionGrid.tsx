@@ -8,11 +8,18 @@ import PieceCard from "@/features/catalog/PieceCard"
 import type { ProductSummary } from "@/features/catalog/types"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
-import { INTERLUDE_AFTER, tileSpans } from "./grid-layout"
+import { COLUMNS, interludeAfter, tileSpans } from "./grid-layout"
 
 interface CollectionGridProps {
   pieces: ProductSummary[]
   onClear: () => void
+}
+
+type Layout = keyof typeof COLUMNS
+
+interface InterludeProps {
+  /** The layouts (phones, two columns, three columns) in which this placement is the one shown. */
+  layouts: Layout[]
 }
 
 interface CommissionTileProps {
@@ -24,23 +31,24 @@ const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 768px) 50vw, 100vw"
 // Static class names so Tailwind generates them.
 const MD_SPAN = { 1: "md:col-span-1", 2: "md:col-span-2" } as const
 const LG_SPAN = { 1: "lg:col-span-1", 2: "lg:col-span-2", 3: "lg:col-span-3" } as const
+const SHOWN = { base: ["hidden", "flex"], md: ["md:hidden", "md:flex"], lg: ["lg:hidden", "lg:flex"] } as const
+const LAYOUTS = Object.keys(COLUMNS) as Layout[]
 
-function Interlude() {
+function Interlude({ layouts }: InterludeProps) {
   const { m } = useLocale()
   const photo = CRAFT_IMAGES.boreThrough
+  // The interlude sits at a different place per layout, so each placement is displayed only in its own layouts.
+  const display = LAYOUTS.map((layout) => SHOWN[layout][Number(layouts.includes(layout))])
   return (
-    <li data-cell="interlude" className="relative col-span-full flex flex-col gap-8 lg:flex-row lg:items-end lg:gap-[clamp(2.5rem,6vw,6rem)]">
+    <li
+      data-cell="interlude"
+      data-layouts={layouts.join(" ")}
+      className={cn("relative col-span-full flex-col gap-8 lg:flex-row lg:items-end lg:gap-[clamp(2.5rem,6vw,6rem)]", display)}
+    >
       {/* Full-bleed charcoal band starting partway down the photo, so the photo straddles the edge. */}
       <div aria-hidden="true" className="absolute start-[calc(50%-50vw)] end-[calc(50%-50vw)] top-straddle bottom-0 bg-dark-section" />
       <div className="relative aspect-video overflow-hidden bg-photo-dark lg:w-[65%]">
-        <Picture
-          imageKey={photo.key}
-          width={photo.width}
-          height={photo.height}
-          alt={m.collection.interludeAlt}
-          sizes="(min-width: 1024px) 65vw, 100vw"
-          fit="cover"
-        />
+        <Picture image={photo} alt={m.collection.interludeAlt} sizes="(min-width: 1024px) 65vw, 100vw" fit="cover" />
       </div>
       <div className="relative flex max-w-110 flex-col gap-5 pb-10 text-dark-section-foreground lg:pb-[clamp(2.5rem,5vw,4rem)]">
         <Rule onDark />
@@ -78,6 +86,11 @@ function CommissionTile({ count }: CommissionTileProps) {
 
 export default function CollectionGrid({ pieces, onClear }: CollectionGridProps) {
   const { m } = useLocale()
+  const interludes = new Map<number, Layout[]>()
+  for (const layout of LAYOUTS) {
+    const after = interludeAfter(COLUMNS[layout], pieces.length)
+    if (after !== null) interludes.set(after, [...(interludes.get(after) ?? []), layout])
+  }
 
   if (pieces.length === 0) {
     return (
@@ -98,7 +111,8 @@ export default function CollectionGrid({ pieces, onClear }: CollectionGridProps)
             <PieceCard product={piece} sizes={CARD_SIZES} headingLevel={2} />
           </li>
         )
-        return i === INTERLUDE_AFTER - 1 && pieces.length > INTERLUDE_AFTER ? [card, <Interlude key="interlude" />] : [card]
+        const layouts = interludes.get(i + 1)
+        return layouts ? [card, <Interlude key={`interlude-${i}`} layouts={layouts} />] : [card]
       })}
       <CommissionTile count={pieces.length} />
     </ul>

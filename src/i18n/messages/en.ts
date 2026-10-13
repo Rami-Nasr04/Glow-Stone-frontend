@@ -48,7 +48,6 @@ export const en = {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
     metaDescription: "Wine racks hand-carved from Lebanese limestone, in small numbered editions. Made in Lebanon.",
     heroAlt: "{name} rack in {stone} with a glass of red wine on a stone wall above the misty Qadisha Valley",
-    heroAltPlain: "A limestone wine rack with a glass of red wine on a stone wall above the misty Qadisha Valley",
     shopCollection: "Shop collection",
     quote: "From stone, form emerges.",
     quoteLine: "Limited objects for wine & living.",
@@ -115,6 +114,8 @@ export const en = {
     soldOut: "Sold out",
     soldOutSimilar: "This edition has found its homes. For a similar piece, write to Omar.",
     contactOmar: "Contact Omar",
+    loadFailed: "This piece couldn't be loaded.",
+    loadFailedLead: "Please check your connection and try again in a moment.",
     tabs: { story: "Story", details: "Details", care: "Care", delivery: "Delivery" },
     naturalVariation: "Each piece is carved by hand. Natural variations in the stone are part of its character.",
     specs: {

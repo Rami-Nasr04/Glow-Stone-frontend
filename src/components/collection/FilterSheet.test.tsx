@@ -1,11 +1,11 @@
 import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { listProducts } from "@/features/catalog/catalog"
+import { PRODUCTS } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import FilterSheet from "./FilterSheet"
 import { filterOptions, NO_FILTERS } from "./filters"
 
-const options = filterOptions(listProducts())
+const options = filterOptions(PRODUCTS)
 
 describe("FilterSheet", () => {
   it("is not in the page at all while closed", () => {

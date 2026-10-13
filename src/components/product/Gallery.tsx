@@ -1,41 +1,34 @@
 import { useState } from "react"
 import Picture from "@/components/media/Picture"
 import { noBreak, placard } from "@/features/catalog/format"
-import { piecePhotos } from "@/features/catalog/photos"
-import type { Product, ProductImage } from "@/features/catalog/types"
+import NoPhoto from "@/features/catalog/NoPhoto"
+import type { Product } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
 interface GalleryProps {
   piece: Product
-  /** Defaults to the piece's bundled photos (the API's `images` once the product_images slice lands). */
-  photos?: ProductImage[]
 }
 
 // 4:5 frame, never taller than the viewport minus the header; the photo is contained on stone, never cropped.
 const frame = "relative mx-auto block aspect-4/5 overflow-hidden h-[min(70vh,760px,calc(100svh-9rem))] max-w-full bg-background"
 
-export default function Gallery({ piece, photos }: GalleryProps) {
+export default function Gallery({ piece }: GalleryProps) {
   const { m } = useLocale()
   const [selected, setSelected] = useState(0)
   const [shown, setShown] = useState(0)
-  const images = photos ?? piecePhotos(piece)
+  const images = piece.images
   const current = images[selected] ?? images[0]
-  if (!current) return null
+  // The API has no alt text: every photo is named from the piece.
+  const altOf = (i: number) => interpolate(m.catalog.photoAlt, { name: piece.name, n: i + 1, total: images.length })
 
   const many = images.length > 1
   const grey = piece.soldOut && "grayscale-60"
-  const main = (
-    <Picture
-      imageKey={current.key}
-      width={current.width}
-      height={current.height}
-      alt={current.alt}
-      sizes="(min-width: 1024px) 45vw, 100vw"
-      priority
-      className={cn(grey)}
-    />
+  const main = current ? (
+    <Picture image={current} alt={altOf(images.indexOf(current))} sizes="(min-width: 1024px) 45vw, 100vw" priority className={cn(grey)} />
+  ) : (
+    <NoPhoto />
   )
 
   const onSwipe = (e: React.UIEvent<HTMLUListElement>) => {
@@ -56,10 +49,10 @@ export default function Gallery({ piece, photos }: GalleryProps) {
         {many && (
           <ul className="flex flex-wrap justify-center gap-2.5">
             {images.map((image, i) => (
-              <li key={image.key}>
+              <li key={image.url}>
                 <button
                   type="button"
-                  aria-label={image.alt}
+                  aria-label={altOf(i)}
                   aria-pressed={i === selected}
                   onClick={() => setSelected(i)}
                   className={cn(
@@ -67,7 +60,7 @@ export default function Gallery({ piece, photos }: GalleryProps) {
                     i === selected ? "border-accent opacity-100" : "border-transparent opacity-60 hover:opacity-100",
                   )}
                 >
-                  <Picture imageKey={image.key} width={image.width} height={image.height} alt="" sizes="56px" className={cn(grey)} />
+                  <Picture image={image} alt="" sizes="56px" className={cn(grey)} />
                 </button>
               </li>
             ))}
@@ -85,18 +78,15 @@ export default function Gallery({ piece, photos }: GalleryProps) {
           className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, i) => (
-            <li key={image.key} className="aspect-2/3 w-full shrink-0 snap-start overflow-hidden bg-background">
-              <Picture
-                imageKey={image.key}
-                width={image.width}
-                height={image.height}
-                alt={image.alt}
-                sizes="100vw"
-                priority={i === 0}
-                className={cn(grey)}
-              />
+            <li key={image.url} className="aspect-2/3 w-full shrink-0 snap-start overflow-hidden bg-background">
+              <Picture image={image} alt={altOf(i)} sizes="100vw" priority={i === 0} className={cn(grey)} />
             </li>
           ))}
+          {!current && (
+            <li className="aspect-2/3 w-full shrink-0 overflow-hidden">
+              <NoPhoto />
+            </li>
+          )}
         </ul>
         {many && (
           <p className="absolute end-4 bottom-4 bg-background px-3 py-2 text-xs tracking-caps">

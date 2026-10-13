@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { getProduct } from "@/features/catalog/catalog"
+import { productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import ProductTabs from "./ProductTabs"
 
@@ -8,7 +8,7 @@ const ARZ = 1
 const BATROUN = 3
 const JBEIL = 4
 const QADISHA = 5
-const piece = (id: number) => getProduct(id)!
+const piece = productOf
 
 describe("ProductTabs", () => {
   it("opens on the story when a piece has one: the first paragraph as the lead, then the rest, with no quote", () => {

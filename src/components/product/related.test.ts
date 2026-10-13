@@ -1,4 +1,4 @@
-import { listProducts } from "@/features/catalog/catalog"
+import { PRODUCTS } from "@/test/catalog"
 import type { ProductSummary } from "@/features/catalog/types"
 import { relatedPieces } from "./related"
 
@@ -20,6 +20,7 @@ function piece(id: number, stoneType: string, soldOut = false): ProductSummary {
     featured: false,
     summary: null,
     createdAt: `2026-10-0${id}T09:00:00.000Z`,
+    images: [],
   }
 }
 
@@ -32,13 +33,12 @@ describe("relatedPieces", () => {
   })
 
   it("never suggests the piece itself and stops at three", () => {
-    const all = listProducts()
-    const related = relatedPieces(all, 3)
+    const related = relatedPieces(PRODUCTS, 3)
     expect(ids(related)).not.toContain(3)
     expect(related).toHaveLength(3)
   })
 
   it("suggests nothing for an unknown piece", () => {
-    expect(relatedPieces(listProducts(), 99)).toEqual([])
+    expect(relatedPieces(PRODUCTS, 99)).toEqual([])
   })
 })

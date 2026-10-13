@@ -1,7 +1,6 @@
-import { listProducts } from "@/features/catalog/catalog"
+import { PRODUCTS as all } from "@/test/catalog"
 import { activeCount, filterOptions, filterPieces, NO_FILTERS, readFilters, writeFilters } from "./filters"
 
-const all = listProducts()
 const options = filterOptions(all)
 const ids = (pieces: { id: number }[]) => pieces.map((p) => p.id)
 

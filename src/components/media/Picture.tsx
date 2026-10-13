@@ -1,11 +1,9 @@
-import { imageSrcSet, imageUrl } from "@/lib/images"
+import { type ApiImage, type BundledImage, imageSrcSet, imageUrl, photoSrcSet, photoUrl } from "@/lib/images"
 import { cn } from "@/lib/utils"
 
 interface PictureProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet" | "width" | "height"> {
-  imageKey: string
-  /** Width of the widest generated variant (2048 for product photos, 2880 for craft photos). */
-  width: number
-  height: number
+  /** A bundled image by key (its width is the widest generated variant), or a product photo from the API. */
+  image: BundledImage | ApiImage
   alt: string
   /** CSS sizes hint, e.g. "(min-width: 1024px) 50vw, 100vw". */
   sizes: string
@@ -14,24 +12,15 @@ interface PictureProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "
   priority?: boolean
 }
 
-export default function Picture({
-  imageKey,
-  width,
-  height,
-  alt,
-  sizes,
-  fit = "contain",
-  priority = false,
-  className,
-  ...props
-}: PictureProps) {
+export default function Picture({ image, alt, sizes, fit = "contain", priority = false, className, ...props }: PictureProps) {
+  const fromApi = "url" in image
   return (
     <img
-      src={imageUrl(imageKey, 960)}
-      srcSet={imageSrcSet(imageKey, width)}
+      src={fromApi ? photoUrl(image, 960) : imageUrl(image.key, 960)}
+      srcSet={fromApi ? photoSrcSet(image) : imageSrcSet(image.key, image.width)}
       sizes={sizes}
-      width={width}
-      height={height}
+      width={image.width}
+      height={image.height}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}

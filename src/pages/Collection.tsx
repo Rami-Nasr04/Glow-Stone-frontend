@@ -4,11 +4,18 @@ import CollectionIntro from "@/components/collection/CollectionIntro"
 import FilterBar from "@/components/collection/FilterBar"
 import { filterOptions, filterPieces, NO_FILTERS, readFilters, writeFilters, type Filters } from "@/components/collection/filters"
 import FilterSheet from "@/components/collection/FilterSheet"
-import { listProducts } from "@/features/catalog/catalog"
+import { useLiveStock, withLiveStock } from "@/features/catalog/live-stock"
+import type { ProductSummary } from "@/features/catalog/types"
 
-export default function Collection() {
+interface CollectionProps {
+  /** GET /products, newest first. */
+  products: ProductSummary[]
+}
+
+export default function Collection({ products }: CollectionProps) {
   const [params, setParams] = useSearchParams()
-  const all = listProducts()
+  const live = useLiveStock()
+  const all = products.map((p) => withLiveStock(p, live))
   const options = filterOptions(all)
   const filters = readFilters(params, options)
   const pieces = filterPieces(all, filters)

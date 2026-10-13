@@ -1,4 +1,5 @@
 import { directionOf, isLocale, toLocale } from "./locales"
+import { PRODUCTS } from "@/test/catalog"
 import { localizedPath, prerenderPaths } from "./paths"
 
 describe("locales", () => {
@@ -26,8 +27,8 @@ describe("localized paths", () => {
     expect(localizedPath("fr", "/about")).toBe("/fr/about")
   })
 
-  it("prerenders every static page and every published piece, in the published locales only", async () => {
-    const paths = await prerenderPaths()
+  it("prerenders every static page and every published piece from GET /products, in the published locales only", () => {
+    const paths = prerenderPaths(PRODUCTS)
     expect(paths.slice(0, 4)).toEqual(["/", "/collection", "/about", "/contact"])
     expect(paths.filter((p) => p.startsWith("/collection/"))).toEqual([
       "/collection/6/sannine",
@@ -41,8 +42,15 @@ describe("localized paths", () => {
     expect(paths.some((p) => p.startsWith("/ar"))).toBe(false)
   })
 
-  it("never prerenders the private account and sign-in pages", async () => {
-    const paths = await prerenderPaths()
+  it("prerenders a renamed piece under its current name only", () => {
+    const renamed = PRODUCTS.map((p) => (p.id === 5 ? { ...p, name: "Qadisha Valley" } : p))
+    const paths = prerenderPaths(renamed)
+    expect(paths).toContain("/collection/5/qadisha-valley")
+    expect(paths).not.toContain("/collection/5/qadisha")
+  })
+
+  it("never prerenders the private account and sign-in pages", () => {
+    const paths = prerenderPaths(PRODUCTS)
     for (const page of ["/sign-in", "/sign-up", "/verify", "/forgot-password", "/account"]) expect(paths).not.toContain(page)
   })
 })

@@ -1,11 +1,11 @@
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { listProducts } from "@/features/catalog/catalog"
+import { PRODUCTS } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import FilterBar from "./FilterBar"
 import { filterOptions, NO_FILTERS } from "./filters"
 
-const options = filterOptions(listProducts())
+const options = filterOptions(PRODUCTS)
 
 describe("FilterBar", () => {
   it("offers the filters that have a real choice, and the piece count", () => {

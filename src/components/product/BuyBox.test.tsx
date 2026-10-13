@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
-import { getProduct } from "@/features/catalog/catalog"
+import { productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import BuyBox from "./BuyBox"
 
@@ -10,7 +10,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
 const NAHR = 2
 const QADISHA = 5
 const SANNINE = 6
-const piece = (id: number) => getProduct(id)!
+const piece = productOf
 
 describe("BuyBox", () => {
   it("names the piece, its stone and its summary under a breadcrumb back to the collection", () => {

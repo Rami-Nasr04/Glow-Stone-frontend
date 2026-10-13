@@ -1,25 +1,6 @@
-import { getProduct, listProducts, newestFirst } from "./catalog"
+import { PRODUCTS, productOf, stubApi } from "@/test/catalog"
+import { apiBase, getProduct, listProducts, newestFirst } from "./catalog"
 import type { ProductSummary } from "./types"
-
-// Field names of GET /products and GET /products/{id}, as agreed with the backend.
-const SUMMARY_FIELDS = [
-  "bottles",
-  "color",
-  "createdAt",
-  "depthCm",
-  "editionSize",
-  "featured",
-  "heightCm",
-  "id",
-  "name",
-  "price",
-  "remaining",
-  "soldOut",
-  "stoneType",
-  "summary",
-  "weightKg",
-  "widthCm",
-]
 
 // The products seeded in the database (2026-10-13).
 const SEED = [
@@ -32,28 +13,34 @@ const SEED = [
 ]
 
 describe("catalog", () => {
-  it("holds exactly the six real pieces from the database seed", () => {
+  beforeEach(() => vi.stubEnv("VITE_API_URL", "https://api.test"))
+  afterEach(() => vi.unstubAllEnvs())
+
+  it("test fixture: today's live answers hold exactly the six real pieces from the database seed", () => {
     for (const row of SEED) {
-      expect(getProduct(row.id)).toEqual({ ...row, stoneType: "Limestone", soldOut: row.remaining === 0, story: null })
+      const { images, ...piece } = productOf(row.id)
+      expect(piece).toEqual({ ...row, stoneType: "Limestone", soldOut: row.remaining === 0, story: null })
+      expect(images.length).toBeGreaterThan(0)
     }
-    expect(listProducts()).toHaveLength(6)
+    expect(PRODUCTS.map((p) => p.images.length)).toEqual([2, 2, 2, 2, 2, 2])
   })
 
-  it("lists the published pieces newest first, like GET /products", () => {
-    expect(listProducts().map((p) => `${p.id} ${p.name}`)).toEqual(["6 Sannine", "5 Qadisha", "4 Jbeil", "3 Batroun", "2 Nahr", "1 Arz"])
+  it("reads the published pieces from GET /products at VITE_API_URL, newest first", async () => {
+    const fetch = stubApi()
+    expect((await listProducts()).map((p) => `${p.id} ${p.name}`)).toEqual(["6 Sannine", "5 Qadisha", "4 Jbeil", "3 Batroun", "2 Nahr", "1 Arz"])
+    expect(fetch).toHaveBeenCalledWith("https://api.test/products", expect.anything())
   })
 
-  it("returns exactly the contract's fields, with no story in the list", () => {
-    for (const piece of listProducts()) expect(Object.keys(piece).sort()).toEqual(SUMMARY_FIELDS)
-    expect(Object.keys(getProduct(5)!).sort()).toEqual([...SUMMARY_FIELDS, "story"].sort())
+  it("reads one piece with all its photos, and nothing for an unknown id", async () => {
+    stubApi()
+    expect((await getProduct(4))?.images).toHaveLength(19)
+    expect(await getProduct(7)).toBeNull()
   })
 
-  it("finds nothing for an unknown id", () => {
-    expect(getProduct(7)).toBeNull()
-  })
-
-  it("marks a piece with nothing remaining as sold out", () => {
-    expect(listProducts().filter((p) => p.soldOut).map((p) => p.name)).toEqual(["Nahr"])
+  it("refuses to run without the API address", async () => {
+    vi.stubEnv("VITE_API_URL", "")
+    expect(() => apiBase()).toThrow("VITE_API_URL is not set")
+    await expect(listProducts()).rejects.toThrow("VITE_API_URL is not set")
   })
 
   it("orders by creation date, then by id, both newest first", () => {

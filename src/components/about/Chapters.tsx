@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react"
 import Picture from "@/components/media/Picture"
 import { Rule } from "@/components/ui/rule"
 import { CRAFT_IMAGES } from "@/config/images"
-import { getProduct } from "@/features/catalog/catalog"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
@@ -12,11 +11,15 @@ const PHOTOS = [CRAFT_IMAGES.crest, CRAFT_IMAGES.bore, CRAFT_IMAGES.notch, CRAFT
 
 const pad = (n: number) => String(n).padStart(2, "0")
 
-export default function Chapters() {
+interface ChaptersProps {
+  /** The name of the piece in the crest photo (Arz), or null when it isn't published. */
+  crestName: string | null
+}
+
+export default function Chapters({ crestName }: ChaptersProps) {
   const { m } = useLocale()
   // The crest photo's alt names its piece (Arz) from the data.
-  const crestPiece = getProduct(CRAFT_IMAGES.crest.pieceId)?.name ?? m.catalog.unnamedPiece
-  const photoAlt = (i: number) => interpolate(m.about.photoAlts[i] ?? "", { name: crestPiece })
+  const photoAlt = (i: number) => interpolate(m.about.photoAlts[i] ?? "", { name: crestName ?? m.catalog.unnamedPiece })
   const chapters = m.about.chapters
   const listRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
@@ -52,9 +55,7 @@ export default function Chapters() {
           {PHOTOS.map((photo, i) => (
             <Picture
               key={photo.key}
-              imageKey={photo.key}
-              width={photo.width}
-              height={photo.height}
+              image={photo}
               alt=""
               sizes="50vw"
               fit="cover"
@@ -78,9 +79,7 @@ export default function Chapters() {
                 {photo && (
                   <div className="aspect-3/2 overflow-hidden bg-dark-section lg:hidden">
                     <Picture
-                      imageKey={photo.key}
-                      width={photo.width}
-                      height={photo.height}
+                      image={photo}
                       alt={photoAlt(i)}
                       sizes="100vw"
                       fit="cover"

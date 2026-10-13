@@ -5,25 +5,36 @@ import Gallery from "@/components/product/Gallery"
 import ProductTabs from "@/components/product/ProductTabs"
 import { relatedPieces } from "@/components/product/related"
 import StickyAddBar from "@/components/product/StickyAddBar"
-import { getProduct, listProducts } from "@/features/catalog/catalog"
+import { useLiveStock, withLiveStock } from "@/features/catalog/live-stock"
 import PieceCard from "@/features/catalog/PieceCard"
-import { parseProductId, productPath, readableName } from "@/features/catalog/product-path"
+import { productPath, readableName } from "@/features/catalog/product-path"
+import type { Product as ProductData, ProductSummary } from "@/features/catalog/types"
 import { useLocale } from "@/i18n/useLocale"
 import NotFound from "@/pages/NotFound"
 
 const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 640px) 50vw, 100vw"
 
-export default function Product() {
-  const { id: rawId, name } = useParams()
+interface ProductProps {
+  /** GET /products/{id}, or null for an unknown or unpublished piece. */
+  piece: ProductData | null
+  /** GET /products, for the related pieces. */
+  products: ProductSummary[]
+}
+
+export default function Product({ piece: built, products }: ProductProps) {
+  const { name } = useParams()
   const { m, to } = useLocale()
   const addButton = useRef<HTMLButtonElement>(null)
-  const id = parseProductId(rawId)
-  const piece = id === null ? null : getProduct(id)
-  if (!piece) return <NotFound />
+  const live = useLiveStock()
+  if (!built) return <NotFound />
   // Found by id only: a missing or outdated name in the address is corrected in place, never a 404.
-  if (name !== readableName(piece.name)) return <Navigate replace to={to(productPath(piece))} />
+  if (name !== readableName(built.name)) return <Navigate replace to={to(productPath(built))} />
 
-  const related = relatedPieces(listProducts(), piece.id)
+  const piece = withLiveStock(built, live)
+  const related = relatedPieces(
+    products.map((p) => withLiveStock(p, live)),
+    piece.id,
+  )
 
   return (
     <>

@@ -1,18 +1,19 @@
 import { render, screen } from "@testing-library/react"
 import { createRoutesStub, useLocation } from "react-router"
+import type { Product as ProductData } from "@/features/catalog/types"
+import { PRODUCTS, productOf } from "@/test/catalog"
 import Product from "./Product"
 
-function Page() {
-  const { pathname } = useLocation()
-  return (
-    <>
-      <p>address: {pathname}</p>
-      <Product />
-    </>
-  )
-}
-
-function renderAt(path: string) {
+function renderAt(path: string, piece: ProductData | null = productOf(5)) {
+  function Page() {
+    const { pathname } = useLocation()
+    return (
+      <>
+        <p>address: {pathname}</p>
+        <Product piece={piece} products={PRODUCTS} />
+      </>
+    )
+  }
   const Stub = createRoutesStub([{ path: "/:lang?/collection/:id/:name?", Component: Page }])
   return render(<Stub initialEntries={[path]} />)
 }
@@ -30,6 +31,13 @@ describe("Product", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Qadisha")
   })
 
+  // The id is the key: a link made before Omar renamed a piece still lands on it, under its current name.
+  it("lands on a renamed piece under its new name from its old address", async () => {
+    renderAt("/collection/5/qadisha", { ...productOf(5), name: "Qadisha Valley" })
+    expect(await screen.findByText("address: /collection/5/qadisha-valley")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Qadisha Valley")
+  })
+
   it("offers related pieces and, for available pieces, the sticky bar", () => {
     const { container } = renderAt("/collection/5/qadisha")
     expect(screen.getByRole("heading", { level: 2, name: "You may also like" })).toBeInTheDocument()
@@ -38,12 +46,24 @@ describe("Product", () => {
   })
 
   it("has no sticky bar for a sold-out piece", () => {
-    const { container } = renderAt("/collection/2/nahr")
+    const { container } = renderAt("/collection/2/nahr", productOf(2))
     expect(container.querySelector("[data-sticky-bar]")).toBeNull()
   })
 
-  it.each(["/collection/99/granite", "/collection/abc"])("shows the missing page for %s", (path) => {
-    renderAt(path)
+  it("turns sold out when the live stock says the last one has gone", async () => {
+    vi.stubEnv("VITE_API_URL", "https://api.test")
+    const live = PRODUCTS.map((p) => (p.id === 5 ? { ...p, remaining: 0, soldOut: true } : p))
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ success: true, data: live }))))
+    const { container } = renderAt("/collection/5/qadisha")
+    expect(screen.getByRole("button", { name: "Add to cart" })).toBeInTheDocument()
+    expect(await screen.findByText("Edition of 8 — sold out")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument()
+    expect(container.querySelector("[data-sticky-bar]")).toBeNull()
+    vi.unstubAllEnvs()
+  })
+
+  it("shows the missing page for an unknown or unpublished piece", () => {
+    renderAt("/collection/99/granite", null)
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
   })
 })

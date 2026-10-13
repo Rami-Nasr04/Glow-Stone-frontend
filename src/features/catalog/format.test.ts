@@ -1,9 +1,9 @@
 import { en } from "@/i18n/messages/en"
-import { getProduct } from "./catalog"
+import { productOf } from "@/test/catalog"
 import { dimensionsLabel, noBreak, placard, placardParts, stoneLabel, storyParagraphs } from "./format"
 
-const qadisha = getProduct(5)!
-const jbeil = getProduct(4)!
+const qadisha = productOf(5)
+const jbeil = productOf(4)
 
 describe("catalog format", () => {
   it("keeps two-part names on one line", () => {
@@ -13,7 +13,7 @@ describe("catalog format", () => {
 
   it("names the stone by its colour and type", () => {
     expect(stoneLabel(qadisha)).toBe("Cream limestone")
-    expect(stoneLabel(getProduct(1)!)).toBe("Warm beige limestone")
+    expect(stoneLabel(productOf(1))).toBe("Warm beige limestone")
   })
 
   it("formats dimensions, or nothing when any is missing", () => {

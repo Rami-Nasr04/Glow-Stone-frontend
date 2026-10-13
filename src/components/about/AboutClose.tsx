@@ -14,9 +14,7 @@ export default function AboutClose() {
       <div className="relative z-10 -mb-straddle px-gutter">
         <div className="mx-auto aspect-3/2 max-w-224 overflow-hidden bg-photo-dark">
           <Picture
-            imageKey={photo.key}
-            width={photo.width}
-            height={photo.height}
+            image={photo}
             alt={m.about.photoAlts[3] ?? ""}
             sizes="(min-width: 1024px) 56rem, 100vw"
             fit="cover"

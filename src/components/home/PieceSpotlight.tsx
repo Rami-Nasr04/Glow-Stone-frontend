@@ -3,26 +3,26 @@ import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
 import { ActionLink } from "@/components/ui/action-link"
 import { Rule } from "@/components/ui/rule"
-import { getProduct } from "@/features/catalog/catalog"
 import EditionLine from "@/features/catalog/EditionLine"
 import { noBreak, placardParts } from "@/features/catalog/format"
-import { coverOf, piecePhotos } from "@/features/catalog/photos"
+import NoPhoto from "@/features/catalog/NoPhoto"
 import { productPath } from "@/features/catalog/product-path"
+import type { Product } from "@/features/catalog/types"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
-import { HOME_PIECE, SPOTLIGHT_PHOTOS } from "./home-config"
+import { spotlightPhotos } from "./spotlight"
 
-export default function PieceSpotlight() {
+interface PieceSpotlightProps {
+  /** The home piece (HOME_PIECE) with all its photos. */
+  piece: Product
+}
+
+export default function PieceSpotlight({ piece }: PieceSpotlightProps) {
   const { m, to } = useLocale()
-  const piece = getProduct(HOME_PIECE)
-  const cover = piece && coverOf(piece)
-  if (!piece || !cover) return null
-
   const href = to(productPath(piece))
-  const photos = piecePhotos(piece)
-  const photo = (key: string) => photos.find((img) => img.key === key) ?? cover
-  const detail = photo(SPOTLIGHT_PHOTOS.detail)
-  const full = photo(SPOTLIGHT_PHOTOS.full)
+  const { cover, detail, inset } = spotlightPhotos(piece.images)
+  // Desktop: the landscape detail, or the cover alone when there is none.
+  const main = detail ?? cover
   // Only what the piece's own row says: its summary and how many bottles it holds.
   const capacity = piece.bottles === 1 ? m.home.spotlightBottle : interpolate(m.home.spotlightBottles, { count: piece.bottles })
   const text = [piece.summary, capacity].filter(Boolean).join(" ")
@@ -34,7 +34,7 @@ export default function PieceSpotlight() {
       {/* The photos duplicate the "View the piece" link for pointer users; hidden from keyboard and screen readers. */}
       <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6 lg:pe-gutter">
         <Link to={href} tabIndex={-1} aria-hidden="true" className="block aspect-2/3 overflow-hidden bg-photo-dark lg:hidden">
-          <Picture imageKey={cover.key} width={cover.width} height={cover.height} alt="" sizes="100vw" />
+          {cover ? <Picture image={cover} alt="" sizes="100vw" /> : <NoPhoto />}
         </Link>
         <Link
           to={href}
@@ -42,16 +42,18 @@ export default function PieceSpotlight() {
           aria-hidden="true"
           className="relative z-10 hidden aspect-3/2 overflow-hidden bg-photo-dark lg:col-span-8 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:block"
         >
-          <Picture imageKey={detail.key} width={detail.width} height={detail.height} alt="" sizes="62vw" />
+          {main ? <Picture image={main} alt="" sizes="62vw" /> : <NoPhoto />}
         </Link>
-        <Link
-          to={href}
-          tabIndex={-1}
-          aria-hidden="true"
-          className="relative z-20 hidden aspect-2/3 overflow-hidden border-10 border-background bg-background lg:col-span-2 lg:col-start-7 lg:row-start-2 lg:-mb-[14%] lg:block lg:self-end"
-        >
-          <Picture imageKey={full.key} width={full.width} height={full.height} alt="" sizes="13vw" />
-        </Link>
+        {inset && (
+          <Link
+            to={href}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="relative z-20 hidden aspect-2/3 overflow-hidden border-10 border-background bg-background lg:col-span-2 lg:col-start-7 lg:row-start-2 lg:-mb-[14%] lg:block lg:self-end"
+          >
+            <Picture image={inset} alt="" sizes="13vw" />
+          </Link>
+        )}
 
         <h2
           id="spotlight-title"

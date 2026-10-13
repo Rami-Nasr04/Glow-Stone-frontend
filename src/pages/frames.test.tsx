@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react"
 import { createRoutesStub } from "react-router"
+import { PRODUCTS, productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import About from "./About"
 import Collection from "./Collection"
@@ -16,15 +17,16 @@ describe("photo frames", () => {
   afterEach(() => vi.restoreAllMocks())
 
   it.each([
-    ["Home", <Home key="home" />, "/"],
-    ["Collection", <Collection key="collection" />, "/collection"],
-    ["About", <About key="about" />, "/about"],
+    ["Home", <Home key="home" products={PRODUCTS} piece={productOf(5)} />, "/"],
+    ["Collection", <Collection key="collection" products={PRODUCTS} />, "/collection"],
+    ["About", <About key="about" crestName="Arz" />, "/about"],
   ])("clips every aspect-ratio frame on %s", (_, page, path) => {
     expectClippedFrames(renderAt(page, path).container)
   })
 
   it("clips every aspect-ratio frame on a product page", () => {
-    const Stub = createRoutesStub([{ path: "/:lang?/collection/:id/:name?", Component: Product }])
+    const Page = () => <Product piece={productOf(5)} products={PRODUCTS} />
+    const Stub = createRoutesStub([{ path: "/:lang?/collection/:id/:name?", Component: Page }])
     expectClippedFrames(render(<Stub initialEntries={["/collection/5/qadisha"]} />).container)
   })
 })

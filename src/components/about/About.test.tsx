@@ -20,18 +20,18 @@ describe("About sections", () => {
   })
 
   it("tells four chapters, each with its own landscape photo on phones", () => {
-    const { container } = renderAt(<Chapters />)
+    const { container } = renderAt(<Chapters crestName="Arz" />)
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["The stone", "The carving", "The edition", "Time"])
     expect(container.querySelectorAll("article .aspect-3\\/2")).toHaveLength(4)
   })
 
   it("marks unconfirmed facts as placeholders", () => {
-    renderAt(<Chapters />)
+    renderAt(<Chapters crestName="Arz" />)
     expect(screen.getByText("[Placeholder: how each piece is marked and documented.]")).toHaveClass("text-accent")
   })
 
   it("labels the photo panel with the chapter in view, following the scroll", () => {
-    const { container } = renderAt(<Chapters />)
+    const { container } = renderAt(<Chapters crestName="Arz" />)
     const label = container.querySelector("[data-chapter-label]")!
     expect(label).toHaveTextContent("01 / 04 · The stone")
     const articles = container.querySelectorAll("article")

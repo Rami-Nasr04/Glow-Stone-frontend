@@ -2,8 +2,8 @@ import { MoveLeft, MoveRight } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router"
 import { Eyebrow } from "@/components/ui/rule"
-import { listProducts } from "@/features/catalog/catalog"
 import PieceCard from "@/features/catalog/PieceCard"
+import type { ProductSummary } from "@/features/catalog/types"
 import { useLocale } from "@/i18n/useLocale"
 import { scrollBehavior } from "@/lib/motion"
 import { cn } from "@/lib/utils"
@@ -13,16 +13,21 @@ const arrowButton =
   "hidden size-12 items-center justify-center rounded-full border border-primary transition-[opacity,background-color,color] duration-500 hover:bg-primary hover:text-primary-foreground disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-foreground md:flex"
 const arrowIcon = "size-4.5 rtl:-scale-x-100"
 
+interface SelectedPiecesProps {
+  /** Every published piece, newest first; the rail shows the featured ones. */
+  pieces: ProductSummary[]
+}
+
 interface DragState {
   x: number
   left: number
   moved: boolean
 }
 
-export default function SelectedPieces() {
+export default function SelectedPieces({ pieces: all }: SelectedPiecesProps) {
   const { m, to } = useLocale()
   // Featured pieces, newest first like the collection.
-  const pieces = listProducts().filter((p) => p.featured)
+  const pieces = all.filter((p) => p.featured)
   const railRef = useRef<HTMLUListElement>(null)
   const drag = useRef<DragState | null>(null)
   const swallowClick = useRef(false)

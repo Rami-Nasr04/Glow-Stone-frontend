@@ -5,7 +5,7 @@ import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import EditionLine from "./EditionLine"
 import { noBreak, stoneLabel } from "./format"
-import { coverOf, hoverOf } from "./photos"
+import NoPhoto from "./NoPhoto"
 import { productPath } from "./product-path"
 import type { ProductSummary } from "./types"
 
@@ -22,20 +22,17 @@ interface PieceCardProps {
 export default function PieceCard({ product, sizes, compact = false, headingLevel = 3, className }: PieceCardProps) {
   const { to } = useLocale()
   const Heading = headingLevel === 2 ? "h2" : "h3"
-  const cover = coverOf(product)
-  const hover = hoverOf(product)
+  const [cover, hover] = product.images
   const stone = stoneLabel(product)
 
   return (
     <Link to={to(productPath(product))} draggable={false} className={cn("group flex flex-col", compact ? "gap-4.5" : "gap-6", className)}>
       <div className={cn("relative aspect-2/3 overflow-hidden bg-background", product.soldOut && "opacity-55 grayscale-70")}>
         {/* The name is in the link text, so the photos are decorative here. */}
-        {cover && <Picture imageKey={cover.key} width={cover.width} height={cover.height} alt="" sizes={sizes} draggable={false} />}
+        {cover ? <Picture image={cover} alt="" sizes={sizes} draggable={false} /> : <NoPhoto />}
         {hover && (
           <Picture
-            imageKey={hover.key}
-            width={hover.width}
-            height={hover.height}
+            image={hover}
             alt=""
             aria-hidden="true"
             sizes={sizes}

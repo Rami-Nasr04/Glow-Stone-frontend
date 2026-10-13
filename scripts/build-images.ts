@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 import sharp from "sharp"
-import { HERO_MAP, IMAGE_MAP, WEBP_QUALITY, widthsFor } from "./image-map.ts"
+import { CRAFT_WIDTHS, HERO_MAP, IMAGE_MAP, WEBP_QUALITY } from "./image-map.ts"
 
 const heroMode = process.argv[2] === "--hero"
 const sourceDir = heroMode ? process.argv[3] : process.argv[2]
@@ -16,7 +16,7 @@ if (!sourceDir || !existsSync(sourceDir)) {
 
 const jobs = heroMode
   ? Object.entries(HERO_MAP).map(([key, { file, widths }]) => ({ key, source: join(sourceDir, file), widths }))
-  : Object.entries(IMAGE_MAP).map(([key, id]) => ({ key, source: join(sourceDir, `${id}.jpg`), widths: widthsFor(key) }))
+  : Object.entries(IMAGE_MAP).map(([key, id]) => ({ key, source: join(sourceDir, `${id}.jpg`), widths: CRAFT_WIDTHS }))
 
 let written = 0
 for (const { key, source, widths } of jobs) {
