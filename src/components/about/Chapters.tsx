@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import Picture from "@/components/media/Picture"
 import { Rule } from "@/components/ui/rule"
 import { CRAFT_IMAGES } from "@/config/images"
+import { getProduct } from "@/features/catalog/catalog"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
@@ -13,6 +14,9 @@ const pad = (n: number) => String(n).padStart(2, "0")
 
 export default function Chapters() {
   const { m } = useLocale()
+  // The crest photo's alt names its piece (Arz) from the data.
+  const crestPiece = getProduct(CRAFT_IMAGES.crest.pieceId)?.name ?? m.catalog.unnamedPiece
+  const photoAlt = (i: number) => interpolate(m.about.photoAlts[i] ?? "", { name: crestPiece })
   const chapters = m.about.chapters
   const listRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
@@ -77,7 +81,7 @@ export default function Chapters() {
                       imageKey={photo.key}
                       width={photo.width}
                       height={photo.height}
-                      alt={m.about.photoAlts[i] ?? ""}
+                      alt={photoAlt(i)}
                       sizes="100vw"
                       fit="cover"
                     />

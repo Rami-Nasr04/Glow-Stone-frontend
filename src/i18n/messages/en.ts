@@ -40,6 +40,7 @@ export const en = {
   },
   catalog: {
     photoAlt: "{name}, photo {n} of {total}",
+    unnamedPiece: "a Glowstone piece",
     dimensions: "{height} × {width} × {depth} cm",
   },
   // Home lines become editable `site_content` in B6.
@@ -59,7 +60,7 @@ export const en = {
     craftLead: "Every piece begins as a single block of Lebanese limestone and is carved by hand, with chisel and mallet.",
     craftBody: "The marks of the chisel stay in the stone.",
     ourStory: "Our story",
-    crestAlt: "A hand-broken limestone crest, its chisel marks catching the light",
+    crestAlt: "The hand-broken crest of {name}, its chisel marks catching the light",
     boreAlt: "The ringed wall of a hole bored through limestone",
     boreCaption: "The bore",
     spotlightBottles: "Holds {count} bottles.",
@@ -178,7 +179,7 @@ export const en = {
       },
     ],
     photoAlts: [
-      "A hand-broken limestone crest, showing the grain of the stone",
+      "The hand-broken crest of {name}, showing the grain of the limestone",
       "The ringed wall of a hole bored through limestone",
       "A bottle resting in a hand-cut notch",
       "Light passing through a hole bored in limestone",

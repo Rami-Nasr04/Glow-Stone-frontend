@@ -18,7 +18,7 @@ describe("CraftCollage", () => {
 
   it("shows both close-ups cropped to fill, with the bore captioned", () => {
     renderAt(<CraftCollage />)
-    expect(screen.getByAltText(/hand-broken limestone crest/).className).toContain("object-cover")
+    expect(screen.getByAltText(/^The hand-broken crest of Arz/).className).toContain("object-cover")
     expect(screen.getByAltText(/ringed wall/).className).toContain("object-cover")
     expect(screen.getByText("The bore").tagName).toBe("FIGCAPTION")
   })

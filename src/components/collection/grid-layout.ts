@@ -1,6 +1,6 @@
-// The craft interlude takes a full row after the sixth piece (six fills whole rows at one, two and three columns),
-// so only the pieces after it decide the last row.
-export const INTERLUDE_AFTER = 6
+// The craft interlude takes a full row after the third piece: the end of the first row on desktop (Rami, 2026-10-13).
+// Only the pieces after it decide the last row.
+export const INTERLUDE_AFTER = 3
 
 export interface TileSpans {
   md: 1 | 2

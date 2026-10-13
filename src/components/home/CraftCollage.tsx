@@ -2,11 +2,14 @@ import Picture from "@/components/media/Picture"
 import { ActionLink } from "@/components/ui/action-link"
 import { Eyebrow } from "@/components/ui/rule"
 import { CRAFT_IMAGES } from "@/config/images"
+import { getProduct } from "@/features/catalog/catalog"
+import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 
 export default function CraftCollage() {
   const { m, to } = useLocale()
   const { crest, bore } = CRAFT_IMAGES
+  const crestPiece = getProduct(crest.pieceId)?.name ?? m.catalog.unnamedPiece
 
   return (
     <section aria-labelledby="craft-title" className="relative flow-root bg-dark-section text-dark-section-foreground">
@@ -17,7 +20,7 @@ export default function CraftCollage() {
             imageKey={crest.key}
             width={crest.width}
             height={crest.height}
-            alt={m.home.crestAlt}
+            alt={interpolate(m.home.crestAlt, { name: crestPiece })}
             sizes="(min-width: 1024px) 60vw, 100vw"
             fit="cover"
           />
