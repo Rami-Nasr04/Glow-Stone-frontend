@@ -17,10 +17,11 @@ describe("the build", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_API_URL", "https://api.test")
     vi.stubEnv("VITE_SITE_URL", "https://site.test")
+    vi.stubEnv("VITE_ALLOW_INDEXING", "false")
   })
   afterEach(() => vi.unstubAllEnvs())
 
-  it("lists the pages from the API when both addresses are set", async () => {
+  it("lists the pages from the API when every variable is set", async () => {
     stubApi()
     expect(await prerender()).toContain("/collection/5/qadisha")
   })
@@ -29,6 +30,13 @@ describe("the build", () => {
     const fetch = stubApi()
     vi.stubEnv("VITE_SITE_URL", "")
     await expect(prerender()).rejects.toThrow("VITE_SITE_URL is not set")
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it.each(["", "yes"])("refuses VITE_ALLOW_INDEXING=%j before asking the API", async (value) => {
+    const fetch = stubApi()
+    vi.stubEnv("VITE_ALLOW_INDEXING", value)
+    await expect(prerender()).rejects.toThrow("VITE_ALLOW_INDEXING")
     expect(fetch).not.toHaveBeenCalled()
   })
 

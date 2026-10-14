@@ -16,6 +16,6 @@ export default defineConfig({
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.ts"],
     // Placeholder addresses: no test reaches a real site or API.
-    env: { VITE_SITE_URL: "https://site.test" },
+    env: { VITE_SITE_URL: "https://site.test", VITE_ALLOW_INDEXING: "false" },
   },
 })

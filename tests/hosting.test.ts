@@ -27,6 +27,11 @@ describe("vercel.json", () => {
     expect(headersFor("/assets/(.*)")).toContainEqual({ key: "Cache-Control", value: "public, max-age=31536000, immutable" })
   })
 
+  // Until launch (VITE_ALLOW_INDEXING=false): the same rule as the robots tag on every page, for every file served.
+  it("asks search engines not to index anything", () => {
+    expect(headersFor("/(.*)")).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
+  })
+
   it("sends basic security headers on every response", () => {
     const keys = headersFor("/(.*)").map((h) => h.key)
     expect(keys).toEqual(
