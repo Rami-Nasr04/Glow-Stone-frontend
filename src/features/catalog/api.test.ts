@@ -115,7 +115,7 @@ describe("products API", () => {
   })
 
   it("needs the API address", () => {
-    expect(() => requireApiUrl(undefined)).toThrow("VITE_API_URL is not set (see .env.example).")
+    expect(() => requireApiUrl(undefined)).toThrow("VITE_API_URL is not set")
     expect(() => requireApiUrl(" ")).toThrow("VITE_API_URL is not set")
     expect(() => requireApiUrl("ftp://api.test")).toThrow("VITE_API_URL must be an http(s) address")
     expect(requireApiUrl(" https://api.test/ ")).toBe("https://api.test")

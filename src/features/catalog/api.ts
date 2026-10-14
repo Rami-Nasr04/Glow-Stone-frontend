@@ -1,6 +1,7 @@
 // GET /products and GET /products/{id}, as agreed with the backend. Every answer is checked
 // field by field: during the build a bad answer throws and the build stops, so the site never goes out with an empty
 // or half-read catalog. Also loaded by the build config in Node (react-router.config.ts), so no "@/" imports here.
+import { requireUrl } from "../../lib/env.ts"
 import type { Product, ProductImage, ProductSummary } from "./types.ts"
 
 type Json = Record<string, unknown>
@@ -97,10 +98,7 @@ function idOf(value: unknown): string {
 
 /** The API's base address from VITE_API_URL, without a trailing slash. */
 export function requireApiUrl(value: string | undefined): string {
-  const url = value?.trim().replace(/\/+$/, "")
-  if (!url) throw new Error("VITE_API_URL is not set (see .env.example).")
-  if (!/^https?:\/\/\S+$/.test(url)) throw new Error("VITE_API_URL must be an http(s) address.")
-  return url
+  return requireUrl("VITE_API_URL", value)
 }
 
 // The envelope's data, or null for a 404 when `missingIsNull`. Anything else that isn't a good answer throws.

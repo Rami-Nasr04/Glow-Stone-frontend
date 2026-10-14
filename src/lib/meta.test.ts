@@ -8,12 +8,12 @@ describe("pageMeta", () => {
     const meta = pageMeta({ title: "About — Glowstone", description: "Omar, and the patience of stone.", path: "/about" })
     expect(meta).toContainEqual({ title: "About — Glowstone" })
     expect(find(meta, "description")).toMatchObject({ content: "Omar, and the patience of stone." })
-    expect(meta).toContainEqual({ tagName: "link", rel: "canonical", href: "https://glowstonelb.com/about" })
+    expect(meta).toContainEqual({ tagName: "link", rel: "canonical", href: "https://site.test/about" })
   })
 
   it("gives link previews an absolute image, defaulting to the hero", () => {
     const meta = pageMeta({ title: "Glowstone", description: "x", path: "/" })
-    expect(find(meta, "og:image")).toMatchObject({ content: "https://glowstonelb.com/images/hero/desktop-1376.webp" })
+    expect(find(meta, "og:image")).toMatchObject({ content: "https://site.test/images/hero/desktop-1376.webp" })
     expect(find(meta, "twitter:card")).toMatchObject({ content: "summary_large_image" })
   })
 
