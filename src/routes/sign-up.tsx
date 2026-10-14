@@ -1,13 +1,17 @@
+import { ACCOUNTS_OPEN } from "@/features/auth/client"
 import { toLocale } from "@/i18n/locales"
 import { MESSAGES } from "@/i18n/useLocale"
 import type { RouteHandle } from "@/lib/route-handle"
+import NotFound from "@/pages/NotFound"
 import SignUp from "@/pages/SignUp"
 import type { Route } from "./+types/sign-up"
 
-export const handle: RouteHandle = { bare: true }
+// Closed on built sites until the customer pool is live: the missing page, inside the site frame.
+export const handle: RouteHandle = { bare: ACCOUNTS_OPEN }
 
 export function meta({ params }: Route.MetaArgs) {
-  return [{ title: MESSAGES[toLocale(params.lang)].auth.signUp.metaTitle }, { name: "robots", content: "noindex" }]
+  const m = MESSAGES[toLocale(params.lang)]
+  return [{ title: ACCOUNTS_OPEN ? m.auth.signUp.metaTitle : m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
 }
 
-export default SignUp
+export default ACCOUNTS_OPEN ? SignUp : NotFound

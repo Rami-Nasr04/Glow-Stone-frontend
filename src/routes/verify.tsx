@@ -1,13 +1,17 @@
+import { ACCOUNTS_OPEN } from "@/features/auth/client"
 import { toLocale } from "@/i18n/locales"
 import { MESSAGES } from "@/i18n/useLocale"
 import type { RouteHandle } from "@/lib/route-handle"
+import NotFound from "@/pages/NotFound"
 import Verify from "@/pages/Verify"
 import type { Route } from "./+types/verify"
 
-export const handle: RouteHandle = { bare: true }
+// Closed on built sites until the customer pool is live: the missing page, inside the site frame.
+export const handle: RouteHandle = { bare: ACCOUNTS_OPEN }
 
 export function meta({ params }: Route.MetaArgs) {
-  return [{ title: MESSAGES[toLocale(params.lang)].auth.verify.metaTitle }, { name: "robots", content: "noindex" }]
+  const m = MESSAGES[toLocale(params.lang)]
+  return [{ title: ACCOUNTS_OPEN ? m.auth.verify.metaTitle : m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
 }
 
-export default Verify
+export default ACCOUNTS_OPEN ? Verify : NotFound
