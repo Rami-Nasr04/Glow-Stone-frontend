@@ -1,8 +1,7 @@
 import { Outlet, useLocation, useMatches, useParams } from "react-router"
 import SiteFooter from "@/components/layout/SiteFooter"
 import SiteHeader from "@/components/layout/SiteHeader"
-import { isLocale } from "@/i18n/locales"
-import { PUBLISHED_LOCALES } from "@/i18n/paths"
+import { knownPrefix } from "@/i18n/paths"
 import { useLocale } from "@/i18n/useLocale"
 import type { RouteHandle } from "@/lib/route-handle"
 import { cn } from "@/lib/utils"
@@ -15,7 +14,7 @@ export default function LocaleLayout() {
   const matches = useMatches()
   // ":lang?" matches any first segment; anything that is not a published locale is a missing page (inside the
   // site frame). Arabic and French stay unpublished until the I18N phase.
-  const unknownPrefix = lang !== undefined && !(isLocale(lang) && PUBLISHED_LOCALES.includes(lang))
+  const unknownPrefix = !knownPrefix(lang)
   const isHome = !unknownPrefix && pathname.replace(/\/$/, "") === to("/").replace(/\/$/, "")
   // Sign-in pages are full screen: no site header or footer.
   const bare = !unknownPrefix && matches.some((match) => (match.handle as RouteHandle | undefined)?.bare === true)

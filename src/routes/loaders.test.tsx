@@ -73,7 +73,7 @@ describe("route loaders", () => {
 
     serverLoader.mockRejectedValue(new Error("not prerendered"))
     const live = await clientLoader({ ...productArgs("3"), serverLoader } as unknown as Route.ClientLoaderArgs)
-    expect(live.piece?.name).toBe("Batroun")
+    expect(live?.piece?.name).toBe("Batroun")
     expect(fetch).toHaveBeenCalledWith("https://api.test/products/3", expect.anything())
   })
 
@@ -93,6 +93,21 @@ describe("route loaders", () => {
     serverLoader.mockRejectedValue(new Error("no built data"))
     expect(Object.keys((await call()) as object).sort()).toEqual([...keys].sort())
     expect(fetch).toHaveBeenCalled()
+  })
+
+  // ":lang?" takes any first segment (/studio, /nothing-here): the layout shows the missing page there, so the
+  // route asks the API nothing and a failed call can't turn the 404 into an error.
+  it.each([
+    ["home", homeClientLoader],
+    ["collection", collectionClientLoader],
+    ["about", aboutClientLoader],
+    ["product", clientLoader],
+  ] as const)("%s in the browser: nothing to load under an unknown first segment", async (_, load) => {
+    const fetch = stubApi()
+    const serverLoader = vi.fn().mockRejectedValue(new Error("no built data"))
+    const call = load as (a: unknown) => Promise<unknown>
+    expect(await call({ ...args<object>({ lang: "studio", id: "5" }), serverLoader })).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it("product meta: the piece's title, summary, cover and current address", () => {

@@ -4,7 +4,7 @@ import { getProduct, listProducts } from "@/features/catalog/catalog"
 import { parseProductId, productPath } from "@/features/catalog/product-path"
 import { interpolate } from "@/i18n/format"
 import { toLocale } from "@/i18n/locales"
-import { localizedPath } from "@/i18n/paths"
+import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES, useLocale } from "@/i18n/useLocale"
 import { photoUrl } from "@/lib/images"
 import { pageMeta } from "@/lib/meta"
@@ -24,8 +24,10 @@ export function loader({ params }: Route.LoaderArgs) {
 }
 
 // In the browser: the data written into the page when it was built. A page that wasn't built (a piece published
-// since, or an old or mistyped name in the address) has none, so it asks the API itself.
+// since, or an old or mistyped name in the address) has none, so it asks the API itself. Nothing under an unknown
+// first segment: the layout shows the 404 there. Never call `loader` here: it isn't in the browser bundle.
 export async function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  if (!knownPrefix(params.lang)) return null
   try {
     return await serverLoader()
   } catch {
@@ -64,5 +66,5 @@ export function ErrorBoundary() {
 }
 
 export default function ProductRoute({ loaderData }: Route.ComponentProps) {
-  return <Product {...loaderData} />
+  return loaderData ? <Product {...loaderData} /> : null
 }
