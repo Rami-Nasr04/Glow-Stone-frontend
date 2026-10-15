@@ -80,7 +80,7 @@ describe("the studio's edit page", () => {
     expect(screen.getByText(f.unsaved)).toBeInTheDocument()
     await user.click(saveButton())
     await waitFor(() => expect(bodiesOf(fetch, "PATCH")).toEqual([{ price: 450 }]))
-    expect(toast.success).toHaveBeenCalledWith(f.savedToast)
+    expect(toast.success).toHaveBeenCalledWith(f.savedToast, { position: "top-center" })
     await waitFor(() => expect(saveButton()).toHaveTextContent(f.noChanges))
     expect(readDraft(1)).toBeNull()
   })
@@ -146,7 +146,7 @@ describe("the studio's edit page", () => {
     const user = userEvent.setup()
     await user.type(field(labels.color), " light")
     await user.click(saveButton())
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(f.saveFailed))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(f.saveFailed, { position: "top-center" }))
     expect(screen.getByText(f.unsaved)).toBeInTheDocument()
   })
 

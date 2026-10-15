@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useBeforeUnload, useBlocker, useNavigate } from "react-router"
-import { toast } from "sonner"
 import { Field, inputClass } from "@/components/ui/field"
 import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
@@ -16,6 +15,7 @@ import { clearDraft, type DraftKey, readDraft, registerOpenDraft } from "./draft
 import LeaveDialog from "./LeaveDialog"
 import { EMPTY_FORM, type FormErrors, formFromProduct, hasChanges, type ProductFormValues, readForm, changedFields } from "./product-form"
 import StudioNote from "./StudioNote"
+import { studioToast } from "./toast"
 
 interface ProductEditorProps {
   /** The saved piece, or null for a new one. */
@@ -117,20 +117,20 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
           setSaved(result)
           setValues(formFromProduct(result))
           clearDraft(key)
-          toast.success(f.savedToast)
+          studioToast.success(f.savedToast)
         }
         setSaving(false)
       } else {
         const result = await api.createProduct(read.input)
         clearDraft(key)
         latest.current.leaving = true
-        toast.success(f.createdToast)
+        studioToast.success(f.createdToast)
         navigate(studioPath(`/products/${result.id}`), { replace: true })
       }
     } catch (error) {
       setSaving(false)
       if (!(error instanceof StudioError)) {
-        toast.error(f.saveFailed)
+        studioToast.error(f.saveFailed)
         return
       }
       // A 401 has already kept this draft and sent the admin to sign in.
@@ -141,7 +141,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         setErrors(found)
         focusField(found)
       } else if (error.code === "VALIDATION") setFormError(error.message)
-      else toast.error(f.saveFailed)
+      else studioToast.error(f.saveFailed)
     }
   }
 
@@ -242,7 +242,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
                     rows={7}
                     value={values.story}
                     onChange={(e) => set("story", e.target.value)}
-                    className="w-full resize-y border border-border bg-background/40 p-3 text-base leading-relaxed transition-colors duration-500 focus:border-accent focus:outline-none"
+                    className="w-full resize-y border border-border bg-background/40 p-3 text-base leading-relaxed transition-colors duration-500 focus:border-accent focus:shadow-[0_0_0_1px_var(--accent)] focus:outline-none"
                     {...control}
                   />
                 )}
@@ -323,7 +323,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         <button
           type="submit"
           disabled={saving || (saved !== null && !dirty)}
-          className="min-h-11 bg-dark-section-foreground px-6 text-label uppercase tracking-caps text-dark-section transition-opacity duration-500 disabled:opacity-60"
+          className="min-h-11 bg-dark-section-foreground px-6 text-label uppercase tracking-caps text-dark-section transition-opacity duration-500 focus-visible:outline-on-photo disabled:opacity-60"
         >
           {saving ? f.saving : saved ? (dirty ? f.save : f.noChanges) : f.create}
         </button>

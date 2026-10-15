@@ -4,12 +4,16 @@
 // that the page shown is that page (its h1 and title, read from its own built HTML), after a direct
 // load and after a refresh, at 1440 and 390. Also checks that an unknown address shows the 404,
 // that the app moves on to another page after landing, and that the header logo link can be clicked.
+// The studio: its addresses load and refresh to its sign-in page (or its not-found), never indexed, and no shop
+// page loads the studio's sign-in code.
 // Usage: npm run build, npm start, then npm run check:pages (local), or
 //        npm run check:pages -- https://glow-stone-frontend.vercel.app
 // The browser is Microsoft Edge; set EDGE_PATH if it is installed elsewhere.
 import { readdirSync, readFileSync } from "node:fs"
 import { join, sep } from "node:path"
 import puppeteer, { type Page } from "puppeteer-core"
+import { safeStudioNext, studioPath } from "../src/config/studio.ts"
+import { STUDIO_COPY } from "../src/features/studio/copy.ts"
 import { en } from "../src/i18n/messages/en.ts"
 
 const BUILD = "build/client"
@@ -106,6 +110,24 @@ async function logoOnFocus(page: Page): Promise<boolean> {
   return false
 }
 
+// The chunk that carries the Cognito library: only studio pages may load it.
+const studioOnly = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes("USER_SRP_AUTH"))
+if (studioOnly.length === 0) throw new Error("No chunk carries the studio's sign-in code; the check would prove nothing.")
+
+async function loadedStudioCode(page: Page): Promise<string[]> {
+  const loaded = await page.evaluate(() => performance.getEntriesByType("resource").map((entry) => entry.name))
+  return loaded.filter((url) => studioOnly.some((file) => url.endsWith(`/${file}`)))
+}
+
+// Signed out, every studio address ends on the sign-in page, which asks to come back afterwards.
+const signIn = studioPath("/sign-in")
+const studioPages = [
+  { open: studioPath("/"), path: signIn, next: safeStudioNext(studioPath("/products")), h1: STUDIO_COPY.signIn.title },
+  { open: signIn, path: signIn, next: null, h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/products/5"), path: signIn, next: studioPath("/products/5"), h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/nothing-here"), path: studioPath("/nothing-here"), next: null, h1: STUDIO_COPY.notFound.title },
+]
+
 const pages = builtPages(BUILD)
 const home = pages.find((p) => p.path === "/")
 if (!home) throw new Error(`No home page in ${BUILD}. Run npm run build first.`)
@@ -144,6 +166,31 @@ for (const viewport of viewports) {
       await checkLogo(page, home, `${label} scrolled`)
     }
 
+    const studioCode = await loadedStudioCode(page)
+    if (studioCode.length > 0) fail(`${label}: loaded the studio's code (${studioCode.join(", ")})`)
+    for (const error of errors) fail(`${label}: script error "${error}"`)
+    console.log(`  ok ${label}`)
+    await page.close()
+  }
+
+  for (const want of studioPages) {
+    const label = `${viewport.name} ${want.open}`
+    const page = await browser.newPage()
+    await page.setViewport(viewport)
+    const errors: string[] = []
+    page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
+    const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
+    if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
+    for (const step of ["direct", "refresh"]) {
+      if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })
+      const got = await shown(page, want.path)
+      const next = await page.evaluate(() => new URLSearchParams(location.search).get("next"))
+      const robots = await page.$$eval('meta[name="robots"]', (tags) => tags.map((tag) => tag.getAttribute("content")))
+      if (got.path !== want.path) fail(`${label} ${step}: ended on ${got.path}`)
+      if (got.h1 !== want.h1) fail(`${label} ${step}: h1 "${got.h1}", expected "${want.h1}"`)
+      if (next !== want.next) fail(`${label} ${step}: next ${next}, expected ${want.next}`)
+      if (!robots.includes("noindex, nofollow")) fail(`${label} ${step}: no robots noindex tag`)
+    }
     for (const error of errors) fail(`${label}: script error "${error}"`)
     console.log(`  ok ${label}`)
     await page.close()

@@ -84,7 +84,8 @@ describe("the studio's products list", () => {
     expect(String(patch?.[0])).toBe("https://api.test/admin/products/2")
     expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ featured: true })
     await waitFor(() => expect(within(rowOf("Nahr")).getByRole("button", { name: "Stop featuring Nahr on the home page" })).toHaveAttribute("aria-pressed", "true"))
-    expect(toast.success).toHaveBeenCalledWith("Nahr is featured.", { description: STUDIO_COPY.form.savedToast })
+    // Top centre: top-right would cover "New product" and the stars.
+    expect(toast.success).toHaveBeenCalledWith("Nahr is featured.", { description: STUDIO_COPY.form.savedToast, position: "top-center" })
   })
 
   it("puts the star back and says so when the change isn't saved", async () => {
@@ -92,7 +93,7 @@ describe("the studio's products list", () => {
     renderList()
     await screen.findByRole("link", { name: "Arz" })
     await userEvent.setup().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.featureFailed))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.featureFailed, { position: "top-center" }))
     expect(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" })).toHaveAttribute("aria-pressed", "true")
   })
 

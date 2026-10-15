@@ -9,7 +9,9 @@ interface StudioShellProps {
 }
 
 const s = STUDIO_COPY.shell
-const darkLink = "flex min-h-11 items-center text-label uppercase tracking-caps text-dark-section-foreground transition-colors duration-500 hover:text-on-photo"
+// On charcoal the site's wine focus ring is too faint, so focus is drawn in light stone here.
+const darkLink =
+  "flex min-h-11 items-center text-label uppercase tracking-caps text-dark-section-foreground transition-colors duration-500 hover:text-on-photo focus-visible:outline-on-photo"
 
 // The prototype's studio frame: a charcoal sidebar on desktop, a charcoal top bar on phones. The studio has one
 // section for now (products), so phones get no bottom tab bar.
@@ -48,7 +50,7 @@ export default function StudioShell({ children }: StudioShellProps) {
       </a>
 
       <aside className="sticky top-0 hidden h-svh w-62 flex-none flex-col bg-dark-section px-4 pt-7 pb-5 lg:flex">
-        <Link to={studioPath("/products")} aria-label={s.home} className="flex flex-col gap-3 px-3 pb-7">
+        <Link to={studioPath("/products")} aria-label={s.home} className="flex flex-col gap-3 px-3 pb-7 focus-visible:outline-on-photo">
           <img src="/brand/glowstone-wordmark-header-on-dark.svg" alt="" width={192} height={15} className="block h-auto w-42.5" />
           <span className="text-label uppercase tracking-label text-dark-muted-foreground">{STUDIO_COPY.studio}</span>
         </Link>
@@ -62,7 +64,7 @@ export default function StudioShell({ children }: StudioShellProps) {
       </aside>
 
       <header className="sticky top-0 z-30 flex h-15 items-center justify-between gap-3 bg-dark-section px-4 lg:hidden">
-        <Link to={studioPath("/products")} aria-label={s.home} className="flex min-h-11 items-center gap-3">
+        <Link to={studioPath("/products")} aria-label={s.home} className="flex min-h-11 items-center gap-3 focus-visible:outline-on-photo">
           <img src="/brand/glowstone-monogram-on-dark.svg" alt="" width={26} height={26} className="size-6.5" />
           <span className="text-label uppercase tracking-label text-dark-section-foreground">{STUDIO_COPY.studio}</span>
         </Link>

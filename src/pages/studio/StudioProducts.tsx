@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router"
-import { toast } from "sonner"
 import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
 import NoPhoto from "@/features/catalog/NoPhoto"
@@ -9,6 +8,7 @@ import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import StatusBadge from "@/features/studio/StatusBadge"
 import StudioNote from "@/features/studio/StudioNote"
+import { studioToast } from "@/features/studio/toast"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { photoUrl } from "@/lib/images"
 import { cn } from "@/lib/utils"
@@ -61,10 +61,10 @@ export default function StudioProducts() {
     setFeatured(piece.id, featured)
     try {
       await api.updateProduct(piece.id, { featured })
-      toast.success(interpolate(featured ? t.featuredSaved : t.unfeaturedSaved, { name: piece.name }), { description: STUDIO_COPY.form.savedToast })
+      studioToast.success(interpolate(featured ? t.featuredSaved : t.unfeaturedSaved, { name: piece.name }), { description: STUDIO_COPY.form.savedToast })
     } catch {
       setFeatured(piece.id, piece.featured)
-      toast.error(t.featureFailed)
+      studioToast.error(t.featureFailed)
     }
   }
 

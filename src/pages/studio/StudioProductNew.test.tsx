@@ -86,7 +86,7 @@ describe("the studio's new-product page", () => {
         story: null,
       },
     ])
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(f.createdToast))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(f.createdToast, { position: "top-center" }))
   })
 
   it("asks before leaving with something typed", async () => {
