@@ -18,6 +18,8 @@ describe("the build", () => {
     vi.stubEnv("VITE_API_URL", "https://api.test")
     vi.stubEnv("VITE_SITE_URL", "https://site.test")
     vi.stubEnv("VITE_ALLOW_INDEXING", "false")
+    vi.stubEnv("VITE_ADMIN_USER_POOL_ID", "eu-central-1_Test123")
+    vi.stubEnv("VITE_ADMIN_APP_CLIENT_ID", "testclient123")
   })
   afterEach(() => vi.unstubAllEnvs())
 
@@ -37,6 +39,19 @@ describe("the build", () => {
     const fetch = stubApi()
     vi.stubEnv("VITE_ALLOW_INDEXING", value)
     await expect(prerender()).rejects.toThrow("VITE_ALLOW_INDEXING")
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  // The studio can't sign anyone in without them (Rami, 2026-10-16: the build requires both).
+  it.each([
+    ["VITE_ADMIN_USER_POOL_ID", "", "VITE_ADMIN_USER_POOL_ID is not set"],
+    ["VITE_ADMIN_USER_POOL_ID", "6FRkxadSl", "VITE_ADMIN_USER_POOL_ID must look like"],
+    ["VITE_ADMIN_APP_CLIENT_ID", "", "VITE_ADMIN_APP_CLIENT_ID is not set"],
+    ["VITE_ADMIN_APP_CLIENT_ID", "not a client", "VITE_ADMIN_APP_CLIENT_ID must be an app client id"],
+  ])("refuses %s=%j before asking the API", async (name, value, message) => {
+    const fetch = stubApi()
+    vi.stubEnv(name, value)
+    await expect(prerender()).rejects.toThrow(message)
     expect(fetch).not.toHaveBeenCalled()
   })
 

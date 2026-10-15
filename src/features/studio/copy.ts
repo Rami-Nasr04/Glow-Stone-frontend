@@ -1,5 +1,6 @@
 // Every word the studio shows. English only: the studio isn't part of the shop's translated pages.
 export const STUDIO_COPY = {
+  checking: "Checking your session…",
   form: {
     errors: {
       required: "Required.",
