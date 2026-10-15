@@ -1,18 +1,17 @@
 import { screen } from "@testing-library/react"
-import { summaryOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import { HERO_PORTRAIT_MEDIA } from "./home-config"
 import HomeHero from "./HomeHero"
 
 describe("HomeHero", () => {
   it("is the page's only h1, carried by the wordmark", () => {
-    renderAt(<HomeHero piece={summaryOf(5)} />)
+    renderAt(<HomeHero />)
     expect(screen.getByRole("heading", { level: 1, name: "Glowstone" })).toBeInTheDocument()
     expect(screen.getByText("Time is the ultimate luxury.")).toBeInTheDocument()
   })
 
   it("serves the portrait art to upright screens and loads the photo first", () => {
-    const { container } = renderAt(<HomeHero piece={summaryOf(5)} />)
+    const { container } = renderAt(<HomeHero />)
     const source = container.querySelector("picture source")
     expect(source).toHaveAttribute("media", HERO_PORTRAIT_MEDIA)
     expect(source?.getAttribute("srcset")).toContain("/images/hero/mobile-768.webp 768w")
@@ -23,7 +22,7 @@ describe("HomeHero", () => {
   })
 
   it("stays one screen tall on desktop and shows the whole photo, faded into the sky where it stops", () => {
-    const { container } = renderAt(<HomeHero piece={summaryOf(5)} />)
+    const { container } = renderAt(<HomeHero />)
     const section = container.querySelector("section")!
     expect(section.className).toContain("h-svh")
     // The old min-height (photo height + header) pushed the rack's base below the fold on short laptops.
@@ -36,12 +35,13 @@ describe("HomeHero", () => {
     expect(frame.querySelector(".bg-linear-to-t.from-primary\\/75")).not.toBeNull()
   })
 
-  it("links to the collection and to the piece in the photo", () => {
-    renderAt(<HomeHero piece={summaryOf(5)} />)
+  it("links to the collection, and names the piece in the photo without linking to it", () => {
+    renderAt(<HomeHero />)
     const shop = screen.getAllByRole("link", { name: "Shop collection" })
     expect(shop).toHaveLength(2)
     for (const link of shop) expect(link).toHaveAttribute("href", "/collection")
-    expect(screen.getByRole("link", { name: "Qadisha · Cream limestone · Edition of 8" })).toHaveAttribute("href", "/collection/5/qadisha")
-    expect(screen.getByRole("link", { name: "Qadisha · Edition of 8" })).toHaveAttribute("href", "/collection/5/qadisha")
+    expect(screen.getAllByRole("link")).toHaveLength(2)
+    expect(screen.getByText("Qadisha · Cream limestone · Edition of 8")).toBeInTheDocument()
+    expect(screen.getByText("Qadisha · Edition of 8")).toBeInTheDocument()
   })
 })

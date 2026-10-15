@@ -15,20 +15,19 @@ describe("route loaders", () => {
   beforeEach(() => vi.stubEnv("VITE_API_URL", "https://api.test"))
   afterEach(() => vi.unstubAllEnvs())
 
-  it("home: every published piece, and the home piece with all its photos", async () => {
-    stubApi()
-    const data = await homeLoader()
-    expect(data.products).toEqual(PRODUCTS)
-    expect(data.piece).toEqual(productOf(5))
+  it("home: every published piece, and nothing else from the API", async () => {
+    const fetch = stubApi()
+    expect(await homeLoader()).toEqual({ products: PRODUCTS })
+    expect(fetch.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual(["/products"])
   })
 
-  it("home: stops the build when the home piece (Qadisha, id 5) is not published", async () => {
-    const fetch = stubApi()
-    const answer = fetch.getMockImplementation()!
-    fetch.mockImplementation(async (input) =>
-      String(input).endsWith("/products/5") ? new Response(JSON.stringify({ success: false, error: { code: "NOT_FOUND" } }), { status: 404 }) : answer(input),
-    )
-    await expect(homeLoader()).rejects.toThrow("The home piece (id 5) is not published")
+  // The hero and the spotlight are fixed Qadisha content (Rami, 2026-10-15): the home page builds whatever its state.
+  it.each([
+    ["a draft", PRODUCTS.filter((p) => p.id !== 5)],
+    ["sold out", PRODUCTS.map((p) => (p.id === 5 ? { ...p, remaining: 0, soldOut: true } : p))],
+  ])("home: builds when Qadisha is %s", async (_state, products) => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ success: true, data: products }))))
+    expect(await homeLoader()).toEqual({ products })
   })
 
   it("stops the build on a bad answer", async () => {
@@ -80,7 +79,7 @@ describe("route loaders", () => {
   // A host that answers with another page's HTML (vite preview without a trailing slash) leaves a route with no built
   // data: every page then asks the API itself instead of failing.
   it.each([
-    ["home", homeClientLoader, ["products", "piece"]],
+    ["home", homeClientLoader, ["products"]],
     ["collection", collectionClientLoader, ["products"]],
     ["about", aboutClientLoader, ["crestName"]],
   ] as const)("%s in the browser: the built data, else the live API", async (_, clientLoader, keys) => {

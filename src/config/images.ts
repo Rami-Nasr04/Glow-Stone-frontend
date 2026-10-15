@@ -4,6 +4,13 @@ export const HERO_IMAGES = {
   mobile: { key: "hero/mobile", widths: [480, 768], width: 768, height: 1376 },
 } as const
 
+// Qadisha in the home spotlight: copies of two of its product photos (cover and first landscape, 2026-10-15), kept
+// under the site's own keys so deleting a product photo can never break the home page.
+export const HOME_IMAGES = {
+  spotlightFull: { key: "home/spotlight-full", width: 2880, height: 4318 },
+  spotlightDetail: { key: "home/spotlight-detail", width: 2880, height: 1921 },
+} as const
+
 // Craft close-ups get a 2880px variant (scripts/image-map.ts). Sizes are those of that variant.
 export const CRAFT_IMAGES = {
   // The crest close-up is Arz (camera file _ADY1294, from the arz folder): its alt text names the piece from the data.

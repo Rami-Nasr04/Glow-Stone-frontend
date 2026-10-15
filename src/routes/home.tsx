@@ -1,5 +1,4 @@
-import { HOME_PIECE } from "@/components/home/home-config"
-import { getProduct, listProducts } from "@/features/catalog/catalog"
+import { listProducts } from "@/features/catalog/catalog"
 import { toLocale } from "@/i18n/locales"
 import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES } from "@/i18n/useLocale"
@@ -7,12 +6,9 @@ import { pageMeta } from "@/lib/meta"
 import Home from "@/pages/Home"
 import type { Route } from "./+types/home"
 
-// The hero photo and the spotlight show the home piece, so the build stops rather than publish a home page about a
-// piece that is no longer for sale.
+// Only the featured rail reads the API; the hero and the spotlight are fixed content.
 async function load() {
-  const [products, piece] = await Promise.all([listProducts(), getProduct(HOME_PIECE)])
-  if (!piece) throw new Error(`The home piece (id ${HOME_PIECE}) is not published: publish it again, or change HOME_PIECE.`)
-  return { products, piece }
+  return { products: await listProducts() }
 }
 
 // Runs while the site is built.

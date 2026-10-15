@@ -1,28 +1,15 @@
-import { MoveRight } from "lucide-react"
-import { Link } from "react-router"
 import { ActionLink } from "@/components/ui/action-link"
 import { HERO_IMAGES } from "@/config/images"
-import { noBreak, stoneLabel } from "@/features/catalog/format"
-import { productPath } from "@/features/catalog/product-path"
-import type { ProductSummary } from "@/features/catalog/types"
-import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { imageUrl, srcSetFromWidths } from "@/lib/images"
 import { cn } from "@/lib/utils"
 import { HERO_PORTRAIT_MEDIA } from "./home-config"
 
-const captionLink = "flex min-h-11 items-center text-label uppercase text-on-photo"
-const arrow = "shrink-0 rtl:-scale-x-100"
+const caption = "flex min-h-11 items-center text-label uppercase text-on-photo"
 
-interface HomeHeroProps {
-  /** The piece in the hero photo (HOME_PIECE): the caption and the alt text name it. */
-  piece: ProductSummary
-}
-
-export default function HomeHero({ piece }: HomeHeroProps) {
+export default function HomeHero() {
   const { m, to } = useLocale()
   const { desktop, mobile } = HERO_IMAGES
-  const edition = interpolate(m.edition.of, { edition: piece.editionSize })
 
   return (
     // Desktop: exactly one screen. The photo keeps its whole frame, as tall as fits under the header (never wider than
@@ -37,7 +24,7 @@ export default function HomeHero({ piece }: HomeHeroProps) {
             sizes="(orientation: landscape) min(100vw, 179svh), 100vw"
             width={desktop.width}
             height={desktop.height}
-            alt={interpolate(m.home.heroAlt, { name: piece.name, stone: stoneLabel(piece).toLowerCase() })}
+            alt={m.home.heroAlt}
             fetchPriority="high"
             decoding="async"
             className="block size-full object-cover object-right-bottom upright:object-bottom"
@@ -64,19 +51,14 @@ export default function HomeHero({ piece }: HomeHeroProps) {
         </ActionLink>
       </div>
 
-      <Link to={to(productPath(piece))} className={cn(captionLink, "absolute bottom-6.5 end-12 gap-3.5 tracking-label upright:hidden")}>
-        {[noBreak(piece.name), stoneLabel(piece), edition].join(" · ")}
-        <MoveRight aria-hidden="true" strokeWidth={1.1} className={cn("size-4.5", arrow)} />
-      </Link>
+      {/* Names the piece in the photo; not a link, so the home page never depends on that piece being for sale. */}
+      <p className={cn(caption, "absolute bottom-6.5 end-12 tracking-label upright:hidden")}>{m.home.heroCaption}</p>
 
       <div className="absolute inset-x-5 bottom-5 hidden flex-col gap-1.5 upright:flex min-[600px]:upright:inset-x-10 min-[600px]:upright:items-start">
         <ActionLink to={to("/collection")} variant="onPhoto" size="lg">
           {m.home.shopCollection}
         </ActionLink>
-        <Link to={to(productPath(piece))} className={cn(captionLink, "gap-2.5 self-center tracking-caps min-[600px]:self-start")}>
-          {[noBreak(piece.name), edition].join(" · ")}
-          <MoveRight aria-hidden="true" strokeWidth={1.1} className={cn("size-3.5", arrow)} />
-        </Link>
+        <p className={cn(caption, "self-center tracking-caps min-[600px]:self-start")}>{m.home.heroCaptionShort}</p>
       </div>
     </section>
   )

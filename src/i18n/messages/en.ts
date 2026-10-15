@@ -47,7 +47,11 @@ export const en = {
   home: {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
     metaDescription: "Wine racks hand-carved from Lebanese limestone, in small numbered editions. Made in Lebanon.",
-    heroAlt: "{name} rack in {stone} with a glass of red wine on a stone wall above the misty Qadisha Valley",
+    // The hero and the spotlight show Qadisha with fixed text (Rami, 2026-10-15), so a draft, a sale or a price change
+    // in the studio never touches the home page. Price and stock are left out: they change.
+    heroAlt: "Qadisha rack in cream limestone with a glass of red wine on a stone wall above the misty Qadisha Valley",
+    heroCaption: "Qadisha · Cream limestone · Edition of 8",
+    heroCaptionShort: "Qadisha · Edition of 8",
     shopCollection: "Shop collection",
     quote: "From stone, form emerges.",
     quoteLine: "Limited objects for wine & living.",
@@ -62,9 +66,11 @@ export const en = {
     crestAlt: "The hand-broken crest of {name}, its chisel marks catching the light",
     boreAlt: "The ringed wall of a hole bored through limestone",
     boreCaption: "The bore",
-    spotlightBottles: "Holds {count} bottles.",
-    spotlightBottle: "Holds one bottle.",
-    viewThePiece: "View the piece",
+    spotlightName: "Qadisha",
+    spotlightPlacard: ["Cream limestone", "118 × 36 × 20 cm"],
+    spotlightEdition: "Edition of 8",
+    spotlightText: "Tall slab with edge notches and central holes. Holds 14 bottles.",
+    viewTheCollection: "View the collection",
   },
   collection: {
     metaTitle: "The Collection — Glowstone",

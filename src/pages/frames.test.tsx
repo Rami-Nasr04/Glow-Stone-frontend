@@ -17,7 +17,7 @@ describe("photo frames", () => {
   afterEach(() => vi.restoreAllMocks())
 
   it.each([
-    ["Home", <Home key="home" products={PRODUCTS} piece={productOf(5)} />, "/"],
+    ["Home", <Home key="home" products={PRODUCTS} />, "/"],
     ["Collection", <Collection key="collection" products={PRODUCTS} />, "/collection"],
     ["About", <About key="about" crestName="Arz" />, "/about"],
   ])("clips every aspect-ratio frame on %s", (_, page, path) => {
