@@ -1,4 +1,4 @@
-import { clearAllDrafts, clearDraft, readDraft, registerOpenDraft, saveDraft, stashOpenDrafts } from "./drafts"
+import { clearAllDrafts, clearDraft, hasOpenDrafts, readDraft, registerOpenDraft, saveDraft, stashOpenDrafts } from "./drafts"
 import { EMPTY_FORM, type ProductFormValues } from "./product-form"
 
 const draft: ProductFormValues = { ...EMPTY_FORM, name: "Qadisha", price: "1200", featured: true }
@@ -58,6 +58,16 @@ describe("studio drafts", () => {
     clearAllDrafts()
     stashOpenDrafts()
     expect(readDraft(5)).toBeNull()
+  })
+
+  it("knows whether an open form has unsaved changes", () => {
+    let dirty = false
+    const unregister = registerOpenDraft(() => (dirty ? { key: "new", values: draft } : null))
+    expect(hasOpenDrafts()).toBe(false)
+    dirty = true
+    expect(hasOpenDrafts()).toBe(true)
+    unregister()
+    expect(hasOpenDrafts()).toBe(false)
   })
 
   it("works without storage (a private window that refuses it)", () => {

@@ -38,4 +38,11 @@ describe("vercel.json", () => {
       expect.arrayContaining(["X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy", "Strict-Transport-Security"]),
     )
   })
+
+  // The studio is never indexed, even after launch removes the rule above (its own rule stays).
+  it("asks search engines not to index the studio, with a rule of its own", () => {
+    for (const source of ["/studio", "/studio/(.*)"]) {
+      expect(headersFor(source)).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
+    }
+  })
 })

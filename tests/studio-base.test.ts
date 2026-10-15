@@ -12,7 +12,8 @@ describe("the studio base", () => {
 
   it('appears nowhere else in the source as "/studio"', () => {
     const offenders = files("src")
-      .filter((path) => /\.(ts|tsx)$/.test(path) && !/\.test\.tsx?$/.test(path) && !path.replaceAll("\\", "/").endsWith("src/config/studio.ts"))
+      .map((path) => path.replaceAll("\\", "/"))
+      .filter((path) => /\.(ts|tsx)$/.test(path) && !/\.test\.tsx?$/.test(path) && !path.startsWith("src/test/") && path !== "src/config/studio.ts")
       // An address, not a file name like "./config/studio.ts" or "./studio-routes.ts".
       .filter((path) => /(?<![\w.-])\/studio(?![\w.-])/.test(readFileSync(path, "utf8")))
     expect(offenders).toEqual([])

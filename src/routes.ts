@@ -1,6 +1,9 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes"
+import { studioRoutes } from "./studio-routes.ts"
 
 export default [
+  // Static segments outrank ":lang?", so the studio's base never reaches the shop.
+  ...studioRoutes(),
   route(":lang?", "routes/locale-layout.tsx", [
     index("routes/home.tsx"),
     route("collection", "routes/collection.tsx"),

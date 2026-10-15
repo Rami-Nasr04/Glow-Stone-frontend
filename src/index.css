@@ -46,6 +46,8 @@
   --hero-sky-mobile: #d9d7d2;
   --on-photo: #e2e1de; /* captions on the hero's dark gradient */
   --photo-dark: #1f1f1f; /* frame behind dark studio and craft photos */
+  --studio-surface: #d9d8d4; /* the admin studio's page */
+  --studio-panel: #edece9; /* the studio's panels and dialogs */
   /* 7% charcoal noise over Frost Stone, as in the prototype. */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .17 0 0 0 0 .17 0 0 0 0 .17 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
 
@@ -87,6 +89,8 @@
   --color-hero-sky-mobile: var(--hero-sky-mobile);
   --color-on-photo: var(--on-photo);
   --color-photo-dark: var(--photo-dark);
+  --color-studio-surface: var(--studio-surface);
+  --color-studio-panel: var(--studio-panel);
 
   --font-display: var(--font-display-family);
   --font-sans: var(--font-sans-family);

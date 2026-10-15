@@ -13,6 +13,13 @@ describe("theme", () => {
     expect(block(":root")).toContain("--text-label-value: 0.6875rem;")
   })
 
+  it("gives the studio its own page and panel colours", () => {
+    expect(block(":root")).toContain("--studio-surface: #d9d8d4;")
+    expect(block(":root")).toContain("--studio-panel: #edece9;")
+    expect(css).toContain("--color-studio-surface: var(--studio-surface);")
+    expect(css).toContain("--color-studio-panel: var(--studio-panel);")
+  })
+
   it("defines no dark theme", () => {
     expect(css).not.toMatch(/\.dark\s*\{|@custom-variant dark/)
   })
