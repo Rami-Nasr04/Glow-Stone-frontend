@@ -12,9 +12,10 @@ import * as productEdit from "./product-edit"
 import * as productNew from "./product-new"
 import * as products from "./products"
 import * as signIn from "./sign-in"
+import * as signOut from "./sign-out"
 
 type MetaModule = { meta: (args: never) => MetaDescriptor[] }
-const modules: Record<string, MetaModule> = { layout, signIn, newPassword, forgotPassword, products, productNew, productEdit, notFound }
+const modules: Record<string, MetaModule> = { layout, signIn, signOut, newPassword, forgotPassword, products, productNew, productEdit, notFound }
 
 describe("the studio's route modules", () => {
   // A child route's meta replaces its parent's, so every page carries the tag itself.

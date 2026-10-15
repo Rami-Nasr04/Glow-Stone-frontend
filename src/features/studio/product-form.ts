@@ -153,3 +153,16 @@ export function changedFields(original: AdminProduct, input: ProductInput): Part
   }
   return changes as Partial<ProductInput>
 }
+
+const sameValues = (a: ProductFormValues, b: ProductFormValues) =>
+  (Object.keys(a) as (keyof ProductFormValues)[]).every((key) => {
+    const [x, y] = [a[key], b[key]]
+    return typeof x === "string" && typeof y === "string" ? x.trim() === y.trim() : x === y
+  })
+
+/** Whether the form holds anything unsaved: against the saved piece as the API would see it, or the empty form. */
+export function hasChanges(values: ProductFormValues, saved: AdminProduct | null): boolean {
+  if (!saved) return !sameValues(values, EMPTY_FORM)
+  const read = readForm(values)
+  return "input" in read ? Object.keys(changedFields(saved, read.input)).length > 0 : !sameValues(values, formFromProduct(saved))
+}

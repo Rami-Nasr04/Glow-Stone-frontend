@@ -85,8 +85,3 @@ export function stashOpenDrafts(): void {
     if (draft) saveDraft(draft.key, draft.values)
   }
 }
-
-/** True while an open form has unsaved changes (signing out asks first). */
-export function hasOpenDrafts(): boolean {
-  return [...open].some((read) => read() !== null)
-}

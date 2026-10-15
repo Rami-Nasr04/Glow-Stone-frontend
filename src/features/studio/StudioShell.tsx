@@ -1,11 +1,8 @@
-import { useState } from "react"
-import { Link, NavLink, useNavigate } from "react-router"
+import { Link, NavLink } from "react-router"
 import { studioPath } from "@/config/studio"
 import { cn } from "@/lib/utils"
 import { useAdminAuth } from "./auth/admin-auth-context"
 import { STUDIO_COPY } from "./copy"
-import { hasOpenDrafts } from "./drafts"
-import LeaveDialog from "./LeaveDialog"
 
 interface StudioShellProps {
   children: React.ReactNode
@@ -17,23 +14,13 @@ const darkLink = "flex min-h-11 items-center text-label uppercase tracking-caps 
 // The prototype's studio frame: a charcoal sidebar on desktop, a charcoal top bar on phones. The studio has one
 // section for now (products), so phones get no bottom tab bar.
 export default function StudioShell({ children }: StudioShellProps) {
-  const { email, signOut } = useAdminAuth()
-  const navigate = useNavigate()
-  const [asking, setAsking] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const { email } = useAdminAuth()
 
-  const leave = async () => {
-    setAsking(false)
-    setBusy(true)
-    await signOut()
-    navigate(studioPath("/sign-in"), { replace: true })
-  }
-  const askThenLeave = () => (hasOpenDrafts() ? setAsking(true) : void leave())
-
-  const signOutButton = (className?: string) => (
-    <button type="button" onClick={askThenLeave} disabled={busy} className={cn(darkLink, className)}>
-      {busy ? s.signingOut : s.signOut}
-    </button>
+  // Signing out is a page of its own, so an open form with unsaved changes asks first, like for any other link.
+  const signOutLink = (className?: string) => (
+    <Link to={studioPath("/sign-out")} className={cn(darkLink, className)}>
+      {s.signOut}
+    </Link>
   )
   const shopLink = (label: string, className?: string) => (
     <a href="/" target="_blank" rel="noopener noreferrer" className={cn(darkLink, className)}>
@@ -70,7 +57,7 @@ export default function StudioShell({ children }: StudioShellProps) {
         <div className="mt-auto flex flex-col gap-1 border-t border-dark-border px-3 pt-5">
           {shopLink(s.viewShop)}
           <p className="truncate py-2 text-sm text-dark-muted-foreground">{email}</p>
-          {signOutButton("self-start")}
+          {signOutLink("self-start")}
         </div>
       </aside>
 
@@ -81,15 +68,13 @@ export default function StudioShell({ children }: StudioShellProps) {
         </Link>
         <div className="flex items-center gap-5">
           {shopLink(s.shop)}
-          {signOutButton()}
+          {signOutLink()}
         </div>
       </header>
 
       <main id="main" className="w-full max-w-330 min-w-0 flex-1 px-4 pt-5 pb-28 lg:px-10 lg:pt-8 lg:pb-14">
         {children}
       </main>
-
-      <LeaveDialog open={asking} onStay={() => setAsking(false)} onLeave={() => void leave()} />
     </div>
   )
 }

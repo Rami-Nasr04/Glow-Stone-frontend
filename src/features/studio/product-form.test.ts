@@ -1,6 +1,6 @@
 import { adminProductOf } from "@/test/studio"
 import { STUDIO_COPY } from "./copy"
-import { changedFields, EMPTY_FORM, formFromProduct, readForm, type ProductFormValues } from "./product-form"
+import { changedFields, EMPTY_FORM, formFromProduct, hasChanges, readForm, type ProductFormValues } from "./product-form"
 
 const e = STUDIO_COPY.form.errors
 
@@ -123,5 +123,24 @@ describe("changedFields", () => {
 
   it("sends null when a size or the summary is cleared", () => {
     expect(changedFields(original, { ...same(), heightCm: null, summary: null })).toEqual({ heightCm: null, summary: null })
+  })
+})
+
+describe("hasChanges", () => {
+  const original = adminProductOf(1)
+
+  it("compares an edit with the saved piece, as the API would see it", () => {
+    expect(hasChanges(formFromProduct(original), original)).toBe(false)
+    expect(hasChanges({ ...formFromProduct(original), price: "420.00", name: "Arz " }, original)).toBe(false)
+    expect(hasChanges({ ...formFromProduct(original), price: "421" }, original)).toBe(true)
+    // A value the form can't read yet still counts as a change.
+    expect(hasChanges({ ...formFromProduct(original), price: "abc" }, original)).toBe(true)
+  })
+
+  it("compares a new piece with the empty form, ignoring spaces alone", () => {
+    expect(hasChanges(EMPTY_FORM, null)).toBe(false)
+    expect(hasChanges({ ...EMPTY_FORM, name: "  " }, null)).toBe(false)
+    expect(hasChanges({ ...EMPTY_FORM, name: "Arz" }, null)).toBe(true)
+    expect(hasChanges({ ...EMPTY_FORM, featured: true }, null)).toBe(true)
   })
 })

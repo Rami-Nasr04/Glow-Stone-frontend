@@ -65,3 +65,42 @@ export function fakeAdminAuth({ signedInAs = null, temporaryPassword = false }: 
   } satisfies AdminAuthClient
   return client
 }
+
+type Answer = Response | undefined
+
+/**
+ * Stubs fetch with the admin products API over these pieces: GET list and one (404 when unknown), POST (201, new id
+ * 99) and PATCH (merged). `answer` can take over any call first, e.g. to send a 401 or a 400.
+ */
+export function stubAdminApi(pieces: AdminProduct[], answer: (method: string, path: string, body: unknown) => Answer = () => undefined) {
+  let store = [...pieces]
+  const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    const method = init?.method ?? "GET"
+    const path = new URL(String(url)).pathname
+    const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined
+    const forced = answer(method, path, body)
+    if (forced) return forced
+    const id = Number(/^\/admin\/products\/(\d+)$/.exec(path)?.[1])
+    if (method === "POST") {
+      const created = { ...adminProductOf(1), ...(body as object), id: 99, images: [], soldOut: (body as AdminProduct).remaining === 0 }
+      store = [created, ...store]
+      return ok(created, 201)
+    }
+    if (!id) return ok(store)
+    const piece = store.find((p) => p.id === id)
+    if (!piece) return failure(404, "NOT_FOUND", "Product not found")
+    if (method === "PATCH") {
+      const changed = { ...piece, ...(body as object) }
+      store = store.map((p) => (p.id === id ? changed : p))
+      return ok(changed)
+    }
+    return ok(piece)
+  })
+  vi.stubGlobal("fetch", fetch)
+  return fetch
+}
+
+/** The bodies of every call with this method. */
+export function bodiesOf(fetch: ReturnType<typeof stubAdminApi>, method: string): unknown[] {
+  return fetch.mock.calls.filter(([, init]) => (init?.method ?? "GET") === method).map(([, init]) => JSON.parse(String(init?.body)))
+}
