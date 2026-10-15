@@ -2,7 +2,7 @@
 // field by field: during the build a bad answer throws and the build stops, so the site never goes out with an empty
 // or half-read catalog. Also loaded by the build config in Node (react-router.config.ts), so no "@/" imports here.
 import { requireUrl } from "../../lib/env.ts"
-import type { Product, ProductImage, ProductSummary } from "./types.ts"
+import type { AdminProduct, Product, ProductImage, ProductSummary } from "./types.ts"
 
 type Json = Record<string, unknown>
 
@@ -90,6 +90,22 @@ function summary(value: unknown): ProductSummary {
 function product(value: unknown): Product {
   const piece = summary(value)
   return { ...piece, story: textOrNull(value as Json, "story") }
+}
+
+/** One piece as the studio reads it (the public fields, plus status and updatedAt); throws on anything else. */
+export function readAdminProduct(value: unknown): AdminProduct {
+  try {
+    const piece = product(value)
+    const row = value as Json
+    const status = row.status
+    if (status !== "draft" && status !== "published") fail("status must be draft or published")
+    const updatedAt = text(row, "updatedAt")
+    if (Number.isNaN(Date.parse(updatedAt))) fail("updatedAt must be a date")
+    return { ...piece, status, updatedAt }
+  } catch (error) {
+    if (error instanceof Invalid) throw new Error(`product${idOf(value)}: ${error.message}`)
+    throw error
+  }
 }
 
 function idOf(value: unknown): string {

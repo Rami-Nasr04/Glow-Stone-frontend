@@ -41,3 +41,35 @@ export interface ProductImage {
   width: number
   height: number
 }
+
+export type ProductStatus = "draft" | "published"
+
+/** The studio's view of a piece (GET /admin/products[/{id}]): drafts included. */
+export interface AdminProduct extends Product {
+  status: ProductStatus
+  /** ISO timestamp of the last change. */
+  updatedAt: string
+}
+
+/** POST /admin/products (all of it) and PATCH /admin/products/{id} (only the fields that change). */
+export interface ProductInput {
+  name: string
+  stoneType: string
+  color: string
+  price: number
+  bottles: number
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  weightKg?: number | null
+  editionSize: number
+  /** 0 ≤ remaining ≤ editionSize */
+  remaining: number
+  /** Default draft. */
+  status?: ProductStatus
+  /** Default false. */
+  featured?: boolean
+  /** Blank is saved as null. */
+  summary?: string | null
+  story?: string | null
+}
