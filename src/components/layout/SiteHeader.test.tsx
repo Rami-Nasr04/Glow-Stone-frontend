@@ -23,6 +23,15 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Glowstone home" })).toHaveAttribute("href", "/")
   })
 
+  // Over the mobile hero the small logo is invisible, but it is still a tab stop: focus must not vanish.
+  it("shows the logo over the mobile hero while it has keyboard focus", () => {
+    const Stub = createRoutesStub([{ path: "/", Component: () => <SiteHeader overHero /> }])
+    render(<Stub initialEntries={["/"]} />)
+    const logo = screen.getByRole("link", { name: "Glowstone home" })
+    expect(logo).toHaveClass("max-lg:opacity-0")
+    expect(logo).toHaveClass("focus-visible:opacity-100")
+  })
+
   it("opens a full-screen menu with numbered links and closes it again", async () => {
     const user = userEvent.setup()
     renderAt("/")

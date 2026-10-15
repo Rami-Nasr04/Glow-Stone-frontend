@@ -51,11 +51,15 @@ export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_O
       )}
     >
       <div className="flex h-16 items-center justify-between px-5 lg:grid lg:h-21 lg:grid-cols-[1fr_auto_1fr] lg:px-12">
-        {/* Over the mobile hero the big hero wordmark is already on screen, so the small one waits. */}
+        {/* Over the mobile hero the big hero wordmark is already on screen, so the small one waits
+            (but still shows when a keyboard user tabs onto it). */}
         <Link
           to={to("/")}
           aria-label={m.nav.home}
-          className={cn("flex min-h-11 w-max items-center transition-opacity duration-700", !solid && "max-lg:pointer-events-none max-lg:opacity-0")}
+          className={cn(
+            "flex min-h-11 w-max items-center transition-opacity duration-700",
+            !solid && "max-lg:pointer-events-none max-lg:opacity-0 focus-visible:opacity-100",
+          )}
         >
           <Wordmark />
         </Link>
