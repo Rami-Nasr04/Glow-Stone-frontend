@@ -1,5 +1,5 @@
 import { AdminAuthError, type AdminAuthClient, type SignInResult } from "@/features/studio/auth/types"
-import type { AdminProduct } from "@/features/catalog/types"
+import type { AdminProduct, AdminProductImage } from "@/features/catalog/types"
 import { productOf } from "./catalog"
 
 // A piece as GET /admin/products/{id} answers it: the public fields plus status and updatedAt, and each photo with its
@@ -71,20 +71,36 @@ export function fakeAdminAuth({ signedInAs = null, temporaryPassword = false }: 
 
 type Answer = Response | undefined
 
+/** Where the stub's upload slots send files. */
+export const STORAGE_URL = "https://uploads.test/"
+
 /**
  * Stubs fetch with the admin products API over these pieces: GET list and one (404 when unknown), POST (201, new id
- * 99) and PATCH (merged). `answer` can take over any call first, e.g. to send a 401 or a 400.
+ * 99), PATCH (merged), and the photo calls (slot, storage's 204, confirm at the end with id 9001…, order, delete).
+ * `answer` can take over any call first, e.g. to send a 401 or a 400, and may wait.
  */
-export function stubAdminApi(pieces: AdminProduct[], answer: (method: string, path: string, body: unknown) => Answer = () => undefined) {
+export function stubAdminApi(
+  pieces: AdminProduct[],
+  answer: (method: string, path: string, body: unknown) => Answer | Promise<Answer> = () => undefined,
+) {
   let store = [...pieces]
+  let slots = 0
+  let photoIds = 9000
+  const save = (piece: AdminProduct) => {
+    store = store.map((p) => (p.id === piece.id ? piece : p))
+    return piece
+  }
   const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const method = init?.method ?? "GET"
-    const path = new URL(String(url)).pathname
-    const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined
-    const forced = answer(method, path, body)
+    const address = String(url)
+    const path = address === STORAGE_URL ? STORAGE_URL : new URL(address).pathname
+    const body: unknown = typeof init?.body === "string" ? JSON.parse(init.body) : init?.body
+    const forced = await answer(method, path, body)
     if (forced) return forced
-    const id = Number(/^\/admin\/products\/(\d+)$/.exec(path)?.[1])
-    if (method === "POST") {
+    if (path === STORAGE_URL) return new Response(null, { status: 204 })
+    const [, rawId, rest = ""] = /^\/admin\/products(?:\/(\d+))?(\/.*)?$/.exec(path) ?? []
+    const id = Number(rawId)
+    if (method === "POST" && !rawId) {
       const created = { ...adminProductOf(1), ...(body as object), id: 99, images: [], soldOut: (body as AdminProduct).remaining === 0 }
       store = [created, ...store]
       return ok(created, 201)
@@ -92,18 +108,44 @@ export function stubAdminApi(pieces: AdminProduct[], answer: (method: string, pa
     if (!id) return ok(store)
     const piece = store.find((p) => p.id === id)
     if (!piece) return failure(404, "NOT_FOUND", "Product not found")
-    if (method === "PATCH") {
-      const changed = { ...piece, ...(body as object) }
-      store = store.map((p) => (p.id === id ? changed : p))
-      return ok(changed)
+    const closeUp = (images: AdminProductImage[]) => images.map((image, i) => ({ ...image, position: i + 1 }))
+    if (rest === "/photos/upload") {
+      slots++
+      return ok({ uploadId: `upload-${slots}`, url: STORAGE_URL, fields: { key: `incoming/${id}/upload-${slots}`, policy: "cG9saWN5" } })
     }
+    if (rest === "/photos") {
+      const photo = { url: `https://cdn.test/products/${id}/new${++photoIds}`, width: 2880, height: 4318, id: photoIds, position: piece.images.length + 1 }
+      save({ ...piece, images: [...piece.images, photo] })
+      return ok(photo, 201)
+    }
+    if (rest === "/photos/order") {
+      const ids = (body as { imageIds: number[] }).imageIds
+      const same = ids.length === piece.images.length && piece.images.every((image) => ids.includes(image.id))
+      if (!same) return failure(400, "VALIDATION", "Send every photo of this piece exactly once.")
+      const images = closeUp(ids.map((imageId) => piece.images.find((image) => image.id === imageId) as AdminProductImage))
+      return ok(save({ ...piece, images }).images)
+    }
+    const photoId = Number(/^\/photos\/(\d+)$/.exec(rest)?.[1])
+    if (method === "DELETE" && photoId) {
+      if (!piece.images.some((image) => image.id === photoId)) return failure(404, "NOT_FOUND", "Photo not found")
+      save({ ...piece, images: closeUp(piece.images.filter((image) => image.id !== photoId)) })
+      return new Response(null, { status: 204 })
+    }
+    if (method === "PATCH") return ok(save({ ...piece, ...(body as object) }))
     return ok(piece)
   })
   vi.stubGlobal("fetch", fetch)
   return fetch
 }
 
-/** The bodies of every call with this method. */
+/** The JSON bodies of every call with this method (a form upload's body is left as it is). */
 export function bodiesOf(fetch: ReturnType<typeof stubAdminApi>, method: string): unknown[] {
-  return fetch.mock.calls.filter(([, init]) => (init?.method ?? "GET") === method).map(([, init]) => JSON.parse(String(init?.body)))
+  return fetch.mock.calls
+    .filter(([, init]) => (init?.method ?? "GET") === method)
+    .map(([, init]) => (typeof init?.body === "string" ? JSON.parse(init.body) : init?.body))
+}
+
+/** "METHOD path" for every call, in order. */
+export function callsOf(fetch: ReturnType<typeof stubAdminApi>): string[] {
+  return fetch.mock.calls.map(([url, init]) => `${init?.method ?? "GET"} ${String(url) === STORAGE_URL ? STORAGE_URL : new URL(String(url)).pathname}`)
 }

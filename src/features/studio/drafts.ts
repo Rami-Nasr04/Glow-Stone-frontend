@@ -64,6 +64,53 @@ export function clearAllDrafts(): void {
   } catch {
     // Nothing to clear.
   }
+  clearPendingPhotos()
+}
+
+// Photos being added can't be kept across a sign-in (the files stay on the phone), so only their names are: kept
+// before each photo of a batch, they're there whenever a 401 lands. The sign-in page then asks to add them again, and
+// the piece's page names them once.
+const PENDING_PHOTOS = "glowstone.studio.photos-pending"
+
+/** The names not added yet for this piece; an empty list forgets them. */
+export function savePendingPhotos(productId: number, names: string[]): void {
+  if (names.length === 0) return clearPendingPhotos()
+  try {
+    storage()?.setItem(PENDING_PHOTOS, JSON.stringify({ productId, names }))
+  } catch {
+    // Storage full or refused: the sign-in page just won't name them.
+  }
+}
+
+/** The names kept for this piece, or null. */
+export function readPendingPhotos(productId: number): string[] | null {
+  try {
+    const raw = storage()?.getItem(PENDING_PHOTOS)
+    if (!raw) return null
+    const value: unknown = JSON.parse(raw)
+    if (typeof value !== "object" || value === null) return null
+    const { productId: id, names } = value as Record<string, unknown>
+    if (id !== productId || !Array.isArray(names) || !names.every((name) => typeof name === "string")) return null
+    return names
+  } catch {
+    return null
+  }
+}
+
+export function hasPendingPhotos(): boolean {
+  try {
+    return Boolean(storage()?.getItem(PENDING_PHOTOS))
+  } catch {
+    return false
+  }
+}
+
+export function clearPendingPhotos(): void {
+  try {
+    storage()?.removeItem(PENDING_PHOTOS)
+  } catch {
+    // Nothing to clear.
+  }
 }
 
 type OpenDraft = () => { key: DraftKey; values: ProductFormValues } | null

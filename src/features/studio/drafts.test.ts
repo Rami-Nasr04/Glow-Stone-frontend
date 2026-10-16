@@ -1,4 +1,4 @@
-import { clearAllDrafts, clearDraft, readDraft, registerOpenDraft, saveDraft, stashOpenDrafts } from "./drafts"
+import { clearAllDrafts, clearDraft, clearPendingPhotos, hasPendingPhotos, readDraft, readPendingPhotos, registerOpenDraft, saveDraft, savePendingPhotos, stashOpenDrafts } from "./drafts"
 import { EMPTY_FORM, type ProductFormValues } from "./product-form"
 
 const draft: ProductFormValues = { ...EMPTY_FORM, name: "Qadisha", price: "1200", featured: true }
@@ -66,5 +66,33 @@ describe("studio drafts", () => {
     })
     expect(() => saveDraft(5, draft)).not.toThrow()
     spy.mockRestore()
+  })
+})
+
+describe("photos not added when the session ended", () => {
+  beforeEach(() => sessionStorage.clear())
+
+  it("keeps their names for that piece, then forgets them once read", () => {
+    savePendingPhotos(5, ["a.jpg", "b.jpg"])
+    expect(hasPendingPhotos()).toBe(true)
+    expect(readPendingPhotos(4)).toBeNull()
+    expect(readPendingPhotos(5)).toEqual(["a.jpg", "b.jpg"])
+    clearPendingPhotos()
+    expect(readPendingPhotos(5)).toBeNull()
+    expect(hasPendingPhotos()).toBe(false)
+  })
+
+  it("keeps nothing for an empty list, and only names", () => {
+    savePendingPhotos(5, ["a.jpg"])
+    savePendingPhotos(5, [])
+    expect(hasPendingPhotos()).toBe(false)
+    sessionStorage.setItem("glowstone.studio.photos-pending", '{"productId":5,"names":[1]}')
+    expect(readPendingPhotos(5)).toBeNull()
+  })
+
+  it("is cleared with the drafts on sign-out", () => {
+    savePendingPhotos(5, ["a.jpg"])
+    clearAllDrafts()
+    expect(hasPendingPhotos()).toBe(false)
   })
 })

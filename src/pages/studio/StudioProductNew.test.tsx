@@ -47,7 +47,7 @@ describe("the studio's new-product page", () => {
     expect(screen.getByRole("radio", { name: f.draft })).toBeChecked()
     expect(screen.getByRole("switch", { name: f.featured })).toHaveAttribute("aria-checked", "false")
     expect(screen.getByRole("button", { name: f.create })).toBeEnabled()
-    expect(within(screen.getByRole("region", { name: f.photos })).getByText(f.noPhotos)).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: f.photos })).getByText(STUDIO_COPY.photos.saveFirst)).toBeInTheDocument()
   })
 
   it("names every missing required field and focuses the first", async () => {

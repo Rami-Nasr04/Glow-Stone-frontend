@@ -5,14 +5,15 @@ import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
 import { MESSAGES } from "@/i18n/useLocale"
-import { photoUrl } from "@/lib/images"
 import { cn } from "@/lib/utils"
 import StudioNotFound from "@/pages/studio/StudioNotFound"
 import { type ProductField, StudioError } from "./admin-api"
 import { useAdminAuth } from "./auth/admin-auth-context"
 import { STUDIO_COPY } from "./copy"
+import ConfirmDialog from "./ConfirmDialog"
 import { clearDraft, type DraftKey, readDraft, registerOpenDraft } from "./drafts"
-import LeaveDialog from "./LeaveDialog"
+import { panel, panelTitle } from "./panel"
+import PhotoManager from "./PhotoManager"
 import { EMPTY_FORM, type FormErrors, formFromProduct, hasChanges, type ProductFormValues, readForm, changedFields } from "./product-form"
 import StudioNote from "./StudioNote"
 import { studioToast } from "./toast"
@@ -44,8 +45,6 @@ const FIELD_ORDER: ProductField[] = [
 ]
 const OPTIONAL: readonly ProductField[] = ["summary", "story", "heightCm", "widthCm", "depthCm", "weightKg"]
 
-const panel = "flex flex-col gap-5 border border-border bg-studio-panel p-5"
-const panelTitle = "text-xs font-medium uppercase tracking-[0.22em]"
 const idOf = (key: ProductField) => `product-${key}`
 
 function focusField(errors: FormErrors) {
@@ -64,7 +63,8 @@ function previewLine(values: ProductFormValues): string | null {
 }
 
 // Create and edit one piece: exactly the API's fields, checked like the database, sending only what changed.
-// Unsaved changes ask before leaving, and survive a 401 (kept in sessionStorage, restored here after sign-in).
+// Unsaved changes ask before leaving, and survive a 401 (kept in sessionStorage, restored here after sign-in). Photos
+// are changed apart from the form (PhotoManager): each change goes to the API at once.
 export default function ProductEditor({ piece }: ProductEditorProps) {
   const { api } = useAdminAuth()
   const navigate = useNavigate()
@@ -76,21 +76,23 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [gone, setGone] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const dirty = hasChanges(values, saved)
-  const latest = useRef({ dirty, values, leaving: false })
+  const latest = useRef({ dirty, uploading, values, leaving: false })
   useEffect(() => {
-    latest.current = { ...latest.current, dirty, values }
+    latest.current = { ...latest.current, dirty, uploading, values }
   })
 
   // Read when the session ends: the open form's unsaved values are kept for after sign-in.
   useEffect(() => registerOpenDraft(() => (latest.current.dirty ? { key, values: latest.current.values } : null)), [key])
 
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => latest.current.dirty && !latest.current.leaving && currentLocation.pathname !== nextLocation.pathname,
+    ({ currentLocation, nextLocation }) =>
+      (latest.current.dirty || latest.current.uploading) && !latest.current.leaving && currentLocation.pathname !== nextLocation.pathname,
   )
   useBeforeUnload((event) => {
-    if (latest.current.dirty) event.preventDefault()
+    if (latest.current.dirty || latest.current.uploading) event.preventDefault()
   })
 
   if (gone) return <StudioNotFound />
@@ -191,35 +193,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(17.5rem,1fr)]">
         <div className="flex min-w-0 flex-col gap-4">
-          <section aria-labelledby="photos-title" className={panel}>
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 id="photos-title" className={panelTitle}>
-                {f.photos}
-              </h2>
-              <span className="text-xs text-muted-foreground">{f.photosLater}</span>
-            </div>
-            {saved && saved.images.length > 0 ? (
-              <ol className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2.5">
-                {saved.images.map((photo, i) => (
-                  <li key={photo.url} className="relative aspect-2/3 overflow-hidden bg-muted">
-                    <img
-                      src={photoUrl(photo, 480)}
-                      alt={`${interpolate(f.photoLabel, { n: i + 1, count: saved.images.length })}${i === 0 ? `, ${f.cover}` : ""}`}
-                      width={photo.width}
-                      height={photo.height}
-                      loading="lazy"
-                      className="size-full object-contain"
-                    />
-                    <span aria-hidden="true" className="absolute start-1.5 top-1.5 bg-studio-panel px-1.75 py-0.5 text-xs">
-                      {i === 0 ? f.cover : i + 1}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-sm text-muted-foreground">{f.noPhotos}</p>
-            )}
-          </section>
+          <PhotoManager productId={saved?.id ?? null} initial={saved?.images ?? []} onUploadingChange={setUploading} />
 
           <section aria-labelledby="details-title" className={panel}>
             <h2 id="details-title" className={panelTitle}>
@@ -329,10 +303,14 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         </button>
       </div>
 
-      <LeaveDialog
+      <ConfirmDialog
         open={blocker.state === "blocked"}
-        onStay={() => blocker.reset?.()}
-        onLeave={() => {
+        title={uploading ? STUDIO_COPY.leave.uploadingTitle : STUDIO_COPY.leave.title}
+        text={uploading ? STUDIO_COPY.leave.uploadingText : STUDIO_COPY.leave.text}
+        keep={STUDIO_COPY.leave.stay}
+        confirm={STUDIO_COPY.leave.leave}
+        onKeep={() => blocker.reset?.()}
+        onConfirm={() => {
           clearDraft(key)
           latest.current.leaving = true
           blocker.proceed?.()

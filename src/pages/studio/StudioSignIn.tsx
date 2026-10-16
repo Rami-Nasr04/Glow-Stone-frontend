@@ -6,6 +6,7 @@ import { safeStudioNext, studioPath } from "@/config/studio"
 import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { AdminAuthError } from "@/features/studio/auth/types"
 import { STUDIO_COPY } from "@/features/studio/copy"
+import { hasPendingPhotos } from "@/features/studio/drafts"
 import StudioAuthFrame from "@/features/studio/StudioAuthFrame"
 import { cn } from "@/lib/utils"
 import { isEmail } from "@/lib/validation"
@@ -25,6 +26,8 @@ export default function StudioSignIn() {
   const [errors, setErrors] = useState<Errors>({})
   const [busy, setBusy] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  // A batch of photos was cut off by the end of the session: the files can't be kept, so they're asked for again.
+  const [photosCutOff] = useState(() => sessionEnded && hasPendingPhotos())
 
   if (status === "signedIn" && !busy) return <Navigate replace to={safeStudioNext(next)} />
 
@@ -66,6 +69,7 @@ export default function StudioSignIn() {
       {sessionEnded && (
         <p role="status" className="border-y border-border py-3 text-center text-sm">
           {t.sessionEnded}
+          {photosCutOff && <span className="mt-1 block">{STUDIO_COPY.photos.signInAgain}</span>}
         </p>
       )}
       <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-8">

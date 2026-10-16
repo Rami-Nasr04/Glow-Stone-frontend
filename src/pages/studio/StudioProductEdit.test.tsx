@@ -163,7 +163,7 @@ describe("the studio's edit page", () => {
     expect(await screen.findByRole("heading", { name: "Arz" })).toBeInTheDocument()
   })
 
-  it("shows the photos read-only, in the API's order", async () => {
+  it("shows the photos in the API's order, each with its moves", async () => {
     renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
     const photos = screen.getByRole("region", { name: f.photos })
@@ -171,9 +171,7 @@ describe("the studio's edit page", () => {
     expect(images).toHaveLength(adminProductOf(1).images.length)
     expect(images.map((img) => img.getAttribute("src"))).toEqual(adminProductOf(1).images.map((photo) => `${photo.url}/480.webp`))
     expect(images[0]).toHaveAccessibleName("Photo 1 of 13, Cover")
-    for (const img of images) expect(img.className).toContain("object-contain")
-    expect(within(photos).queryAllByRole("button")).toEqual([])
-    expect(within(photos).getByText(f.photosLater)).toBeInTheDocument()
+    expect(within(photos).getByRole("button", { name: "Delete photo 13" })).toBeInTheDocument()
   })
 
   it("previews the edition line the shop will show", async () => {
