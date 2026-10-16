@@ -2,7 +2,7 @@
 // field by field: during the build a bad answer throws and the build stops, so the site never goes out with an empty
 // or half-read catalog. Also loaded by the build config in Node (react-router.config.ts), so no "@/" imports here.
 import { requireUrl } from "../../lib/env.ts"
-import type { AdminProduct, Product, ProductImage, ProductSummary } from "./types.ts"
+import type { AdminProduct, AdminProductImage, Product, ProductImage, ProductSummary } from "./types.ts"
 
 type Json = Record<string, unknown>
 
@@ -92,7 +92,43 @@ function product(value: unknown): Product {
   return { ...piece, story: textOrNull(value as Json, "story") }
 }
 
-/** One piece as the studio reads it (the public fields, plus status and updatedAt); throws on anything else. */
+// A studio photo: the public fields plus its id and place. In a list the studio moves photos by their place, so the
+// places must be exactly 1..n in the order sent (`expected`); a photo on its own may sit anywhere.
+function adminImage(value: unknown, i: number, expected?: number): AdminProductImage {
+  const photo = image(value, i)
+  const row = value as Json
+  const label = `images[${i}]`
+  const id = positive(row, "id", `${label}.id`)
+  const position = positive(row, "position", `${label}.position`)
+  if (expected !== undefined && position !== expected) fail(`${label}.position must be ${expected}`)
+  return { ...photo, id, position }
+}
+
+function adminImages(value: unknown): AdminProductImage[] {
+  if (!Array.isArray(value)) fail("images must be a list")
+  return value.map((photo, i) => adminImage(photo, i, i + 1))
+}
+
+/** A piece's photos in order (PUT …/photos/order); throws on anything else. */
+export function readAdminPhotos(value: unknown): AdminProductImage[] {
+  return explained("photos", () => adminImages(value))
+}
+
+/** One photo (POST …/photos); throws on anything else. */
+export function readAdminPhoto(value: unknown): AdminProductImage {
+  return explained("photo", () => adminImage(value, 0))
+}
+
+function explained<T>(what: string, read: () => T): T {
+  try {
+    return read()
+  } catch (error) {
+    if (error instanceof Invalid) throw new Error(`${what}: ${error.message}`)
+    throw error
+  }
+}
+
+/** One piece as the studio reads it (the public fields, status, updatedAt, and each photo's id and place); throws on anything else. */
 export function readAdminProduct(value: unknown): AdminProduct {
   try {
     const piece = product(value)
@@ -101,7 +137,7 @@ export function readAdminProduct(value: unknown): AdminProduct {
     if (status !== "draft" && status !== "published") fail("status must be draft or published")
     const updatedAt = text(row, "updatedAt")
     if (Number.isNaN(Date.parse(updatedAt))) fail("updatedAt must be a date")
-    return { ...piece, status, updatedAt }
+    return { ...piece, status, updatedAt, images: adminImages(row.images) }
   } catch (error) {
     if (error instanceof Invalid) throw new Error(`product${idOf(value)}: ${error.message}`)
     throw error

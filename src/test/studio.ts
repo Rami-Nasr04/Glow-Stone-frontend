@@ -2,9 +2,12 @@ import { AdminAuthError, type AdminAuthClient, type SignInResult } from "@/featu
 import type { AdminProduct } from "@/features/catalog/types"
 import { productOf } from "./catalog"
 
-// A piece as GET /admin/products/{id} answers it: the public fields plus status and updatedAt.
+// A piece as GET /admin/products/{id} answers it: the public fields plus status and updatedAt, and each photo with its
+// id (the piece's id × 100 + its place) and position.
 export function adminProductOf(id: number, changes: Partial<AdminProduct> = {}): AdminProduct {
-  return { ...productOf(id), status: "published", updatedAt: "2026-10-14T09:00:00.000Z", ...changes }
+  const piece = productOf(id)
+  const images = piece.images.map((image, i) => ({ ...image, id: id * 100 + i + 1, position: i + 1 }))
+  return { ...piece, images, status: "published", updatedAt: "2026-10-14T09:00:00.000Z", ...changes }
 }
 
 /** A JSON answer in the API's envelope. */

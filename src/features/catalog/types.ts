@@ -45,10 +45,18 @@ export interface ProductImage {
 export type ProductStatus = "draft" | "published"
 
 /** The studio's view of a piece (GET /admin/products[/{id}]): drafts included. */
-export interface AdminProduct extends Product {
+export interface AdminProduct extends Omit<Product, "images"> {
   status: ProductStatus
   /** ISO timestamp of the last change. */
   updatedAt: string
+  images: AdminProductImage[]
+}
+
+/** A photo as the studio sees it: with its id (to reorder or delete it) and its place. */
+export interface AdminProductImage extends ProductImage {
+  id: number
+  /** 1 = cover, 2 = hover, then the gallery; always 1..n with no gap. */
+  position: number
 }
 
 /** POST /admin/products (all of it) and PATCH /admin/products/{id} (only the fields that change). */

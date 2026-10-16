@@ -149,9 +149,99 @@ describe("the admin API client", () => {
     expect(await caught(api.listProducts())).toMatchObject({ status: 502, code: "UNAVAILABLE" })
   })
 
+  it("reads each photo's id and position", async () => {
+    const { api } = setup(() => ok(adminProductOf(5)))
+    const piece = await api.getProduct(5)
+    expect(piece.images.slice(0, 2)).toEqual([
+      { ...adminProductOf(5).images[0], id: 501, position: 1 },
+      { ...adminProductOf(5).images[1], id: 502, position: 2 },
+    ])
+  })
+
+  it("refuses photos without an id, or out of order", async () => {
+    const piece = adminProductOf(5)
+    const [first, second, ...rest] = piece.images
+    const { id: _id, ...noId } = first
+    const broken = [
+      { ...piece, images: [noId, second, ...rest] },
+      { ...piece, images: [second, first, ...rest] },
+      { ...piece, images: [first, { ...second, position: 3 }, ...rest] },
+    ]
+    for (const answer of broken) {
+      const { api } = setup(() => ok(answer))
+      expect((await caught(api.getProduct(5))).code).toBe("UNEXPECTED")
+    }
+  })
+
   it("refuses an answer that isn't an admin product", async () => {
     const { status: _status, ...noStatus } = adminProductOf(1)
     const { api } = setup(() => ok(noStatus))
     expect((await caught(api.getProduct(1))).code).toBe("UNEXPECTED")
+  })
+})
+
+const slot = { uploadId: "0b6c3c1e-9a43-4a39-8d1e-2f1c4c7a9b10", url: "https://uploads.test/", fields: { key: "incoming/5/x", policy: "p" } }
+
+describe("the admin photo calls", () => {
+  it("asks for one upload slot", async () => {
+    const { api, fetch } = setup(() => ok(slot))
+    expect(await api.requestUpload(5)).toEqual(slot)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/5/photos/upload`)
+    expect(init?.method).toBe("POST")
+    expect(init?.body).toBeUndefined()
+  })
+
+  it("refuses a slot without its upload id, address or fields", async () => {
+    for (const broken of [{ ...slot, uploadId: "" }, { ...slot, url: 5 }, { ...slot, fields: { key: 1 } }, { ...slot, fields: null }]) {
+      const { api } = setup(() => ok(broken))
+      expect((await caught(api.requestUpload(5))).code).toBe("UNEXPECTED")
+    }
+  })
+
+  it("confirms an upload and reads the new photo (201)", async () => {
+    const photo = { ...adminProductOf(5).images[0], id: 77, position: 10 }
+    const { api, fetch } = setup(() => ok(photo, 201))
+    expect(await api.confirmUpload(5, slot.uploadId)).toEqual(photo)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/5/photos`)
+    expect(init?.method).toBe("POST")
+    expect(JSON.parse(String(init?.body))).toEqual({ uploadId: slot.uploadId })
+  })
+
+  it("passes the photo messages on exactly as the API wrote them", async () => {
+    for (const [status, code, message] of [
+      [400, "VALIDATION", "This photo is too small for the website (at least 1440 px wide)."],
+      [400, "VALIDATION", "This upload wasn't found. Upload the photo again."],
+      [409, "CONFLICT", "A piece can have at most 30 photos."],
+    ] as const) {
+      const { api } = setup(() => failure(status, code, message))
+      expect(await caught(api.confirmUpload(5, slot.uploadId))).toMatchObject({ status, code, message })
+    }
+  })
+
+  it("sends the full new order and reads it back", async () => {
+    const images = adminProductOf(5).images
+    const reordered = [images[1], images[0], ...images.slice(2)].map((image, i) => ({ ...image, position: i + 1 }))
+    const { api, fetch } = setup(() => ok(reordered))
+    expect(await api.reorderPhotos(5, reordered.map((image) => image.id))).toEqual(reordered)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/5/photos/order`)
+    expect(init?.method).toBe("PUT")
+    expect(JSON.parse(String(init?.body))).toEqual({ imageIds: reordered.map((image) => image.id) })
+  })
+
+  it("deletes a photo on a 204 with no body", async () => {
+    const { api, fetch } = setup(() => new Response(null, { status: 204 }))
+    await expect(api.deletePhoto(5, 503)).resolves.toBeUndefined()
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/5/photos/503`)
+    expect(init?.method).toBe("DELETE")
+  })
+
+  it("ends the session on a 401 from a photo call", async () => {
+    const { api, onUnauthorized } = setup(unauthorized)
+    expect((await caught(api.deletePhoto(5, 503))).status).toBe(401)
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
   })
 })

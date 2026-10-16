@@ -1,8 +1,8 @@
-// The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH /admin/products/{id}), with the
-// admin's access token. Answers are read through the envelope; a 401 is judged by its status alone, because API
+// The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH /admin/products/{id}, and the
+// photo calls under /admin/products/{id}/photos), with the admin's access token. Answers are read through the envelope; a 401 is judged by its status alone, because API
 // Gateway answers it with its own {"message":"Unauthorized"}.
-import { readAdminProduct } from "@/features/catalog/api"
-import type { AdminProduct, ProductInput } from "@/features/catalog/types"
+import { readAdminPhoto, readAdminPhotos, readAdminProduct } from "@/features/catalog/api"
+import type { AdminProduct, AdminProductImage, ProductInput } from "@/features/catalog/types"
 
 /** Every key the API takes; anything else is refused by the API, so it is never sent. */
 export const PRODUCT_INPUT_KEYS = [
@@ -25,7 +25,7 @@ export const PRODUCT_INPUT_KEYS = [
 
 export type ProductField = (typeof PRODUCT_INPUT_KEYS)[number]
 
-export type StudioErrorCode = "VALIDATION" | "CONFLICT" | "NOT_FOUND" | "UNAUTHORIZED" | "NETWORK" | "UNAVAILABLE" | "UNEXPECTED"
+export type StudioErrorCode = "VALIDATION" | "CONFLICT" | "NOT_FOUND" | "UNAUTHORIZED" | "NETWORK" | "UNAVAILABLE" | "UNEXPECTED" | "STORAGE"
 
 export class StudioError extends Error {
   readonly status: number
@@ -42,11 +42,25 @@ export class StudioError extends Error {
   }
 }
 
+/** Permission to upload one photo straight to storage (a form POST), valid for 5 minutes. */
+export interface UploadSlot {
+  uploadId: string
+  url: string
+  /** Sent first, in this order, before Content-Type and the file. */
+  fields: Record<string, string>
+}
+
 export interface AdminApi {
   listProducts(): Promise<AdminProduct[]>
   getProduct(id: number): Promise<AdminProduct>
   createProduct(input: ProductInput): Promise<AdminProduct>
   updateProduct(id: number, changes: Partial<ProductInput>): Promise<AdminProduct>
+  requestUpload(id: number): Promise<UploadSlot>
+  /** The uploaded photo, added at the end of the piece's photos. */
+  confirmUpload(id: number, uploadId: string): Promise<AdminProductImage>
+  /** imageIds = every photo of the piece, exactly once, in the new order. */
+  reorderPhotos(id: number, imageIds: number[]): Promise<AdminProductImage[]>
+  deletePhoto(id: number, imageId: number): Promise<void>
 }
 
 interface AdminApiOptions {
@@ -96,6 +110,7 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
       throw new StudioError(0, "NETWORK", error instanceof Error ? error.message : String(error))
     }
     if (response.status === 401) throw ended()
+    if (response.status === 204) return { status: 204, data: undefined }
     let parsed: unknown
     try {
       parsed = await response.json()
@@ -114,12 +129,26 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     return { status: response.status, data: parsed.data }
   }
 
-  function piece(data: unknown): AdminProduct {
+  // The catalog readers throw plain errors; here they become UNEXPECTED.
+  function read<T>(reader: (data: unknown) => T, data: unknown): T {
     try {
-      return readAdminProduct(data)
+      return reader(data)
     } catch (error) {
       throw unexpected(error instanceof Error ? error.message : String(error))
     }
+  }
+  const piece = (data: unknown) => read(readAdminProduct, data)
+
+  function slotOf(data: unknown): UploadSlot {
+    const path = "POST …/photos/upload"
+    if (!isObject(data)) throw unexpected(`${path}: data must be an object`)
+    const { uploadId, url, fields } = data
+    if (typeof uploadId !== "string" || uploadId === "") throw unexpected(`${path}: uploadId must be text`)
+    if (typeof url !== "string" || !url.startsWith("https://")) throw unexpected(`${path}: url must be an https address`)
+    if (!isObject(fields) || !Object.values(fields).every((value) => typeof value === "string")) {
+      throw unexpected(`${path}: fields must be text values`)
+    }
+    return { uploadId, url, fields: fields as Record<string, string> }
   }
 
   return {
@@ -138,6 +167,21 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     },
     async updateProduct(id, changes) {
       return piece((await call("PATCH", `/admin/products/${id}`, pickInput(changes))).data)
+    },
+    async requestUpload(id) {
+      return slotOf((await call("POST", `/admin/products/${id}/photos/upload`)).data)
+    },
+    async confirmUpload(id, uploadId) {
+      const path = `/admin/products/${id}/photos`
+      const { status, data } = await call("POST", path, { uploadId })
+      if (status !== 201) throw unexpected(`POST ${path} answered ${status}, not 201`)
+      return read(readAdminPhoto, data)
+    },
+    async reorderPhotos(id, imageIds) {
+      return read(readAdminPhotos, (await call("PUT", `/admin/products/${id}/photos/order`, { imageIds })).data)
+    },
+    async deletePhoto(id, imageId) {
+      await call("DELETE", `/admin/products/${id}/photos/${imageId}`)
     },
   }
 }
