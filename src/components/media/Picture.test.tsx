@@ -27,7 +27,7 @@ describe("Picture", () => {
     )
     expect(img).toHaveAttribute("width", "2880")
     expect(img).toHaveAttribute("height", "4318")
-    expect(img).toHaveAttribute("sizes", "100vw")
+    expect(img).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 67vw, 100vw")
   })
 
   it("stops a smaller photo's srcset at its own width, and always offers 480", () => {
@@ -57,5 +57,23 @@ describe("Picture", () => {
   it("resolves variant urls", () => {
     expect(imageUrl("craft/bore", 480)).toBe("/images/craft/bore-480.webp")
     expect(photoUrl({ url: PHOTO, width: 2880, height: 4318 }, 1440)).toBe(`${PHOTO}/1440.webp`)
+  })
+
+  // Rami, 2026-10-16: a phone never downloads the 2880 photo. Held sideways (932 px × 3) it would by width alone.
+  it.each([
+    ["100vw", "(min-resolution: 2.5dppx) 67vw, 100vw"],
+    ["(min-width: 1024px) 45vw, 100vw", "(min-width: 1024px) 45vw, (min-resolution: 2.5dppx) 67vw, 100vw"],
+    ["(min-width: 768px) clamp(280px, 25vw, 360px), 72vw", "(min-width: 768px) clamp(280px, 25vw, 360px), (min-resolution: 2.5dppx) 48vw, 72vw"],
+    ["(min-width: 1024px) 410px, (min-width: 768px) 50vw, 100vw", "(min-width: 1024px) 410px, (min-width: 768px) 50vw, (min-resolution: 2.5dppx) 67vw, 100vw"],
+  ])("tells 2.5× and denser screens the phone width %s is 2/3 as wide", (sizes, capped) => {
+    render(<Picture image={{ url: PHOTO, width: 2880, height: 4318 }} alt="Piece" sizes={sizes} />)
+    expect(screen.getByAltText("Piece")).toHaveAttribute("sizes", capped)
+  })
+
+  it("leaves a fixed width alone, and doesn't cap twice", () => {
+    render(<Picture image={{ url: PHOTO, width: 2880, height: 4318 }} alt="Thumb" sizes="56px" />)
+    expect(screen.getByAltText("Thumb")).toHaveAttribute("sizes", "56px")
+    render(<Picture image={{ url: PHOTO, width: 2880, height: 4318 }} alt="Again" sizes="(min-resolution: 2.5dppx) 40vw, 100vw" />)
+    expect(screen.getByAltText("Again")).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 40vw, 100vw")
   })
 })

@@ -16,7 +16,7 @@ describe("Gallery", () => {
     expect(thumbs).toHaveLength(9)
     const main = desktop(container).getByAltText("Qadisha, photo 1 of 9")
     expect(main).toHaveAttribute("src", `${qadisha.images[0].url}/960.webp`)
-    expect(main).toHaveAttribute("sizes", "(min-width: 1024px) 45vw, 100vw")
+    expect(main).toHaveAttribute("sizes", "(min-width: 1024px) 45vw, (min-resolution: 2.5dppx) 67vw, 100vw")
     // Each photo keeps its own shape: the fourth is the landscape one.
     const slides = mobile(container).querySelectorAll("img")
     expect(slides).toHaveLength(9)

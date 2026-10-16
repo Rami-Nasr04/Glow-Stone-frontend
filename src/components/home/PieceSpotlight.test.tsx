@@ -47,12 +47,12 @@ describe("PieceSpotlight", () => {
     expect(frame?.className).toContain("aspect-3/2")
     expect(frame?.className).toMatch(/hidden.*lg:block|lg:block.*hidden/)
     expect(frame?.className).toContain("lg:col-span-8")
-    expect(document.querySelector(detail)).toHaveAttribute("sizes", "62vw")
+    expect(document.querySelector(detail)).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 41vw, 62vw")
     // Phones show the full piece; desktop frames the same photo over the close-up's corner.
     const fulls = [...document.querySelectorAll(full)]
     expect(fulls.map((img) => img.parentElement?.className.includes("lg:hidden"))).toEqual([true, false])
-    expect(fulls[0]).toHaveAttribute("sizes", "100vw")
+    expect(fulls[0]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 67vw, 100vw")
     expect(fulls[1].parentElement?.className).toContain("lg:col-start-7")
-    expect(fulls[1]).toHaveAttribute("sizes", "13vw")
+    expect(fulls[1]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 9vw, 13vw")
   })
 })

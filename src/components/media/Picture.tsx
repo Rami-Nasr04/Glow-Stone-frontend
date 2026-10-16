@@ -1,11 +1,11 @@
-import { type ApiImage, type BundledImage, imageSrcSet, imageUrl, photoSrcSet, photoUrl } from "@/lib/images"
+import { type ApiImage, type BundledImage, capPhoneDensity, imageSrcSet, imageUrl, photoSrcSet, photoUrl } from "@/lib/images"
 import { cn } from "@/lib/utils"
 
 interface PictureProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet" | "width" | "height"> {
   /** A bundled image by key (its width is the widest generated variant), or a product photo from the API. */
   image: BundledImage | ApiImage
   alt: string
-  /** CSS sizes hint, e.g. "(min-width: 1024px) 50vw, 100vw". */
+  /** CSS sizes hint, e.g. "(min-width: 1024px) 50vw, 100vw". Dense phone screens get 2/3 of the last width (capPhoneDensity). */
   sizes: string
   /** "contain" for product photos (a piece is never cropped); "cover" only for craft close-ups. */
   fit?: "contain" | "cover"
@@ -18,7 +18,7 @@ export default function Picture({ image, alt, sizes, fit = "contain", priority =
     <img
       src={fromApi ? photoUrl(image, 960) : imageUrl(image.key, 960)}
       srcSet={fromApi ? photoSrcSet(image) : imageSrcSet(image.key, image.width)}
-      sizes={sizes}
+      sizes={capPhoneDensity(sizes)}
       width={image.width}
       height={image.height}
       alt={alt}

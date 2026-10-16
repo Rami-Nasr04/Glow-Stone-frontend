@@ -46,3 +46,18 @@ export function photoSrcSet(photo: ApiImage): string {
     .map((w) => `${photoUrl(photo, w)} ${w}w`)
     .join(", ")
 }
+
+// Phones have 2.5–4× screens. A photo at full density there looks no sharper, yet held sideways (932 px × 3) the
+// width alone asks for the 2880 file. So screens at 2.5× and up are told the narrowest-screen width in `sizes` is 2/3
+// of itself and choose as a 2× screen would. Desktop entries come first and still win on desktops; 2× is unchanged.
+const DENSE_SCREEN = "(min-resolution: 2.5dppx)"
+
+export function capPhoneDensity(sizes: string): string {
+  if (sizes.includes(DENSE_SCREEN)) return sizes
+  // Top-level commas only: "clamp(280px, 25vw, 360px)" stays whole.
+  const entries = sizes.split(/,(?![^(]*\))/).map((entry) => entry.trim())
+  const phone = entries.at(-1) ?? ""
+  const vw = /^(\d+(?:\.\d+)?)vw$/.exec(phone)
+  if (!vw) return sizes
+  return [...entries.slice(0, -1), `${DENSE_SCREEN} ${Math.round((Number(vw[1]) * 2) / 3)}vw`, phone].join(", ")
+}

@@ -24,7 +24,7 @@ describe("PieceCard", () => {
     expect(imgs).toHaveLength(2)
     expect(imgs[0]).toHaveAttribute("src", `${piece.images[0].url}/960.webp`)
     expect(imgs[0]).toHaveAttribute("alt", "")
-    expect(imgs[0]).toHaveAttribute("sizes", "33vw")
+    expect(imgs[0]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 22vw, 33vw")
     expect(imgs[1]).toHaveAttribute("src", `${piece.images[1].url}/960.webp`)
     expect(imgs[1]).toHaveAttribute("aria-hidden", "true")
     expect(imgs[1].className).toContain("group-hover:opacity-100")
