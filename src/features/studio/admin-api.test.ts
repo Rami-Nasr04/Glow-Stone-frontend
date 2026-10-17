@@ -211,7 +211,7 @@ describe("the admin photo calls", () => {
 
   it("passes the photo messages on exactly as the API wrote them", async () => {
     for (const [status, code, message] of [
-      [400, "VALIDATION", "This photo is too small for the website (at least 1440 px wide)."],
+      [400, "VALIDATION", "This photo is too small for the website (at least 1067 px wide)."],
       [400, "VALIDATION", "This upload wasn't found. Upload the photo again."],
       [409, "CONFLICT", "A piece can have at most 30 photos."],
     ] as const) {

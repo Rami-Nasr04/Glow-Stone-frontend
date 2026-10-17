@@ -126,14 +126,14 @@ describe("adding photos", () => {
     let confirms = 0
     renderPhotos((method, path) => {
       if (method !== "POST" || path !== "/admin/products/5/photos") return undefined
-      return ++confirms === 1 ? failure(400, "VALIDATION", "This photo is too small for the website (at least 1440 px wide).") : undefined
+      return ++confirms === 1 ? failure(400, "VALIDATION", "This photo is too small for the website (at least 1067 px wide).") : undefined
     })
     await opened()
     await userEvent.setup().upload(screen.getByLabelText(p.add), [fileOf("small.jpg"), fileOf("good.jpg")])
     expect(await screen.findByText("Added 1 of 2 photos.")).toBeInTheDocument()
     const failures = screen.getByRole("alert")
     expect(failures).toHaveTextContent(p.notAddedTitle)
-    expect(within(failures).getByText("small.jpg: This photo is too small for the website (at least 1440 px wide).")).toBeInTheDocument()
+    expect(within(failures).getByText("small.jpg: This photo is too small for the website (at least 1067 px wide).")).toBeInTheDocument()
   })
 
   it("refuses a photo over 30 MB before any call", async () => {

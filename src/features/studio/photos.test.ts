@@ -178,13 +178,13 @@ describe("adding several photos", () => {
     const { api } = setup((url) => {
       if (!url.endsWith("/5/photos")) return undefined
       confirms++
-      if (confirms === 1) return failure(400, "VALIDATION", "This photo is too small for the website (at least 1440 px wide).")
+      if (confirms === 1) return failure(400, "VALIDATION", "This photo is too small for the website (at least 1067 px wide).")
       if (confirms === 2) return failure(400, "VALIDATION", "This file isn't a JPEG, PNG or WebP photo.")
       return undefined
     })
     const result = await addPhotos(api, 5, [fileOf("small.jpg"), fileOf("odd.png"), fileOf("big.jpg", { size: MAX_PHOTO_BYTES + 1 }), fileOf("good.jpg")], hooks())
     expect(result.failed).toEqual([
-      { name: "small.jpg", message: "This photo is too small for the website (at least 1440 px wide)." },
+      { name: "small.jpg", message: "This photo is too small for the website (at least 1067 px wide)." },
       { name: "odd.png", message: "This file isn't a JPEG, PNG or WebP photo." },
       { name: "big.jpg", message: "This photo is larger than 30 MB." },
     ])
