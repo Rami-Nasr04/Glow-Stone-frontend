@@ -52,8 +52,16 @@ export function createCognitoAdminAuth({ userPoolId, clientId }: CognitoAdminAut
     )
 
   // The saved session, refreshed when its access token is about to expire. A session that can't be read or
-  // refreshed (refresh token expired or revoked) is cleared.
-  async function liveSession(): Promise<CognitoUserSession | null> {
+  // refreshed (refresh token expired or revoked) is cleared. Calls made together share one reading (and refresh).
+  let reading: Promise<CognitoUserSession | null> | null = null
+  function liveSession(): Promise<CognitoUserSession | null> {
+    reading ??= readLiveSession().finally(() => {
+      reading = null
+    })
+    return reading
+  }
+
+  async function readLiveSession(): Promise<CognitoUserSession | null> {
     const user = pool.getCurrentUser()
     if (!user) return null
     try {

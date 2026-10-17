@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router"
 import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
@@ -29,6 +29,7 @@ function stockLabel(piece: Pick<AdminProduct, "remaining" | "editionSize">): str
 export default function StudioProducts() {
   const { api } = useAdminAuth()
   const [load, setLoad] = useState<Load>({ state: "loading" })
+  const saving = useRef(new Set<number>())
 
   // A 401 has already ended the session; anything else can be tried again.
   const fetchList = useCallback(
@@ -56,8 +57,11 @@ export default function StudioProducts() {
   const setFeatured = (id: number, featured: boolean) =>
     setLoad((current) => (current.state === "ready" ? { ...current, pieces: current.pieces.map((p) => (p.id === id ? { ...p, featured } : p)) } : current))
 
-  // Only { featured } is sent; the star moves at once and goes back if the change isn't saved.
+  // Only { featured } is sent; the star moves at once and goes back if the change isn't saved. A tap while that
+  // star's change is being saved is ignored, so two saves never race.
   const toggleFeatured = async (piece: AdminProduct) => {
+    if (saving.current.has(piece.id)) return
+    saving.current.add(piece.id)
     const featured = !piece.featured
     setFeatured(piece.id, featured)
     try {
@@ -67,6 +71,8 @@ export default function StudioProducts() {
       setFeatured(piece.id, piece.featured)
       // A 401 has already sent the admin to sign in.
       if (!(error instanceof StudioError && error.status === 401)) studioToast.error(t.featureFailed)
+    } finally {
+      saving.current.delete(piece.id)
     }
   }
 

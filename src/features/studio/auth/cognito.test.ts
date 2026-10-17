@@ -21,6 +21,8 @@ const cognito = vi.hoisted(() => ({
   accessToken: "access-1",
   getSessionFails: false,
   refreshFails: false,
+  /** Cognito answers the refresh a moment later, as over the network. */
+  refreshLater: false,
   refreshSession: vi.fn(),
   revoke: vi.fn((cb: (error?: Error) => void) => cb()),
   cleared: vi.fn(),
@@ -71,10 +73,14 @@ vi.mock("amazon-cognito-identity-js", () => {
     }
     refreshSession(_token: unknown, cb: (error: Error | null, value?: unknown) => void) {
       cognito.refreshSession()
-      if (cognito.refreshFails) return cb(cognitoError("NotAuthorizedException", "Refresh Token has been revoked"))
-      cognito.accessToken = "access-2"
-      cognito.accessExpires = Math.floor(Date.now() / 1000) + 3600
-      cb(null, session())
+      const answer = () => {
+        if (cognito.refreshFails) return cb(cognitoError("NotAuthorizedException", "Refresh Token has been revoked"))
+        cognito.accessToken = "access-2"
+        cognito.accessExpires = Math.floor(Date.now() / 1000) + 3600
+        cb(null, session())
+      }
+      if (cognito.refreshLater) setTimeout(answer, 5)
+      else answer()
     }
     signOut(cb?: (error?: Error) => void) {
       if (!cb) {
@@ -134,6 +140,7 @@ beforeEach(() => {
   cognito.accessExpires = nowSeconds() + 3600
   cognito.getSessionFails = false
   cognito.refreshFails = false
+  cognito.refreshLater = false
   cognito.authenticate = (_email, _password, cb) => cb.onSuccess()
   cognito.forgotPassword = (_email, cb) => cb.onSuccess()
   cognito.confirmPassword = (_code, _password, cb) => cb.onSuccess()
@@ -237,6 +244,16 @@ describe("the studio's Cognito client", () => {
     cognito.current = EMAIL
     cognito.accessExpires = nowSeconds() + 90
     expect(await client().accessToken()).toBe("access-2")
+    expect(cognito.refreshSession).toHaveBeenCalledTimes(1)
+  })
+
+  // Several calls at once (a page loading a piece and its photos) share one refresh.
+  it("refreshes once for calls made together", async () => {
+    cognito.current = EMAIL
+    cognito.accessExpires = nowSeconds() + 90
+    cognito.refreshLater = true
+    const auth = client()
+    expect(await Promise.all([auth.accessToken(), auth.accessToken(), auth.accessToken()])).toEqual(["access-2", "access-2", "access-2"])
     expect(cognito.refreshSession).toHaveBeenCalledTimes(1)
   })
 

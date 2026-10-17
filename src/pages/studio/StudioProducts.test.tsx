@@ -111,6 +111,24 @@ describe("the studio's products list", () => {
     expect(toast.error).not.toHaveBeenCalled()
   })
 
+  // Two quick taps would send two saves that can land in either order: the second waits for the first.
+  it("ignores a second tap on a star while its first change is being saved", async () => {
+    let answer: (response: Response) => void = () => {}
+    const fetch = stubApi({ patch: () => undefined as unknown as Response })
+    fetch.mockImplementation(async (_url: string | URL | Request, init?: RequestInit) =>
+      init?.method === "PATCH" ? new Promise<Response>((done) => (answer = done)) : ok(pieces),
+    )
+    renderList()
+    await screen.findByRole("link", { name: "Nahr" })
+    const user = userEvent.setup()
+    await user.click(within(rowOf("Nahr")).getByRole("button", { name: "Feature Nahr on the home page" }))
+    await user.click(within(rowOf("Nahr")).getByRole("button", { name: "Stop featuring Nahr on the home page" }))
+    expect(fetch.mock.calls.filter(([, init]) => init?.method === "PATCH")).toHaveLength(1)
+    answer(ok({ ...pieces.find((p) => p.name === "Nahr"), featured: true }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+    expect(within(rowOf("Nahr")).getByRole("button", { name: "Stop featuring Nahr on the home page" })).toHaveAttribute("aria-pressed", "true")
+  })
+
   it("says that changes reach the website at the next publish", async () => {
     stubApi()
     renderList()
