@@ -40,10 +40,18 @@ export function photoUrl(photo: ApiImage, width: ImageWidth): string {
   return `${photo.url}/${width}.webp`
 }
 
-// The allowed widths up to the photo's own; 480 always, since a smaller master comes back at its own size.
+// The allowed widths below the photo's own, then the next one once: a master is never enlarged, so every wider ask
+// returns the same file, and naming it twice would have the CDN cache it under two addresses.
+export function photoWidths(photo: ApiImage): ImageWidth[] {
+  const below = IMAGE_WIDTHS.filter((w) => w < photo.width)
+  const next = IMAGE_WIDTHS.find((w) => w >= photo.width)
+  return next ? [...below, next] : below
+}
+
+// Each address is described by the width its file really has: 1440.webp of a 1067-wide photo is 1067w.
 export function photoSrcSet(photo: ApiImage): string {
-  return IMAGE_WIDTHS.filter((w, i) => i === 0 || w <= photo.width)
-    .map((w) => `${photoUrl(photo, w)} ${w}w`)
+  return photoWidths(photo)
+    .map((w) => `${photoUrl(photo, w)} ${Math.min(w, photo.width)}w`)
     .join(", ")
 }
 

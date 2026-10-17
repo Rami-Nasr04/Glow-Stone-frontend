@@ -256,4 +256,10 @@ describe("pre-warming", () => {
     expect(warmed).toHaveLength(5)
     expect(warmed[4]).toBe(`${adminProductOf(5).images[0].url}/2880.webp`)
   })
+
+  it("loads only the addresses the website asks for, for a photo narrower than 2880", () => {
+    const photo = { ...adminProductOf(5).images[0], width: 1067, height: 1600 }
+    prewarm(photo)
+    expect(warmed).toEqual([480, 960, 1440].map((w) => `${photo.url}/${w}.webp`))
+  })
 })

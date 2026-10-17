@@ -30,13 +30,26 @@ describe("Picture", () => {
     expect(img).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 67vw, 100vw")
   })
 
-  it("stops a smaller photo's srcset at its own width, and always offers 480", () => {
+  it("stops a smaller photo's srcset at its own width", () => {
     render(<Picture image={{ url: PHOTO, width: 2048, height: 1365 }} alt="Wide" sizes="62vw" />)
     expect(screen.getByAltText("Wide").getAttribute("srcset")).toBe(
       [480, 960, 1440, 2048].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
     )
+    render(<Picture image={{ url: PHOTO, width: 1440, height: 2160 }} alt="Exact" sizes="62vw" />)
+    expect(screen.getByAltText("Exact").getAttribute("srcset")).toBe(
+      [480, 960, 1440].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
+    )
+  })
+
+  // A master is never enlarged: a 1067-wide photo comes back at 1067 for 1440, 2048 and 2880. The srcset names the
+  // first of those once, with the width the file really has, so the CDN never caches one file under three addresses.
+  it("offers a photo between two sizes at its real width, once", () => {
+    render(<Picture image={{ url: PHOTO, width: 1067, height: 1600 }} alt="Sannine" sizes="100vw" />)
+    expect(screen.getByAltText("Sannine").getAttribute("srcset")).toBe(
+      `${PHOTO}/480.webp 480w, ${PHOTO}/960.webp 960w, ${PHOTO}/1440.webp 1067w`,
+    )
     render(<Picture image={{ url: PHOTO, width: 300, height: 450 }} alt="Tiny" sizes="56px" />)
-    expect(screen.getByAltText("Tiny").getAttribute("srcset")).toBe(`${PHOTO}/480.webp 480w`)
+    expect(screen.getByAltText("Tiny").getAttribute("srcset")).toBe(`${PHOTO}/480.webp 300w`)
   })
 
   it("never crops by default and lazy-loads unless marked priority", () => {

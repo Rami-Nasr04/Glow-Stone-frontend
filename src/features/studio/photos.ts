@@ -2,7 +2,7 @@
 // then confirm it, and the server makes the master. Several files go one at a time, in the order chosen; one failure
 // doesn't stop the others.
 import type { AdminProductImage } from "@/features/catalog/types"
-import { type ApiImage, IMAGE_WIDTHS, photoUrl } from "@/lib/images"
+import { type ApiImage, photoUrl, photoWidths } from "@/lib/images"
 import { type AdminApi, StudioError, type UploadSlot } from "./admin-api"
 
 export const MAX_PHOTO_BYTES = 30 * 1024 * 1024
@@ -40,9 +40,9 @@ export async function sendToStorage(slot: UploadSlot, file: File): Promise<void>
   if (!response.ok) throw new StudioError(response.status, "STORAGE", PHOTO_MESSAGES.storage)
 }
 
-/** Loads every size once, so the CDN has them cached before the first visitor. */
+/** Loads every address the website asks for once, so the CDN has them cached before the first visitor. */
 export function prewarm(photo: ApiImage): void {
-  for (const width of IMAGE_WIDTHS) new Image().src = photoUrl(photo, width)
+  for (const width of photoWidths(photo)) new Image().src = photoUrl(photo, width)
 }
 
 /** One photo: checked here first, then the three calls. `onConfirm` runs once the file is in storage. */
