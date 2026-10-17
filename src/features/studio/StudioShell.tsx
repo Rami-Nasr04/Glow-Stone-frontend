@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router"
-import { studioPath } from "@/config/studio"
+import { SITE_URL } from "@/config/site"
+import { SITE_PARTS, shopHref, studioPath } from "@/config/studio"
 import { cn } from "@/lib/utils"
 import { useAdminAuth } from "./auth/admin-auth-context"
 import { STUDIO_COPY } from "./copy"
@@ -25,7 +26,7 @@ export default function StudioShell({ children }: StudioShellProps) {
     </Link>
   )
   const shopLink = (label: string, className?: string) => (
-    <a href="/" target="_blank" rel="noopener noreferrer" className={cn(darkLink, className)}>
+    <a href={shopHref(SITE_PARTS, SITE_URL)} target="_blank" rel="noopener noreferrer" className={cn(darkLink, className)}>
       {label} <span aria-hidden="true">↗</span>
     </a>
   )

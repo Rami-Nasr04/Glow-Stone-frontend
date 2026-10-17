@@ -1,7 +1,7 @@
 import type { RouteConfigEntry } from "@react-router/dev/routes"
 import { describe, expect, it } from "vitest"
 import { prerenderPaths } from "../src/i18n/paths.ts"
-import routes from "../src/routes.ts"
+import routes, { siteRoutes } from "../src/routes.ts"
 import { studioRoutes } from "../src/studio-routes.ts"
 
 // Every full address a route config answers, e.g. "/studio/products/:id".
@@ -31,6 +31,16 @@ describe("the studio's routes", () => {
   it("are mounted in the site's routes, ahead of the shop", () => {
     expect(addresses(routes)).toEqual(expect.arrayContaining(STUDIO_PAGES.map((page) => `/studio${page}`)))
     expect(routes.findIndex((entry) => entry.path === "/studio")).toBeLessThan(routes.findIndex((entry) => entry.path === ":lang?"))
+  })
+
+  it("are left out of a shop-only build, and the shop out of a studio-only one", () => {
+    const shop = addresses(siteRoutes(["shop"], "/studio"))
+    expect(shop.some((path) => path.includes("studio") || STUDIO_PAGES.includes(path))).toBe(false)
+    expect(shop).toEqual(expect.arrayContaining(["/:lang?/collection", "/:lang?/*"]))
+    const studio = addresses(siteRoutes(["studio"], "/"))
+    expect(studio).toEqual(expect.arrayContaining(["/", "/*", ...STUDIO_PAGES]))
+    expect(studio.some((path) => path.includes(":lang?") || path.includes("collection"))).toBe(false)
+    expect(addresses(siteRoutes(["shop", "studio"], "/studio"))).toEqual(addresses(routes))
   })
 
   it("are never prerendered: the built studio is the SPA shell", () => {

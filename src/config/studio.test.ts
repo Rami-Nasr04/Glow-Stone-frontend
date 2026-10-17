@@ -1,4 +1,4 @@
-import { safeStudioNext, STUDIO_BASE, studioPath } from "./studio"
+import { readSiteParts, readStudioBase, safeStudioNext, SITE_PARTS, STUDIO_BASE, shopHref, studioPath } from "./studio"
 
 describe("studio addresses", () => {
   it("live under one base, /studio until the studio moves to its own subdomain", () => {
@@ -22,5 +22,35 @@ describe("studio addresses", () => {
     }
     expect(safeStudioNext("/products/5", "/")).toBe("/products/5")
     expect(safeStudioNext("/sign-in", "/")).toBe("/products")
+  })
+})
+
+// The domain step (launch checklist): the shop's project builds "shop", a second project builds "studio" at its root.
+describe("the site's parts", () => {
+  it("are both, with the studio under /studio, when nothing is set (today's single project)", () => {
+    expect(readSiteParts(undefined)).toEqual(["shop", "studio"])
+    expect(readSiteParts(" ")).toEqual(["shop", "studio"])
+    expect(readStudioBase(undefined, ["shop", "studio"])).toBe("/studio")
+    expect(SITE_PARTS).toEqual(["shop", "studio"])
+    expect(STUDIO_BASE).toBe("/studio")
+  })
+
+  it("can be the shop alone or the studio alone", () => {
+    expect(readSiteParts("shop")).toEqual(["shop"])
+    expect(readSiteParts("studio")).toEqual(["studio"])
+    expect(readStudioBase("/", ["studio"])).toBe("/")
+  })
+
+  it("stop the build on a value that would leave a broken site", () => {
+    expect(() => readSiteParts("both")).toThrow('VITE_SITE_PARTS must be "shop" or "studio"')
+    expect(() => readStudioBase("studio", ["shop", "studio"])).toThrow("VITE_STUDIO_BASE must be")
+    expect(() => readStudioBase("/studio/", ["shop", "studio"])).toThrow("VITE_STUDIO_BASE must be")
+    expect(() => readStudioBase(undefined, ["studio"])).toThrow("set VITE_STUDIO_BASE=/")
+    expect(() => readStudioBase("/", ["shop", "studio"])).toThrow("can't take the root")
+  })
+
+  it("send the studio's shop link to the shop's own address when the shop isn't in this build", () => {
+    expect(shopHref(["shop", "studio"], "https://shop.test")).toBe("/")
+    expect(shopHref(["studio"], "https://shop.test")).toBe("https://shop.test/")
   })
 })

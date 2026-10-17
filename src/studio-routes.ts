@@ -20,3 +20,4 @@ export function studioRoutes(base: string = STUDIO_BASE): RouteConfigEntry[] {
     ]),
   ]
 }
+

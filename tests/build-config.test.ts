@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import config from "../react-router.config.ts"
 
@@ -53,6 +55,48 @@ describe("the build", () => {
     vi.stubEnv(name, value)
     await expect(prerender()).rejects.toThrow(message)
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  // The domain step: a studio-only project prerenders nothing and doesn't need the products list.
+  it("prerenders nothing for a studio-only build, without asking the API", async () => {
+    const fetch = stubApi()
+    vi.stubEnv("VITE_SITE_PARTS", "studio")
+    vi.stubEnv("VITE_STUDIO_BASE", "/")
+    expect(await prerender()).toEqual([])
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("builds a shop-only site without the studio's variables", async () => {
+    stubApi()
+    vi.stubEnv("VITE_SITE_PARTS", "shop")
+    vi.stubEnv("VITE_ADMIN_USER_POOL_ID", "")
+    vi.stubEnv("VITE_ADMIN_APP_CLIENT_ID", "")
+    expect(await prerender()).toContain("/collection/5/qadisha")
+  })
+
+  it("refuses parts that would leave a broken site", async () => {
+    vi.stubEnv("VITE_SITE_PARTS", "everything")
+    await expect(prerender()).rejects.toThrow("VITE_SITE_PARTS")
+    vi.stubEnv("VITE_SITE_PARTS", "studio")
+    await expect(prerender()).rejects.toThrow("VITE_STUDIO_BASE=/")
+  })
+
+  // With nothing prerendered, React Router writes the app shell as index.html; vercel.json rewrites every address to
+  // __spa-fallback.html, so the shell must carry that name, and "/" takes the same rewrite.
+  it.each([
+    ["studio", "/", ["__spa-fallback.html"]],
+    ["", "", ["index.html"]],
+  ])("names the app shell for the rewrite (VITE_SITE_PARTS=%j)", async (parts, base, files) => {
+    vi.stubEnv("VITE_SITE_PARTS", parts)
+    vi.stubEnv("VITE_STUDIO_BASE", base)
+    const dir = mkdtempSync(join(tmpdir(), "build-end-"))
+    mkdirSync(join(dir, "client"))
+    writeFileSync(join(dir, "client", "index.html"), "app shell")
+    const buildEnd = config.buildEnd as (args: { reactRouterConfig: { buildDirectory: string } }) => Promise<void>
+    await buildEnd({ reactRouterConfig: { buildDirectory: dir } })
+    for (const name of ["index.html", "__spa-fallback.html"]) expect(existsSync(join(dir, "client", name)), name).toBe(files.includes(name))
+    expect(readFileSync(join(dir, "client", files[0]), "utf8")).toBe("app shell")
+    rmSync(dir, { recursive: true, force: true })
   })
 
   it("refuses a missing VITE_API_URL", async () => {

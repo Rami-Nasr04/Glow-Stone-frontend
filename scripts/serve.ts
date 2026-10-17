@@ -76,10 +76,15 @@ export function createSiteServer(outputDir: string, config: VercelConfig) {
   })
 }
 
+// A build to serve: its home page, or (a studio-only build, nothing prerendered) the rewrite's app shell.
+export function hasBuild(outputDir: string, config: VercelConfig): boolean {
+  return [join(outputDir, "index.html"), ...config.rewrites.map((r) => join(outputDir, r.destination))].some((path) => existsSync(path))
+}
+
 if (import.meta.main) {
   const config = JSON.parse(readFileSync("vercel.json", "utf8")) as VercelConfig
   const port = Number(process.argv[2] ?? 4173)
-  if (!existsSync(join(config.outputDirectory, "index.html"))) {
+  if (!hasBuild(config.outputDirectory, config)) {
     console.error(`No build in ${config.outputDirectory}. Run npm run build first.`)
     process.exit(1)
   }

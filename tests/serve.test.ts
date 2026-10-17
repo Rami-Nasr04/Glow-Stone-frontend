@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
-import { createSiteServer, type VercelConfig } from "../scripts/serve.ts"
+import { createSiteServer, hasBuild, type VercelConfig } from "../scripts/serve.ts"
 
 const config = JSON.parse(readFileSync("vercel.json", "utf8")) as VercelConfig
 
@@ -99,5 +99,16 @@ describe("local site server (same rules as Vercel)", () => {
   it("caches build assets for a year and revalidates everything else", async () => {
     expect((await get("/assets/app-abc123.js")).headers["cache-control"]).toBe("public, max-age=31536000, immutable")
     expect((await get("/collection")).headers["cache-control"]).toBe("public, max-age=0, must-revalidate")
+  })
+})
+
+// A studio-only build prerenders nothing: the SPA shell is the whole site, and npm start serves it.
+describe("which builds npm start serves", () => {
+  it("takes a build with the app shell even without a home page", () => {
+    const dir = mkdtempSync(join(tmpdir(), "serve-build-"))
+    expect(hasBuild(dir, config)).toBe(false)
+    writeFileSync(join(dir, "__spa-fallback.html"), "app shell")
+    expect(hasBuild(dir, config)).toBe(true)
+    rmSync(dir, { recursive: true, force: true })
   })
 })
