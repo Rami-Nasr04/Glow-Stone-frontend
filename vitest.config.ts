@@ -12,6 +12,9 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // Half the logical cores: one jsdom worker per thread starves them all, and the studio's longest tests (1.5 s
+    // alone) passed the 5 s timeout. Half takes no longer in all and keeps them near 2 s.
+    maxWorkers: "50%",
     globals: true,
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.ts"],

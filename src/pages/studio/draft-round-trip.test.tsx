@@ -43,11 +43,14 @@ function renderStudio(path: string, auth = fakeAdminAuth({ signedInAs: "omar@exa
   return auth
 }
 
+// Pasted, as a password manager fills them: typing each key is covered by the sign-in page's own tests.
 async function signInAgain() {
   const user = userEvent.setup()
   expect(await screen.findByText(STUDIO_COPY.signIn.sessionEnded)).toBeInTheDocument()
-  await user.type(screen.getByLabelText(STUDIO_COPY.email), "omar@example.com")
-  await user.type(screen.getByLabelText(STUDIO_COPY.password), PASSWORD)
+  await user.click(screen.getByLabelText(STUDIO_COPY.email))
+  await user.paste("omar@example.com")
+  await user.click(screen.getByLabelText(STUDIO_COPY.password))
+  await user.paste(PASSWORD)
   await user.click(screen.getByRole("button", { name: STUDIO_COPY.signIn.submit }))
 }
 
