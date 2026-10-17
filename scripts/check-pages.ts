@@ -204,6 +204,9 @@ for (const viewport of viewports) {
     await page.setViewport(viewport)
     const errors: string[] = []
     page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
+    // Every studio address is the same shell: from the cache, Vercel answers 304 without the X-Robots-Tag header
+    // (the browser keeps the cached one), so the header is read from a fresh answer.
+    await page.setCacheEnabled(false)
     const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
     if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
     for (const step of ["direct", "refresh"]) {
