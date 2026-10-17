@@ -4,6 +4,7 @@ import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
 import NoPhoto from "@/features/catalog/NoPhoto"
 import { stoneLabel } from "@/features/catalog/format"
+import { StudioError } from "@/features/studio/admin-api"
 import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import StatusBadge from "@/features/studio/StatusBadge"
@@ -62,9 +63,10 @@ export default function StudioProducts() {
     try {
       await api.updateProduct(piece.id, { featured })
       studioToast.success(interpolate(featured ? t.featuredSaved : t.unfeaturedSaved, { name: piece.name }), { description: STUDIO_COPY.form.savedToast })
-    } catch {
+    } catch (error) {
       setFeatured(piece.id, piece.featured)
-      studioToast.error(t.featureFailed)
+      // A 401 has already sent the admin to sign in.
+      if (!(error instanceof StudioError && error.status === 401)) studioToast.error(t.featureFailed)
     }
   }
 

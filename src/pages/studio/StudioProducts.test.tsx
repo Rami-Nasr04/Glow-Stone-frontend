@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import type { AdminProduct } from "@/features/catalog/types"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import { renderStudioAt } from "@/test/render-studio"
-import { adminProductOf, fakeAdminAuth, failure, ok } from "@/test/studio"
+import { adminProductOf, fakeAdminAuth, failure, ok, unauthorized } from "@/test/studio"
 import StudioProducts from "./StudioProducts"
 
 const t = STUDIO_COPY.list
@@ -37,7 +37,10 @@ function renderList() {
 
 const rowOf = (name: string) => screen.getByRole("link", { name }).closest("li") as HTMLElement
 
-beforeEach(() => vi.mocked(toast.success).mockClear())
+beforeEach(() => {
+  vi.mocked(toast.success).mockClear()
+  vi.mocked(toast.error).mockClear()
+})
 
 describe("the studio's products list", () => {
   it("lists every piece, drafts included, in the API's order", async () => {
@@ -95,6 +98,17 @@ describe("the studio's products list", () => {
     await userEvent.setup().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.featureFailed, { position: "top-center" }))
     expect(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  // The session ended: the admin is sent to sign in, as everywhere in the studio, without a "couldn't save" on the way.
+  it("says nothing about the star when the session has ended", async () => {
+    const auth = fakeAdminAuth({ signedInAs: "omar@example.com" })
+    stubApi({ patch: () => unauthorized() })
+    renderStudioAt(<StudioProducts />, "/studio/products", { auth })
+    await screen.findByRole("link", { name: "Arz" })
+    await userEvent.setup().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
+    await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
+    expect(toast.error).not.toHaveBeenCalled()
   })
 
   it("says that changes reach the website at the next publish", async () => {

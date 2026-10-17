@@ -1,6 +1,6 @@
 // The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH /admin/products/{id}, and the
-// photo calls under /admin/products/{id}/photos), with the admin's access token. Answers are read through the envelope; a 401 is judged by its status alone, because API
-// Gateway answers it with its own {"message":"Unauthorized"}.
+// photo calls under /admin/products/{id}/photos), with the admin's access token. Answers are read through the
+// envelope; a 401 is judged by its status alone, because API Gateway answers it with its own {"message":"Unauthorized"}.
 import { readAdminPhoto, readAdminPhotos, readAdminProduct } from "@/features/catalog/api"
 import type { AdminProduct, AdminProductImage, ProductInput } from "@/features/catalog/types"
 
