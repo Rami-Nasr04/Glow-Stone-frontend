@@ -13,6 +13,9 @@ interface GalleryProps {
 
 // 4:5 frame, never taller than the viewport minus the header; the photo is contained on stone, never cropped.
 const frame = "relative mx-auto block aspect-4/5 overflow-hidden h-[min(70vh,760px,calc(100svh-9rem))] max-w-full bg-background"
+// Both galleries load their first photo eagerly, and CSS hides one. With the same sizes they ask for the same file,
+// so the hidden one costs no download.
+const PHOTO_SIZES = "(min-width: 1024px) 45vw, 100vw"
 
 export default function Gallery({ piece }: GalleryProps) {
   const { m } = useLocale()
@@ -26,7 +29,7 @@ export default function Gallery({ piece }: GalleryProps) {
   const many = images.length > 1
   const grey = piece.soldOut && "grayscale-60"
   const main = current ? (
-    <Picture image={current} alt={altOf(images.indexOf(current))} sizes="(min-width: 1024px) 45vw, 100vw" priority className={cn(grey)} />
+    <Picture image={current} alt={altOf(images.indexOf(current))} sizes={PHOTO_SIZES} priority className={cn(grey)} />
   ) : (
     <NoPhoto />
   )
@@ -79,7 +82,7 @@ export default function Gallery({ piece }: GalleryProps) {
         >
           {images.map((image, i) => (
             <li key={image.url} className="aspect-2/3 w-full shrink-0 snap-start overflow-hidden bg-background">
-              <Picture image={image} alt={altOf(i)} sizes="100vw" priority={i === 0} className={cn(grey)} />
+              <Picture image={image} alt={altOf(i)} sizes={PHOTO_SIZES} priority={i === 0} className={cn(grey)} />
             </li>
           ))}
           {!current && (

@@ -85,12 +85,20 @@ export function sizesWidth(sizes: string, screen: TestScreen): number {
   throw new Error(`sizes has no default: ${sizes}`)
 }
 
+/** The srcset candidate this screen downloads: its address and described width. */
+export function chosen(img: HTMLImageElement, screen: TestScreen): { url: string; width: number } {
+  const candidates = (img.getAttribute("srcset") ?? "")
+    .split(",")
+    .map((candidate) => {
+      const [url, descriptor] = candidate.trim().split(/\s+/)
+      return { url, width: Number(/^(\d+)w$/.exec(descriptor)?.[1]) }
+    })
+    .sort((a, b) => a.width - b.width)
+  const needed = sizesWidth(img.getAttribute("sizes") ?? "100vw", screen) * screen.dpr
+  return candidates.find((candidate) => candidate.width >= needed) ?? candidates[candidates.length - 1]
+}
+
 /** The srcset width this screen downloads. */
 export function chosenWidth(img: HTMLImageElement, screen: TestScreen): number {
-  const widths = (img.getAttribute("srcset") ?? "")
-    .split(",")
-    .map((candidate) => Number(/(\d+)w$/.exec(candidate.trim())?.[1]))
-    .sort((a, b) => a - b)
-  const needed = sizesWidth(img.getAttribute("sizes") ?? "100vw", screen) * screen.dpr
-  return widths.find((width) => width >= needed) ?? widths[widths.length - 1]
+  return chosen(img, screen).width
 }

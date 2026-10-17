@@ -2,7 +2,7 @@ import { render } from "@testing-library/react"
 import { createRoutesStub } from "react-router"
 import { PRODUCTS, productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
-import { chosenWidth, sizesWidth, type TestScreen } from "@/test/srcset"
+import { chosen, chosenWidth, sizesWidth, type TestScreen } from "@/test/srcset"
 import About from "./About"
 import Collection from "./Collection"
 import Home from "./Home"
@@ -82,5 +82,20 @@ describe("on a desktop", () => {
         }
       }
     }
+  })
+})
+
+// Rami, 2026-10-17: the product page shows its first photo in the desktop gallery or the phone strip, never both, yet
+// both are loaded eagerly. Each must ask for the file the other asks for, so the hidden one costs no download.
+describe("the product page's first photo", () => {
+  const SCREENS: Record<string, TestScreen> = { desktop: DESKTOP, "desktop 2×": { ...DESKTOP, dpr: 2 }, "tablet 2×": { width: 820, height: 1180, dpr: 2 }, ...PHONES }
+  it.each(Object.entries(SCREENS))("is downloaded once on a %s", (_screen, screen) => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ top: 1000 } as DOMRect)
+    const Stub = createRoutesStub([{ path: "/:lang?/collection/:id/:name?", Component: PAGES.product }])
+    const { container } = render(<Stub initialEntries={["/collection/4/jbeil"]} />)
+    const shown = container.querySelector<HTMLImageElement>("[data-gallery=desktop] img")!
+    const strip = container.querySelector<HTMLImageElement>("[data-gallery=mobile] img")!
+    expect(strip.getAttribute("src")).toBe(shown.getAttribute("src"))
+    expect(chosen(strip, screen).url).toBe(chosen(shown, screen).url)
   })
 })
