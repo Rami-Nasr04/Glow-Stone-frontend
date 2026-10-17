@@ -58,6 +58,20 @@ describe("the studio's edit page", () => {
     expect(screen.getByText(STUDIO_COPY.website)).toBeInTheDocument()
   })
 
+  // Its height is a token the page's scroll padding uses too (tests/theme.test.ts), so it never covers a field.
+  it("marks the save bar, sized by the token the page keeps clear", async () => {
+    renderEdit()
+    const save = await screen.findByRole("button", { name: f.noChanges })
+    const bar = save.closest("[data-studio-save-bar]")
+    expect(bar).not.toBeNull()
+    expect(bar?.className).toContain("h-(--studio-save-bar)")
+    // Each status radio is an invisible layer over its whole label, so scrolling to it clears the bar too.
+    for (const radio of screen.getAllByRole("radio")) {
+      expect(radio.className).toMatch(/absolute inset-0.*opacity-0/)
+      expect(radio.closest("label")?.className).toContain("relative")
+    }
+  })
+
   it("has nothing to save until something really changes", async () => {
     const { fetch } = renderEdit()
     await screen.findByRole("heading", { name: "Arz" })

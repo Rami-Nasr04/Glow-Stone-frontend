@@ -63,7 +63,7 @@ export default function StudioShell({ children }: StudioShellProps) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-15 items-center justify-between gap-3 bg-dark-section px-4 lg:hidden">
+      <header data-studio-header className="sticky top-0 z-30 flex h-(--studio-header) items-center justify-between gap-3 bg-dark-section px-4 lg:hidden">
         <Link to={studioPath("/products")} aria-label={s.home} className="flex min-h-11 items-center gap-3 focus-visible:outline-on-photo">
           <img src="/brand/glowstone-monogram-on-dark.svg" alt="" width={26} height={26} className="size-6.5" />
           <span className="text-label uppercase tracking-label text-dark-section-foreground">{STUDIO_COPY.studio}</span>

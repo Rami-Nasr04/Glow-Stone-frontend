@@ -45,6 +45,15 @@ describe("theme", () => {
     for (const tracking of trackings) expect(cn(`tracking-${tracking}`, "tracking-wide"), tracking).toBe("tracking-wide")
   })
 
+  // The studio's sticky phone header and fixed save bar must never cover a control the page scrolls to (Tab focus,
+  // scrollIntoView): the page keeps their height clear, from the same tokens that size them.
+  it("keeps the studio's header and save bar clear of what the page scrolls to", () => {
+    expect(block(":root")).toContain("--studio-header: 3.75rem;")
+    expect(block(":root")).toContain("--studio-save-bar: 4.25rem;")
+    expect(block("html:has([data-studio-save-bar])")).toContain("scroll-padding-bottom: calc(var(--studio-save-bar) + 1rem);")
+    expect(css).toMatch(/@media \(width < 64rem\) \{\s*html:has\(\[data-studio-header\]\) \{\s*scroll-padding-top: calc\(var\(--studio-header\) \+ 1rem\);/)
+  })
+
   it("draws no jagged section edges", () => {
     expect(css).not.toContain("strata")
   })

@@ -248,9 +248,9 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
               {(["draft", "published"] as const).map((status) => (
                 <label
                   key={status}
-                  className="flex min-h-11 cursor-pointer items-center justify-center text-label uppercase tracking-[0.14em] transition-colors duration-500 has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:outline has-focus-visible:outline-accent"
+                  className="relative flex min-h-11 cursor-pointer items-center justify-center text-label uppercase tracking-[0.14em] transition-colors duration-500 has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:outline has-focus-visible:outline-accent"
                 >
-                  <input type="radio" name="status" value={status} checked={values.status === status} onChange={() => set("status", status)} className="sr-only" />
+                  <input type="radio" name="status" value={status} checked={values.status === status} onChange={() => set("status", status)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
                   {status === "draft" ? f.draft : f.published}
                 </label>
               ))}
@@ -289,7 +289,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-dark-section px-4 py-3 lg:start-62 lg:px-10">
+      <div data-studio-save-bar className="fixed inset-x-0 bottom-0 z-40 flex h-(--studio-save-bar) items-center justify-between gap-3 bg-dark-section px-4 lg:start-62 lg:px-10">
         <span aria-live="polite" className="flex items-center gap-2 text-sm text-dark-muted-foreground">
           <span aria-hidden="true" className={cn("size-1.5 rotate-45 bg-wine-on-dark", !dirty && "opacity-0")} />
           {statusLine}

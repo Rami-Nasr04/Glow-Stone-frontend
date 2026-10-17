@@ -237,7 +237,7 @@ export default function PhotoManager({ productId, initial, onUploadingChange }: 
       <div className="flex flex-col gap-2">
         <label
           className={cn(
-            "flex min-h-11 cursor-pointer items-center gap-2 self-start border border-primary px-5 text-label uppercase tracking-caps transition-colors duration-500 has-focus-visible:outline has-focus-visible:outline-accent hover:bg-background/60",
+            "relative flex min-h-11 cursor-pointer items-center gap-2 self-start border border-primary px-5 text-label uppercase tracking-caps transition-colors duration-500 has-focus-visible:outline has-focus-visible:outline-accent hover:bg-background/60",
             busy && "cursor-default opacity-50",
           )}
         >
@@ -250,7 +250,10 @@ export default function PhotoManager({ productId, initial, onUploadingChange }: 
             aria-disabled={busy || undefined}
             onClick={(event) => working.current && event.preventDefault()}
             onChange={add}
-            className="sr-only"
+            // An invisible layer over the whole button (scrolling to it clears the save bar); the empty title stops
+            // the browser's "No file chosen" tooltip.
+            title=""
+            className="absolute inset-0 size-full cursor-[inherit] opacity-0"
           />
           <Plus aria-hidden="true" className="size-4" />
           {p.add}

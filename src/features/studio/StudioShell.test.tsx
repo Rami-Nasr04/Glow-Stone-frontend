@@ -35,6 +35,14 @@ describe("the studio shell", () => {
     }
   })
 
+  // Its height is a token the page's scroll padding uses too (tests/theme.test.ts), so it never covers a control.
+  it("marks the phone header, sized by the token the page keeps clear", () => {
+    renderShell()
+    const header = document.querySelector("[data-studio-header]")
+    expect(header?.tagName).toBe("HEADER")
+    expect(header?.className).toContain("h-(--studio-header)")
+  })
+
   it("offers a skip link to the page", () => {
     renderShell()
     expect(screen.getAllByRole("link", { name: "Skip to content" })[0]).toHaveAttribute("href", "#main")

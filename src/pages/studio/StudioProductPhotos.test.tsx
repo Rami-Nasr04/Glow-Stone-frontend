@@ -90,6 +90,10 @@ describe("adding photos", () => {
     expect(input).toHaveAttribute("type", "file")
     expect(input).toHaveAttribute("accept", "image/jpeg,image/png,image/webp")
     expect(input).toHaveAttribute("multiple")
+    // An invisible layer over the whole button, so scrolling to it brings the whole button clear of the bars.
+    expect(input.className).toMatch(/absolute inset-0.*opacity-0/)
+    expect(input.closest("label")?.className).toContain("relative")
+    expect(input).toHaveAttribute("title", "")
   })
 
   it("adds each photo with the three calls, one at a time, saying which one is going", async () => {

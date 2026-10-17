@@ -48,6 +48,8 @@
   --photo-dark: #1f1f1f; /* frame behind dark studio and craft photos */
   --studio-surface: #d9d8d4; /* the admin studio's page */
   --studio-panel: #edece9; /* the studio's panels and dialogs */
+  --studio-header: 3.75rem; /* the studio's sticky header on phones */
+  --studio-save-bar: 4.25rem; /* the editor's fixed save bar */
   /* 7% charcoal noise over Frost Stone, as in the prototype. */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .17 0 0 0 0 .17 0 0 0 0 .17 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
 
@@ -154,6 +156,16 @@
     @apply bg-background font-sans text-body text-foreground;
     background-image: var(--grain);
     background-size: 200px 200px;
+  }
+  /* The studio's fixed save bar and its sticky phone header never cover what the page scrolls to (Tab focus,
+     scrollIntoView): while they are on the page, it keeps their height clear. */
+  html:has([data-studio-save-bar]) {
+    scroll-padding-bottom: calc(var(--studio-save-bar) + 1rem);
+  }
+  @media (width < 64rem) {
+    html:has([data-studio-header]) {
+      scroll-padding-top: calc(var(--studio-header) + 1rem);
+    }
   }
   :focus-visible {
     outline: 1px solid var(--ring);
