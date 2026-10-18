@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
+const STUDIO_HOST = "studio.glowstonelb.com"
+
 interface Header {
   key: string
   value: string
@@ -11,9 +13,9 @@ describe("vercel.json", () => {
   const config = JSON.parse(readFileSync("vercel.json", "utf8")) as {
     outputDirectory: string
     rewrites: { source: string; destination: string }[]
-    headers: { source: string; headers: Header[] }[]
+    headers: { source: string; has?: { type: string; value: string }[]; headers: Header[] }[]
   }
-  const headersFor = (source: string) => config.headers.find((h) => h.source === source)?.headers ?? []
+  const headersFor = (source: string) => config.headers.find((h) => h.source === source && !h.has)?.headers ?? []
 
   it("serves the prerendered client build", () => {
     expect(config.outputDirectory).toBe("build/client")
@@ -44,5 +46,13 @@ describe("vercel.json", () => {
     for (const source of ["/studio", "/studio/(.*)"]) {
       expect(headersFor(source)).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
     }
+  })
+
+  // Its subdomain likewise: every answer from that host, whatever happens to the site-wide rule at launch.
+  it(`asks search engines not to index anything on ${STUDIO_HOST}`, () => {
+    const rule = config.headers.find((h) => h.has?.some((c) => c.type === "host" && c.value === STUDIO_HOST))
+    expect(rule?.source).toBe("/(.*)")
+    expect(rule?.has).toEqual([{ type: "host", value: STUDIO_HOST }])
+    expect(rule?.headers).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
   })
 })
