@@ -2,15 +2,19 @@
 // (DOM types: the callbacks passed to the page run inside the browser.)
 // Opens every built page in a real browser by its address without the trailing slash, then checks
 // that the page shown is that page (its h1 and title, read from its own built HTML), after a direct
-// load and after a refresh, at 1440 and 390. Also checks that an unknown address shows the 404,
-// that the app moves on to another page after landing, and that the header logo link can be clicked.
+// load and after a refresh, at 1440 and 390. Also checks that an unknown address answers 404 and shows the 404 page,
+// that a page that isn't prerendered (sign-in, a piece published since the build) still answers 200, that the app
+// moves on to another page after landing, and that the header logo link can be clicked. Every built page's canonical
+// and og:url must be the address checked (so after VITE_SITE_URL changes, one run against the new address proves it),
+// and its robots tag and X-Robots-Tag header must agree.
 // The studio: its addresses load and refresh to its sign-in page (or its not-found), never indexed, and no shop
 // page loads the studio's sign-in code.
 // A build of one part (VITE_SITE_PARTS, set the same way for the build and this check): "shop" has no studio route
 // and no studio code; "studio" (VITE_STUDIO_BASE=/) has the studio at the root, the shop's addresses on the studio's
 // not-found, nothing prerendered, and noindex in the shell's own HTML.
-// Usage: npm run build, npm start, then npm run check:pages (local), or
-//        npm run check:pages -- https://glow-stone-frontend.vercel.app
+// Usage: npm run build, npm start, then npm run check:pages (local), or against a deployment of the same build:
+//        npm run check:pages -- https://glowstonelb.com
+// A studio-only build locally: npm start -- 4173 studio.glowstonelb.com (the server then applies that host's rules).
 // The browser is Microsoft Edge; set EDGE_PATH if it is installed elsewhere.
 import { readdirSync, readFileSync } from "node:fs"
 import { join, sep } from "node:path"
@@ -27,6 +31,10 @@ interface Expected {
   path: string
   h1: string
   title?: string
+  /** The status of a direct load: 200 unless said otherwise. */
+  status?: number
+  /** A prerendered page: its canonical and og:url are checked. */
+  built?: boolean
 }
 
 const squash = (text: string) => text.replace(/\s+/g, " ").trim()
@@ -51,6 +59,7 @@ function builtPages(dir: string): Expected[] {
         path: `/${folder}`,
         h1: h1Text(html),
         title: squash(/<title>([^<]*)<\/title>/.exec(html)?.[1] ?? "").replace(/&amp;/g, "&"),
+        built: true,
       }
     })
     .sort((a, b) => a.path.localeCompare(b.path))
@@ -142,7 +151,8 @@ const studioPages = [
   // Without the shop, its addresses are the studio's not-found.
   ...(withShop ? [] : ["/collection", "/collection/5/qadisha", "/about"].map((path) => ({ open: path, path, next: null, h1: STUDIO_COPY.notFound.title }))),
 ]
-// Without the studio, its old addresses are the shop's 404.
+// Without the studio, its old addresses show the shop's 404 page. They still answer 200: vercel.json (shared by every
+// build) rewrites them to the shell until the studio moves off the shop's project and its rewrites go.
 const noStudio: Expected[] = withStudio ? [] : ["/studio", "/studio/products", "/studio/sign-in"].map((path) => ({ path, h1: en.notFound.title }))
 
 const pages = builtPages(BUILD)
@@ -156,8 +166,18 @@ if (!withShop) {
   const shell = readFileSync(join(BUILD, "__spa-fallback.html"), "utf8")
   if (!/<meta name="robots" content="noindex, nofollow"/.test(shell)) fail("the studio-only shell has no robots noindex tag")
 }
-// Only the h1: under an unknown first segment the 404 keeps the home title (accepted until the studio exists).
-const notFound: Expected = { path: "/nothing-here", h1: en.notFound.title }
+// Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
+// title (accepted until the studio exists).
+const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
+// Pages that aren't prerendered still answer 200 (a rewrite to the shell). A piece the API doesn't know shows the 404
+// page in the browser: the address has the shape of a piece published since the build.
+const notBuilt: Expected[] = [
+  // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until the customer pool is live: the 404 page, in the
+  // site frame. When they open, it is full screen: h1 en.auth.signIn.title and no header logo to follow.
+  { path: "/sign-in", h1: en.notFound.title },
+  { path: "/collection/99999/no-such-piece", h1: en.notFound.title },
+]
+const canonicalOf = (path: string) => `${base}${path}`
 
 const browser = await puppeteer.launch({ executablePath: edge, headless: true })
 const viewports = [
@@ -167,15 +187,32 @@ const viewports = [
 
 console.log(`Checking ${pages.length} pages on ${base} (parts: ${SITE_PARTS.join(" + ")})`)
 for (const viewport of viewports) {
-  for (const want of withShop ? [...pages, notFound, ...noStudio] : []) {
+  for (const want of withShop ? [...pages, ...notFound, ...notBuilt, ...noStudio] : []) {
     const label = `${viewport.name} ${want.path}`
     const page = await browser.newPage()
     await page.setViewport(viewport)
+    // Statuses and headers from fresh answers (a 304 from the cache carries neither the status nor X-Robots-Tag).
+    await page.setCacheEnabled(false)
     const errors: string[] = []
     page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
 
-    await page.goto(base + want.path, { waitUntil: "networkidle0" })
+    const response = await page.goto(base + want.path, { waitUntil: "networkidle0" })
+    const status = response?.status()
+    if (status !== (want.status ?? 200)) fail(`${label}: status ${status}, expected ${want.status ?? 200}`)
     await expectPage(page, want, `${label} direct`)
+    const head = await page.evaluate(() => ({
+      canonical: document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? null,
+      ogUrl: document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content ?? null,
+      robots: [...document.querySelectorAll<HTMLMetaElement>('meta[name="robots"]')].map((tag) => tag.content),
+    }))
+    if (want.built) {
+      if (head.canonical !== canonicalOf(want.path)) fail(`${label}: canonical ${head.canonical}, expected ${canonicalOf(want.path)}`)
+      if (head.ogUrl !== canonicalOf(want.path)) fail(`${label}: og:url ${head.ogUrl}, expected ${canonicalOf(want.path)}`)
+    }
+    const header = response?.headers()["x-robots-tag"]
+    if (head.robots.includes("noindex, nofollow") !== (header === "noindex, nofollow")) {
+      fail(`${label}: robots tag ${JSON.stringify(head.robots)} and X-Robots-Tag "${header}" disagree`)
+    }
     await page.reload({ waitUntil: "networkidle0" })
     await expectPage(page, want, `${label} refresh`)
 
@@ -208,6 +245,7 @@ for (const viewport of viewports) {
     // (the browser keeps the cached one), so the header is read from a fresh answer.
     await page.setCacheEnabled(false)
     const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
+    if (response?.status() !== 200) fail(`${label}: status ${response?.status()}, expected 200`)
     if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
     for (const step of ["direct", "refresh"]) {
       if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })
