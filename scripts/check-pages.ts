@@ -151,9 +151,11 @@ const studioPages = [
   // Without the shop, its addresses are the studio's not-found.
   ...(withShop ? [] : ["/collection", "/collection/5/qadisha", "/about"].map((path) => ({ open: path, path, next: null, h1: STUDIO_COPY.notFound.title }))),
 ]
-// Without the studio, its old addresses show the shop's 404 page. They still answer 200: vercel.json (shared by every
-// build) rewrites them to the shell until the studio moves off the shop's project and its rewrites go.
-const noStudio: Expected[] = withStudio ? [] : ["/studio", "/studio/products", "/studio/sign-in"].map((path) => ({ path, h1: en.notFound.title }))
+// Without the studio, its old addresses are a real 404 with the shop's 404 page.
+const noStudio: Expected[] = withStudio ? [] : ["/studio", "/studio/products", "/studio/sign-in"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
+// The studio is served only on its own host (its project, VITE_SITE_PARTS=studio). In a build that carries both parts
+// (VITE_SITE_PARTS unset, used by no project), vercel.json has no rewrite for /studio: its pages still render, with 404.
+const studioStatus = withShop ? 404 : 200
 
 const pages = builtPages(BUILD)
 const home = pages.find((p) => p.path === "/")
@@ -167,7 +169,7 @@ if (!withShop) {
   if (!/<meta name="robots" content="noindex, nofollow"/.test(shell)) fail("the studio-only shell has no robots noindex tag")
 }
 // Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
-// title (accepted until the studio exists).
+// page's title (accepted).
 const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
 // Pages that aren't prerendered still answer 200 (a rewrite to the shell). A piece the API doesn't know shows the 404
 // page in the browser: the address has the shape of a piece published since the build.
@@ -245,7 +247,7 @@ for (const viewport of viewports) {
     // (the browser keeps the cached one), so the header is read from a fresh answer.
     await page.setCacheEnabled(false)
     const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
-    if (response?.status() !== 200) fail(`${label}: status ${response?.status()}, expected 200`)
+    if (response?.status() !== studioStatus) fail(`${label}: status ${response?.status()}, expected ${studioStatus}`)
     if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
     for (const step of ["direct", "refresh"]) {
       if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })

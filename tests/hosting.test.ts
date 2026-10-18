@@ -2,10 +2,10 @@ import type { RouteConfigEntry } from "@react-router/dev/routes"
 import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import { rewriteFor, type VercelConfig } from "../scripts/serve.ts"
-import { STUDIO_BASE } from "../src/config/studio.ts"
 import { localizedPath, PUBLISHED_LOCALES, STATIC_PAGES } from "../src/i18n/paths.ts"
 import { siteRoutes } from "../src/routes.ts"
 
+const SHOP_HOST = "glowstonelb.com"
 const STUDIO_HOST = "studio.glowstonelb.com"
 const SHELL = "/__spa-fallback.html"
 
@@ -40,10 +40,11 @@ describe("vercel.json", () => {
     for (const source of sources) expect(source).toMatch(/^(\/([a-z0-9-]+|\((\.\*|\[0-9\]\+|\[\^\/\]\+|[a-z0-9-]+(\|[a-z0-9-]+)*)\)))*$|^\/\(\.\*\)$/)
   })
 
+  // The studio has its own project and host: on the shop, its old addresses are a real 404.
   it.each([
-    ["/studio", true],
-    ["/studio/products/5", true],
-    ["/studio/sign-in/new-password", true],
+    ["/studio", false],
+    ["/studio/products/5", false],
+    ["/studio/sign-in/new-password", false],
     ["/sign-in", true],
     ["/sign-up", true],
     ["/verify", true],
@@ -57,14 +58,15 @@ describe("vercel.json", () => {
     ["/ar", false],
     ["/ar/collection", false],
   ])("on the shop's address, %s gets the app shell: %s", (path, shell) => {
-    expect(rewriteFor(config, path, "glow-stone-frontend.vercel.app") !== undefined).toBe(shell)
+    expect(rewriteFor(config, path, SHOP_HOST) !== undefined).toBe(shell)
   })
 
-  // Drift guard: a new shop or studio page that isn't prerendered must get its rewrite, or it would answer 404; in every
-  // published locale, so publishing Arabic or French fails here until their rewrites are added.
-  it("rewrites every page the routes answer that the build doesn't prerender", () => {
+  // Drift guard: a new shop page that isn't prerendered must get its rewrite, or it would answer 404; in every published
+  // locale, so publishing Arabic or French fails here until their rewrites are added. (The shop's project builds the
+  // shop alone, VITE_SITE_PARTS=shop.)
+  it("rewrites every shop page the routes answer that the build doesn't prerender", () => {
     const sample = (path: string) => path.replace(/:id/g, "5").replace(/:name\?/g, "qadisha").replace(/:doc/g, "terms")
-    const pages = addresses(siteRoutes(["shop", "studio"], STUDIO_BASE))
+    const pages = addresses(siteRoutes(["shop"], "/studio"))
       .filter((path) => !path.endsWith("*"))
       .flatMap((path) =>
         path.startsWith("/:lang?") ? PUBLISHED_LOCALES.map((locale) => localizedPath(locale, path.replace("/:lang?", "") || "/")) : [path],
@@ -72,8 +74,15 @@ describe("vercel.json", () => {
       .map(sample)
     const built = new Set(PUBLISHED_LOCALES.flatMap((locale) => [...STATIC_PAGES, "/collection/5/qadisha"].map((page) => localizedPath(locale, page))))
     for (const page of pages.filter((path) => !built.has(path))) {
-      expect(rewriteFor(config, page, "glow-stone-frontend.vercel.app"), page).toBeDefined()
+      expect(rewriteFor(config, page, SHOP_HOST), page).toBeDefined()
     }
+  })
+
+  // And every studio page, on the studio's host (its project builds the studio alone, at the root).
+  it(`rewrites every studio page on ${STUDIO_HOST}`, () => {
+    const pages = addresses(siteRoutes(["studio"], "/")).map((path) => path.replace(/:id/g, "5").replace(/\*$/, "nothing-here"))
+    expect(pages.length).toBeGreaterThan(5)
+    for (const page of pages) expect(rewriteFor(config, page, STUDIO_HOST)?.destination, page).toBe(SHELL)
   })
 
   // The studio's own project (VITE_SITE_PARTS=studio, VITE_STUDIO_BASE=/) answers every address with the app shell.
@@ -97,14 +106,13 @@ describe("vercel.json", () => {
     )
   })
 
-  // The studio is never indexed, even after launch removes the rule above (its own rule stays).
-  it("asks search engines not to index the studio, with a rule of its own", () => {
-    for (const source of ["/studio", "/studio/(.*)"]) {
-      expect(headersFor(source)).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
-    }
+  // The shop no longer serves the studio, so no rule names its old path.
+  it("has no rule left for the shop's old /studio path", () => {
+    const sources = [...config.rewrites, ...config.headers].map((rule) => rule.source)
+    expect(sources.filter((source) => source.startsWith("/studio"))).toEqual([])
   })
 
-  // Its subdomain likewise: every answer from that host, whatever happens to the site-wide rule at launch.
+  // The studio is never indexed: every answer from its host, whatever happens to the site-wide rule at launch.
   it(`asks search engines not to index anything on ${STUDIO_HOST}`, () => {
     const rule = config.headers.find((h) => h.has?.some((c) => c.type === "host" && c.value === STUDIO_HOST))
     expect(rule?.source).toBe("/(.*)")

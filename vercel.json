@@ -4,8 +4,6 @@
   "outputDirectory": "build/client",
   "rewrites": [
     { "source": "/(.*)", "has": [{ "type": "host", "value": "studio.glowstonelb.com" }], "destination": "/__spa-fallback.html" },
-    { "source": "/studio", "destination": "/__spa-fallback.html" },
-    { "source": "/studio/(.*)", "destination": "/__spa-fallback.html" },
     { "source": "/(sign-in|sign-up|verify|forgot-password)", "destination": "/__spa-fallback.html" },
     { "source": "/collection/([0-9]+)", "destination": "/__spa-fallback.html" },
     { "source": "/collection/([0-9]+)/([^/]+)", "destination": "/__spa-fallback.html" }
@@ -18,14 +16,6 @@
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "studio.glowstonelb.com" }],
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
-      "source": "/studio",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
-      "source": "/studio/(.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
