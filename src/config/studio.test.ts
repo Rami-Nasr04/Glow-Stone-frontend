@@ -1,7 +1,7 @@
 import { readSiteParts, readStudioBase, safeStudioNext, SITE_PARTS, STUDIO_BASE, shopHref, studioPath } from "./studio"
 
 describe("studio addresses", () => {
-  it("live under one base, /studio until the studio moves to its own subdomain", () => {
+  it("live under one base, /studio when it is unset (local development)", () => {
     expect(STUDIO_BASE).toBe("/studio")
     expect(studioPath("/products/7")).toBe("/studio/products/7")
     expect(studioPath("/")).toBe("/studio")

@@ -1,7 +1,7 @@
-// Which parts of the site a build carries, and the studio's address prefix, written here and nowhere else. Unset, a
-// build carries both, with the studio under "/studio": one project, as today. At the domain step the shop's project
-// sets VITE_SITE_PARTS=shop (no studio code at all), and a second project sets VITE_SITE_PARTS=studio with
-// VITE_STUDIO_BASE=/ (the studio at the root of its own subdomain, nothing prerendered). Node-safe: the route list,
+// Which parts of the site a build carries, and the studio's address prefix, written here and nowhere else. The shop's
+// project sets VITE_SITE_PARTS=shop (no studio code at all); the studio's project sets VITE_SITE_PARTS=studio with
+// VITE_STUDIO_BASE=/ (the studio at the root of studio.glowstonelb.com, nothing prerendered). Unset (local
+// development), a build carries both, with the studio under "/studio". Node-safe: the route list,
 // the build config and scripts/check-pages.ts import it.
 import { safeNext } from "../features/auth/next-path.ts"
 
