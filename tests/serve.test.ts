@@ -15,6 +15,7 @@ const FILES: Record<string, string> = {
   "collection/5/qadisha/index.html": "qadisha page",
   "collection/5/qadisha.data": "qadisha data",
   "__spa-fallback.html": "app shell",
+  "404.html": "missing page",
   "assets/app-abc123.js": "console.log(1)",
   "secret.txt": "outside the site",
 }
@@ -42,9 +43,9 @@ afterAll(() => {
 })
 
 // node:http, not fetch: the test setup stubs fetch so no test reaches the network.
-function get(path: string): Promise<{ status: number; body: string; headers: IncomingHttpHeaders }> {
+function get(path: string, host?: string): Promise<{ status: number; body: string; headers: IncomingHttpHeaders }> {
   return new Promise((done, fail) => {
-    request(base + path, (res) => {
+    request(base + path, { headers: host ? { Host: host } : {} }, (res) => {
       let body = ""
       res.setEncoding("utf8")
       res.on("data", (chunk: string) => (body += chunk))
@@ -71,8 +72,8 @@ describe("local site server (same rules as Vercel)", () => {
     expect(res.body).toBe(body)
   })
 
-  it.each(["/nothing-here", "/studio", "/sign-in", "/collection/99/x", "/assets/missing.js", "/%E0%A4%A"])(
-    "answers %s with the app shell and status 200, like the rewrite in vercel.json",
+  it.each(["/studio", "/studio/products/5", "/sign-in", "/collection/99", "/collection/99/x"])(
+    "answers %s with the app shell and status 200, like the rewrites in vercel.json",
     async (path) => {
       const res = await get(path)
       expect(res.status).toBe(200)
@@ -80,9 +81,29 @@ describe("local site server (same rules as Vercel)", () => {
     },
   )
 
+  it.each(["/nothing-here", "/collection/abc", "/legal/unknown", "/ar/collection", "/assets/missing.js", "/%E0%A4%A"])(
+    "answers %s with 404.html and status 404, like Vercel",
+    async (path) => {
+      const res = await get(path)
+      expect(res.status).toBe(404)
+      expect(res.body).toBe("missing page")
+      expect(res.headers["content-type"]).toBe("text/html; charset=utf-8")
+      expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
+    },
+  )
+
   it("never serves a file from outside the build folder", async () => {
     const res = await get("/..%2fsecret.txt")
-    expect(res.body).toBe("app shell")
+    expect(res.status).toBe(404)
+    expect(res.body).toBe("missing page")
+  })
+
+  // The studio's own project: every address on its host is the app shell, never indexed.
+  it.each(["/", "/products/5", "/nothing-here"])("answers %s on studio.glowstonelb.com with the app shell, noindex", async (path) => {
+    const res = await get(path, "studio.glowstonelb.com")
+    expect(res.status).toBe(200)
+    expect(res.body).toBe(path === "/" ? "home page" : "app shell")
+    expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
   })
 
   it("labels pages as UTF-8 HTML", async () => {
@@ -91,7 +112,7 @@ describe("local site server (same rules as Vercel)", () => {
 
   it("sends every header vercel.json sets for all paths", async () => {
     const res = await get("/collection")
-    const all = config.headers.find((h) => h.source === "/(.*)")?.headers ?? []
+    const all = config.headers.find((h) => h.source === "/(.*)" && !h.has)?.headers ?? []
     expect(all.length).toBeGreaterThan(0)
     for (const { key, value } of all) expect(res.headers[key.toLowerCase()]).toBe(value)
   })
@@ -99,6 +120,24 @@ describe("local site server (same rules as Vercel)", () => {
   it("caches build assets for a year and revalidates everything else", async () => {
     expect((await get("/assets/app-abc123.js")).headers["cache-control"]).toBe("public, max-age=31536000, immutable")
     expect((await get("/collection")).headers["cache-control"]).toBe("public, max-age=0, must-revalidate")
+  })
+})
+
+// npm start -- <port> <host>: every request is served under that host's rules (a studio-only build, locally).
+describe("serving as another host", () => {
+  it("applies that host's rules to every request", async () => {
+    const studio = createSiteServer(root, config, "studio.glowstonelb.com")
+    await new Promise<void>((done) => studio.listen(0, "127.0.0.1", done))
+    const res = await new Promise<{ status: number; robots: unknown }>((done, fail) => {
+      request(`http://127.0.0.1:${(studio.address() as AddressInfo).port}/products/5`, (r) => {
+        r.resume()
+        r.on("end", () => done({ status: r.statusCode ?? 0, robots: r.headers["x-robots-tag"] }))
+      })
+        .on("error", fail)
+        .end()
+    })
+    studio.close()
+    expect(res).toEqual({ status: 200, robots: "noindex, nofollow" })
   })
 })
 

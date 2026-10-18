@@ -1,4 +1,4 @@
-import { existsSync, renameSync } from "node:fs"
+import { copyFileSync, existsSync, renameSync } from "node:fs"
 import { join } from "node:path"
 import type { Config } from "@react-router/dev/config"
 import { loadEnv } from "vite"
@@ -28,11 +28,14 @@ export default {
     return prerenderPaths(await fetchProducts(api))
   },
   // With nothing prerendered (the studio alone) React Router writes the app shell as index.html. vercel.json rewrites
-  // every address to /__spa-fallback.html, so the shell takes that name and "/" goes through the same rewrite.
+  // to /__spa-fallback.html, so the shell takes that name and "/" goes through the same rewrite. Every build also gets
+  // 404.html, a copy of the shell: Vercel (and npm start) answer an address with no file and no rewrite with it and
+  // status 404, and the app shows its 404 page there.
   async buildEnd({ reactRouterConfig }) {
     const env = loadEnv("production", process.cwd(), "VITE_")
-    if (readSiteParts(env.VITE_SITE_PARTS).includes("shop")) return
     const client = join(reactRouterConfig.buildDirectory, "client")
-    if (existsSync(join(client, "index.html"))) renameSync(join(client, "index.html"), join(client, "__spa-fallback.html"))
+    const shell = join(client, "__spa-fallback.html")
+    if (!readSiteParts(env.VITE_SITE_PARTS).includes("shop") && existsSync(join(client, "index.html"))) renameSync(join(client, "index.html"), shell)
+    if (existsSync(shell)) copyFileSync(shell, join(client, "404.html"))
   },
 } satisfies Config

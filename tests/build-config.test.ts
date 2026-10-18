@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -81,21 +81,23 @@ describe("the build", () => {
     await expect(prerender()).rejects.toThrow("VITE_STUDIO_BASE=/")
   })
 
-  // With nothing prerendered, React Router writes the app shell as index.html; vercel.json rewrites every address to
-  // __spa-fallback.html, so the shell must carry that name, and "/" takes the same rewrite.
+  // With nothing prerendered, React Router writes the app shell as index.html; vercel.json rewrites to
+  // __spa-fallback.html, so the shell must carry that name. Every build also gets 404.html, the same shell: Vercel
+  // answers an address with no file and no rewrite with it and status 404, and the app shows its 404 page.
   it.each([
-    ["studio", "/", ["__spa-fallback.html"]],
-    ["", "", ["index.html"]],
-  ])("names the app shell for the rewrite (VITE_SITE_PARTS=%j)", async (parts, base, files) => {
+    ["studio", "/", { "index.html": "app shell" }, { "__spa-fallback.html": "app shell", "404.html": "app shell" }],
+    ["", "", { "index.html": "home page", "__spa-fallback.html": "app shell" }, { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell" }],
+    ["shop", "", { "index.html": "home page", "__spa-fallback.html": "app shell" }, { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell" }],
+  ])("names the app shell for the rewrites and the 404 (VITE_SITE_PARTS=%j)", async (parts, base, before, after) => {
     vi.stubEnv("VITE_SITE_PARTS", parts)
     vi.stubEnv("VITE_STUDIO_BASE", base)
     const dir = mkdtempSync(join(tmpdir(), "build-end-"))
     mkdirSync(join(dir, "client"))
-    writeFileSync(join(dir, "client", "index.html"), "app shell")
+    for (const [name, body] of Object.entries(before)) writeFileSync(join(dir, "client", name), body)
     const buildEnd = config.buildEnd as (args: { reactRouterConfig: { buildDirectory: string } }) => Promise<void>
     await buildEnd({ reactRouterConfig: { buildDirectory: dir } })
-    for (const name of ["index.html", "__spa-fallback.html"]) expect(existsSync(join(dir, "client", name)), name).toBe(files.includes(name))
-    expect(readFileSync(join(dir, "client", files[0]), "utf8")).toBe("app shell")
+    const files = Object.fromEntries(readdirSync(join(dir, "client")).map((name) => [name, readFileSync(join(dir, "client", name), "utf8")]))
+    expect(files).toEqual(after)
     rmSync(dir, { recursive: true, force: true })
   })
 
