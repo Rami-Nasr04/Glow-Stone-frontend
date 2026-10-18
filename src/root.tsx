@@ -2,11 +2,12 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useParams } from "reac
 import RobotsMeta from "@/components/layout/RobotsMeta"
 import Toaster from "@/components/ui/sonner"
 import AuthProvider from "@/features/auth/AuthProvider"
-import { directionOf, toLocale } from "@/i18n/locales"
+import { directionOf } from "@/i18n/locales"
+import { pageLocale } from "@/i18n/paths"
 import "./index.css"
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const locale = toLocale(useParams().lang)
+  const locale = pageLocale(useParams().lang)
   return (
     <html lang={locale} dir={directionOf(locale)}>
       <head>

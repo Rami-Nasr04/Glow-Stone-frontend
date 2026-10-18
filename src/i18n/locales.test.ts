@@ -1,6 +1,6 @@
 import { directionOf, isLocale, toLocale } from "./locales"
 import { PRODUCTS } from "@/test/catalog"
-import { localizedPath, prerenderPaths } from "./paths"
+import { localizedPath, pageLocale, prerenderPaths } from "./paths"
 
 describe("locales", () => {
   it("accepts only en, ar and fr", () => {
@@ -52,5 +52,14 @@ describe("localized paths", () => {
   it("never prerenders the private account and sign-in pages", () => {
     const paths = prerenderPaths(PRODUCTS)
     for (const page of ["/sign-in", "/sign-up", "/verify", "/forgot-password", "/account"]) expect(paths).not.toContain(page)
+  })
+
+  // A page under an unpublished or unknown prefix is the English 404: its links and direction are English too.
+  it("shows a page in a published locale only, else in the default", () => {
+    expect(pageLocale(undefined)).toBe("en")
+    expect(pageLocale("en")).toBe("en")
+    expect(pageLocale("ar")).toBe("en")
+    expect(pageLocale("fr")).toBe("en")
+    expect(pageLocale("de")).toBe("en")
   })
 })

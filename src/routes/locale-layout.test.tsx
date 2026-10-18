@@ -88,4 +88,12 @@ describe("LocaleLayout", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
     expect(screen.getByRole("banner")).toBeInTheDocument()
   })
+
+  // The 404 under /ar must not send the visitor to /ar again: the logo and every other link lead to the English pages.
+  it("links to the published pages from the missing page under an unpublished prefix", () => {
+    renderAt("/ar")
+    for (const logo of screen.getAllByRole("link", { name: "Glowstone home" })) expect(logo).toHaveAttribute("href", "/")
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "")
+    expect(hrefs.filter((href) => href === "/ar" || href.startsWith("/ar/"))).toEqual([])
+  })
 })

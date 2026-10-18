@@ -1,7 +1,7 @@
 import { useParams } from "react-router"
-import { toLocale, type Locale } from "./locales"
+import type { Locale } from "./locales"
 import { en, type Messages } from "./messages/en"
-import { localizedPath } from "./paths"
+import { localizedPath, pageLocale } from "./paths"
 
 // Every locale reads the English copy until the Arabic and French dictionaries are added.
 export const MESSAGES: Record<Locale, Messages> = { en, ar: en, fr: en }
@@ -14,6 +14,6 @@ export interface LocaleTools {
 }
 
 export function useLocale(): LocaleTools {
-  const locale = toLocale(useParams().lang)
+  const locale = pageLocale(useParams().lang)
   return { locale, m: MESSAGES[locale], to: (path) => localizedPath(locale, path) }
 }

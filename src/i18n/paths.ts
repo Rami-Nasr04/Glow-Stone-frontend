@@ -1,5 +1,5 @@
 import { productPath } from "../features/catalog/product-path.ts"
-import { DEFAULT_LOCALE, isLocale, type Locale } from "./locales.ts"
+import { DEFAULT_LOCALE, isLocale, type Locale, toLocale } from "./locales.ts"
 
 // Public pages that are rendered to static HTML at build time, once per published locale.
 export const STATIC_PAGES = ["/", "/collection", "/about", "/contact", "/legal/terms", "/legal/privacy", "/legal/delivery"] as const
@@ -10,6 +10,11 @@ export const PUBLISHED_LOCALES: readonly Locale[] = ["en"]
 // ":lang?" matches any first segment. Anything but a published locale (or none) is a missing page.
 export function knownPrefix(lang: string | undefined): boolean {
   return lang === undefined || (isLocale(lang) && PUBLISHED_LOCALES.includes(lang))
+}
+
+// The locale a page is shown in: the address's, when published; else the default (the page is the English 404).
+export function pageLocale(lang: string | undefined): Locale {
+  return knownPrefix(lang) ? toLocale(lang) : DEFAULT_LOCALE
 }
 
 export function localizedPath(locale: string, path: string): string {
