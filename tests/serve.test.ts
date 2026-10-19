@@ -81,7 +81,7 @@ describe("local site server (same rules as Vercel)", () => {
     },
   )
 
-  it.each(["/nothing-here", "/studio", "/studio/products/5", "/collection/abc", "/legal/unknown", "/ar/collection", "/assets/missing.js", "/%E0%A4%A"])(
+  it.each(["/nothing-here", "/studios", "/collection/abc", "/legal/unknown", "/ar/collection", "/assets/missing.js", "/%E0%A4%A"])(
     "answers %s with 404.html and status 404, like Vercel",
     async (path) => {
       const res = await get(path)
@@ -91,6 +91,24 @@ describe("local site server (same rules as Vercel)", () => {
       expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
     },
   )
+
+  // The redirects in vercel.json answer before any file, keeping the query string.
+  it.each([
+    ["/studio", "https://studio.glowstonelb.com/"],
+    ["/studio/products/5", "https://studio.glowstonelb.com/products/5"],
+    ["/studio/sign-in?next=%2Fproducts", "https://studio.glowstonelb.com/sign-in?next=%2Fproducts"],
+  ])("answers %s with a 308 to %s", async (path, location) => {
+    const res = await get(path)
+    expect(res.status).toBe(308)
+    expect(res.headers.location).toBe(location)
+    expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
+  })
+
+  it("never redirects /studio on the studio's own host", async () => {
+    const res = await get("/studio", "studio.glowstonelb.com")
+    expect(res.status).toBe(200)
+    expect(res.body).toBe("app shell")
+  })
 
   it("never serves a file from outside the build folder", async () => {
     const res = await get("/..%2fsecret.txt")

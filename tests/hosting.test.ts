@@ -1,7 +1,7 @@
 import type { RouteConfigEntry } from "@react-router/dev/routes"
 import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
-import { rewriteFor, type VercelConfig } from "../scripts/serve.ts"
+import { redirectFor, rewriteFor, type VercelConfig } from "../scripts/serve.ts"
 import { localizedPath, PUBLISHED_LOCALES, STATIC_PAGES } from "../src/i18n/paths.ts"
 import { siteRoutes } from "../src/routes.ts"
 
@@ -19,7 +19,8 @@ function addresses(entries: RouteConfigEntry[], parent = ""): string[] {
 }
 
 // Pages that are not prerendered (sign-in, the studio, a piece published since the build) load the app shell; every
-// other address is a real 404 (Vercel serves 404.html, the same shell, which shows the 404 page).
+// other address is a real 404 (Vercel serves 404.html, the same shell, which shows the 404 page), except the studio's
+// old addresses on the shop, which are redirected to its own host.
 describe("vercel.json", () => {
   const config = JSON.parse(readFileSync("vercel.json", "utf8")) as VercelConfig
   const headersFor = (source: string) => config.headers.find((h) => h.source === source && !h.has)?.headers ?? []
@@ -35,12 +36,28 @@ describe("vercel.json", () => {
 
   // serve.ts reads a source as an anchored regular expression; Vercel reads it with path-to-regexp. The two agree on
   // plain paths and unnamed groups, so a source may hold nothing else (no ":name", no "\d", no "?" or "*" outside a group).
+  // A redirect may end in one named wildcard ("/:path*"), which serve.ts reads the way path-to-regexp does.
   it("writes every source in the subset both readers agree on", () => {
     const sources = [...config.rewrites, ...config.headers].map((rule) => rule.source)
     for (const source of sources) expect(source).toMatch(/^(\/([a-z0-9-]+|\((\.\*|\[0-9\]\+|\[\^\/\]\+|[a-z0-9-]+(\|[a-z0-9-]+)*)\)))*$|^\/\(\.\*\)$/)
+    for (const { source } of config.redirects) expect(source).toMatch(/^(\/[a-z0-9-]+)+(\/:[a-z]+\*)?$/)
   })
 
-  // The studio has its own project and host: on the shop, its old addresses are a real 404.
+  // The studio has its own project and host: on the shop, its old addresses send the visitor there (old bookmarks).
+  it.each([
+    ["/studio", "https://studio.glowstonelb.com/"],
+    ["/studio/", "https://studio.glowstonelb.com/"],
+    ["/studio/products/4", "https://studio.glowstonelb.com/products/4"],
+    ["/studio/sign-in/new-password", "https://studio.glowstonelb.com/sign-in/new-password"],
+  ])(`on the shop's address, %s answers 308 to %s`, (path, location) => {
+    expect(redirectFor(config, path, SHOP_HOST)).toEqual({ status: 308, location })
+  })
+
+  it.each(["/studios", "/collection/studio", "/sign-in"])("on the shop's address, %s is not redirected", (path) => {
+    expect(redirectFor(config, path, SHOP_HOST)).toBeUndefined()
+  })
+
+  // Which addresses on the shop get the app shell (the redirect answers /studio before any rewrite).
   it.each([
     ["/studio", false],
     ["/studio/products/5", false],
@@ -76,6 +93,7 @@ describe("vercel.json", () => {
     for (const page of pages.filter((path) => !built.has(path))) {
       expect(rewriteFor(config, page, SHOP_HOST), page).toBeDefined()
     }
+    for (const page of pages) expect(redirectFor(config, page, SHOP_HOST), page).toBeUndefined()
   })
 
   // And every studio page, on the studio's host (its project builds the studio alone, at the root).
@@ -83,6 +101,8 @@ describe("vercel.json", () => {
     const pages = addresses(siteRoutes(["studio"], "/")).map((path) => path.replace(/:id/g, "5").replace(/\*$/, "nothing-here"))
     expect(pages.length).toBeGreaterThan(5)
     for (const page of pages) expect(rewriteFor(config, page, STUDIO_HOST)?.destination, page).toBe(SHELL)
+    // The shop's redirect of /studio never answers on the studio's own host, so it can't loop.
+    for (const page of [...pages, "/studio", "/studio/products/4"]) expect(redirectFor(config, page, STUDIO_HOST), page).toBeUndefined()
   })
 
   // The studio's own project (VITE_SITE_PARTS=studio, VITE_STUDIO_BASE=/) answers every address with the app shell.
@@ -106,8 +126,8 @@ describe("vercel.json", () => {
     )
   })
 
-  // The shop no longer serves the studio, so no rule names its old path.
-  it("has no rule left for the shop's old /studio path", () => {
+  // The shop no longer serves the studio, so only the redirects name its old path.
+  it("has no rewrite or header rule left for the shop's old /studio path", () => {
     const sources = [...config.rewrites, ...config.headers].map((rule) => rule.source)
     expect(sources.filter((source) => source.startsWith("/studio"))).toEqual([])
   })

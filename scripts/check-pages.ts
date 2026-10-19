@@ -8,7 +8,7 @@
 // and og:url must be the address checked (so after VITE_SITE_URL changes, one run against the new address proves it),
 // and its robots tag and X-Robots-Tag header must agree.
 // The studio: its addresses load and refresh to its sign-in page (or its not-found), never indexed, and no shop
-// page loads the studio's sign-in code.
+// page loads the studio's sign-in code. On the shop's address, the studio's old addresses answer 308 to its own host.
 // A build of one part (VITE_SITE_PARTS, set the same way for the build and this check): "shop" has no studio route
 // and no studio code; "studio" (VITE_STUDIO_BASE=/) has the studio at the root, the shop's addresses on the studio's
 // not-found, nothing prerendered, and noindex in the shell's own HTML.
@@ -149,13 +149,17 @@ const studioPages = [
   { open: studioPath("/products/5"), path: signIn, next: studioPath("/products/5"), h1: STUDIO_COPY.signIn.title },
   { open: studioPath("/nothing-here"), path: studioPath("/nothing-here"), next: null, h1: STUDIO_COPY.notFound.title },
   // Without the shop, its addresses are the studio's not-found.
-  ...(withShop ? [] : ["/collection", "/collection/5/qadisha", "/about"].map((path) => ({ open: path, path, next: null, h1: STUDIO_COPY.notFound.title }))),
+  ...["/collection", "/collection/5/qadisha", "/about"].map((path) => ({ open: path, path, next: null, h1: STUDIO_COPY.notFound.title })),
 ]
-// Without the studio, its old addresses are a real 404 with the shop's 404 page.
-const noStudio: Expected[] = withStudio ? [] : ["/studio", "/studio/products", "/studio/sign-in"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
-// The studio is served only on its own host (its project, VITE_SITE_PARTS=studio). In a build that carries both parts
-// (VITE_SITE_PARTS unset, used by no project), vercel.json has no rewrite for /studio: its pages still render, with 404.
-const studioStatus = withShop ? 404 : 200
+// The studio is served only on its own host (its project, VITE_SITE_PARTS=studio, VITE_STUDIO_BASE=/), so its pages
+// are checked only in a studio-only build. On any other host, vercel.json sends the old /studio addresses there (old
+// bookmarks), whatever the build carries; so a build of both parts (VITE_SITE_PARTS unset, used by no project) has
+// its studio pages checked nowhere.
+const STUDIO_ORIGIN = "https://studio.glowstonelb.com"
+const studioRedirects = [
+  ["/studio", `${STUDIO_ORIGIN}/`],
+  ["/studio/products/4", `${STUDIO_ORIGIN}/products/4`],
+]
 
 const pages = builtPages(BUILD)
 const home = pages.find((p) => p.path === "/")
@@ -189,7 +193,7 @@ const viewports = [
 
 console.log(`Checking ${pages.length} pages on ${base} (parts: ${SITE_PARTS.join(" + ")})`)
 for (const viewport of viewports) {
-  for (const want of withShop ? [...pages, ...notFound, ...notBuilt, ...noStudio] : []) {
+  for (const want of withShop ? [...pages, ...notFound, ...notBuilt] : []) {
     const label = `${viewport.name} ${want.path}`
     const page = await browser.newPage()
     await page.setViewport(viewport)
@@ -237,7 +241,7 @@ for (const viewport of viewports) {
     await page.close()
   }
 
-  for (const want of withStudio ? studioPages : []) {
+  for (const want of withShop ? [] : studioPages) {
     const label = `${viewport.name} ${want.open}`
     const page = await browser.newPage()
     await page.setViewport(viewport)
@@ -247,7 +251,7 @@ for (const viewport of viewports) {
     // (the browser keeps the cached one), so the header is read from a fresh answer.
     await page.setCacheEnabled(false)
     const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
-    if (response?.status() !== studioStatus) fail(`${label}: status ${response?.status()}, expected ${studioStatus}`)
+    if (response?.status() !== 200) fail(`${label}: status ${response?.status()}, expected 200`)
     if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
     for (const step of ["direct", "refresh"]) {
       if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })
@@ -265,6 +269,14 @@ for (const viewport of viewports) {
   }
 }
 await browser.close()
+
+// The redirect itself, not followed (following it would leave for the live studio).
+for (const [path, location] of withShop ? studioRedirects : []) {
+  const response = await fetch(base + path, { redirect: "manual" })
+  const got = `${response.status} ${response.headers.get("location")}`
+  if (got !== `308 ${location}`) fail(`${path}: answered ${got}, expected 308 ${location}`)
+  else console.log(`  ok ${path} -> 308 ${location}`)
+}
 
 console.log(failures.length === 0 ? "All pages passed." : `${failures.length} problem(s).`)
 process.exitCode = failures.length === 0 ? 0 : 1

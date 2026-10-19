@@ -30,7 +30,7 @@ npm run dev
 
 ## Hosting
 
-Two Vercel projects build this repo from `build/client` (`vercel.json`): the shop at https://glowstonelb.com (`VITE_SITE_PARTS=shop`) and the studio at https://studio.glowstonelb.com (`VITE_SITE_PARTS=studio`, `VITE_STUDIO_BASE=/`). Pages that are not prerendered (sign-in, a piece published since the build, every studio page) are served by the app shell `/__spa-fallback.html`; any other address answers 404 with `404.html`. Product photos come from the API's CloudFront addresses.
+Two Vercel projects build this repo from `build/client` (`vercel.json`): the shop at https://glowstonelb.com (`VITE_SITE_PARTS=shop`) and the studio at https://studio.glowstonelb.com (`VITE_SITE_PARTS=studio`, `VITE_STUDIO_BASE=/`). Pages that are not prerendered (sign-in, a piece published since the build, every studio page) are served by the app shell `/__spa-fallback.html`; any other address answers 404 with `404.html`. On the shop, the studio's old addresses (`/studio/...`) answer 308 to the same page on the studio's host. Product photos come from the API's CloudFront addresses.
 
 ## Layout
 

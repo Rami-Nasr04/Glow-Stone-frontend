@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
+  "redirects": [
+    { "source": "/studio", "missing": [{ "type": "host", "value": "studio.glowstonelb.com" }], "destination": "https://studio.glowstonelb.com/", "permanent": true },
+    { "source": "/studio/:path*", "missing": [{ "type": "host", "value": "studio.glowstonelb.com" }], "destination": "https://studio.glowstonelb.com/:path*", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/(.*)", "has": [{ "type": "host", "value": "studio.glowstonelb.com" }], "destination": "/__spa-fallback.html" },
     { "source": "/(sign-in|sign-up|verify|forgot-password)", "destination": "/__spa-fallback.html" },
