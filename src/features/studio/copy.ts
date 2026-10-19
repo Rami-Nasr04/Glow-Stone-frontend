@@ -151,6 +151,7 @@ export const STUDIO_COPY = {
     none: "No photos yet.",
     add: "Add photos",
     hint: "JPEG, PNG or WebP, at least 1067 px wide and up to 30 MB. The first photo is the cover, the second shows on hover.",
+    saved: "Photos save as soon as you add, move or delete them.",
     adding: "Adding photo…",
     addingOf: "Adding photo {n} of {count}…",
     addedOne: "Photo added.",

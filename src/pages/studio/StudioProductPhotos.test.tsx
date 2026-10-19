@@ -96,6 +96,18 @@ describe("adding photos", () => {
     expect(input).toHaveAttribute("title", "")
   })
 
+  // Rami saw "No changes" on the save bar after an upload: the photos don't wait for Save, and the page says so.
+  it("says under the button, after the format line, that photos save at once", async () => {
+    renderPhotos()
+    await opened()
+    expect(p.saved).toBe("Photos save as soon as you add, move or delete them.")
+    expect(screen.getByLabelText(p.add)).toHaveAccessibleDescription(`${p.hint} ${p.saved}`)
+    const hint = screen.getByText(p.hint)
+    const saved = screen.getByText(p.saved)
+    expect(hint.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(saved.className).toBe(hint.className)
+  })
+
   it("adds each photo with the three calls, one at a time, saying which one is going", async () => {
     let release = () => {}
     const held = new Promise<undefined>((resolve) => (release = () => resolve(undefined)))

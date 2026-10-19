@@ -246,7 +246,7 @@ export default function PhotoManager({ productId, initial, onUploadingChange }: 
             type="file"
             accept={PHOTO_ACCEPT}
             multiple
-            aria-describedby="photos-hint"
+            aria-describedby="photos-hint photos-saved"
             aria-disabled={busy || undefined}
             onClick={(event) => working.current && event.preventDefault()}
             onChange={add}
@@ -260,6 +260,9 @@ export default function PhotoManager({ productId, initial, onUploadingChange }: 
         </label>
         <p id="photos-hint" className="text-xs text-muted-foreground">
           {p.hint}
+        </p>
+        <p id="photos-saved" className="text-xs text-muted-foreground">
+          {p.saved}
         </p>
       </div>
 
