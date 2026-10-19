@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // Which parts of the site a build carries, and the studio's address prefix, written here and nowhere else. The shop's
 // project sets VITE_SITE_PARTS=shop (no studio code at all); the studio's project sets VITE_SITE_PARTS=studio with
 // VITE_STUDIO_BASE=/ (the studio at the root of studio.glowstonelb.com, nothing prerendered). Unset (local
@@ -25,12 +26,13 @@ export function readStudioBase(value: string | undefined, parts: readonly SitePa
   return base
 }
 
-// Vite's variables in the app and the route list; the process's own in plain Node (scripts/check-pages.ts).
-type Env = Record<string, string | undefined>
-const env: Env = (import.meta as { env?: Env }).env ?? (globalThis as { process?: { env: Env } }).process?.env ?? {}
+// Vite's variables in the app and the route list; the process's own in plain Node (scripts/check-pages.ts). Each
+// variable by its full name, which Vite replaces with its value alone: read whole, Vite's env becomes an object of
+// every VITE_ variable, and that put the admin ids in the shop's bundle (tests/build-config.test.ts).
+const processEnv: Record<string, string | undefined> = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {}
 
-export const SITE_PARTS = readSiteParts(env.VITE_SITE_PARTS)
-export const STUDIO_BASE = readStudioBase(env.VITE_STUDIO_BASE, SITE_PARTS)
+export const SITE_PARTS = readSiteParts(import.meta.env?.VITE_SITE_PARTS ?? processEnv.VITE_SITE_PARTS)
+export const STUDIO_BASE = readStudioBase(import.meta.env?.VITE_STUDIO_BASE ?? processEnv.VITE_STUDIO_BASE, SITE_PARTS)
 
 /** The studio's "View shop" link: the same site, or the shop's own address when this build has no shop. */
 export function shopHref(parts: readonly SitePart[], siteUrl: string): string {

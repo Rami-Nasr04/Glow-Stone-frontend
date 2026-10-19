@@ -105,4 +105,14 @@ describe("the build", () => {
     vi.stubEnv("VITE_API_URL", "")
     await expect(prerender()).rejects.toThrow("VITE_API_URL is not set")
   })
+
+  // Vite replaces import.meta.env.VITE_X with its value alone; import.meta.env read whole becomes an object holding every
+  // VITE_ variable, so the shop's bundle would carry the studio's admin pool and client ids.
+  it("puts each environment variable in the app by its name, never import.meta.env whole", () => {
+    const files = readdirSync("src", { recursive: true, encoding: "utf8" }).filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$|[\\/]test[\\/]/.test(file))
+    const whole = files.flatMap((file) =>
+      [...readFileSync(join("src", file), "utf8").matchAll(/import\.meta(?:\s+as\s+[^)]+\))?\s*\.env(\??\.[A-Z_]+)?/g)].filter((m) => !m[1]).map(() => file),
+    )
+    expect(whole).toEqual([])
+  })
 })

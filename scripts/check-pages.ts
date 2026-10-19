@@ -127,11 +127,11 @@ const withShop = SITE_PARTS.includes("shop")
 const withStudio = SITE_PARTS.includes("studio")
 const studioOnly = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes("USER_SRP_AUTH"))
 if (withStudio && studioOnly.length === 0) throw new Error("No chunk carries the studio's sign-in code; the check would prove nothing.")
-// A shop-only build carries no studio code at all: not its sign-in, not its words.
+// A shop-only build carries no studio code at all: not its sign-in, not its words, not its admin variables.
 if (!withStudio) {
   const studioWords = readdirSync(join(BUILD, "assets")).filter((file) => {
     const text = readFileSync(join(BUILD, "assets", file), "utf8")
-    return text.includes("USER_SRP_AUTH") || text.includes(STUDIO_COPY.signIn.intro) || text.includes(STUDIO_COPY.photos.hint)
+    return ["USER_SRP_AUTH", STUDIO_COPY.signIn.intro, STUDIO_COPY.photos.hint, "VITE_ADMIN_"].some((word) => text.includes(word))
   })
   if (studioWords.length > 0) fail(`the shop-only build carries studio code: ${studioWords.join(", ")}`)
 }
