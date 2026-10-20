@@ -76,7 +76,8 @@ export const STORAGE_URL = "https://uploads.test/"
 
 /**
  * Stubs fetch with the admin products API over these pieces: GET list and one (404 when unknown), POST (201, new id
- * 99), PATCH (merged), and the photo calls (slot, storage's 204, confirm at the end with id 9001…, order, delete).
+ * 99), PATCH (merged), DELETE (204 for a draft, 409 for a published piece), the photo calls (slot, storage's 204,
+ * confirm at the end with id 9001…, order, delete), and POST /admin/publish (202).
  * `answer` can take over any call first, e.g. to send a 401 or a 400, and may wait.
  */
 export function stubAdminApi(
@@ -98,6 +99,7 @@ export function stubAdminApi(
     const forced = await answer(method, path, body)
     if (forced) return forced
     if (path === STORAGE_URL) return new Response(null, { status: 204 })
+    if (path === "/admin/publish") return ok({ started: true }, 202)
     const [, rawId, rest = ""] = /^\/admin\/products(?:\/(\d+))?(\/.*)?$/.exec(path) ?? []
     const id = Number(rawId)
     if (method === "POST" && !rawId) {
@@ -132,6 +134,11 @@ export function stubAdminApi(
       return new Response(null, { status: 204 })
     }
     if (method === "PATCH") return ok(save({ ...piece, ...(body as object) }))
+    if (method === "DELETE" && !rest) {
+      if (piece.status === "published") return failure(409, "CONFLICT", "Set this piece to draft before deleting it.")
+      store = store.filter((p) => p.id !== id)
+      return new Response(null, { status: 204 })
+    }
     return ok(piece)
   })
   vi.stubGlobal("fetch", fetch)

@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link, useBeforeUnload, useBlocker, useNavigate } from "react-router"
 import { Field, inputClass } from "@/components/ui/field"
@@ -26,6 +27,11 @@ interface ProductEditorProps {
 type TextField = Exclude<keyof ProductFormValues, "status" | "featured">
 
 const f = STUDIO_COPY.form
+const d = f.deletePiece
+
+function deleteQuestion(name: string, photos: number): string {
+  return interpolate(photos === 0 ? d.titleNone : photos === 1 ? d.titleOne : d.title, { name, n: photos })
+}
 
 // Screen order, for focusing the first field with a problem.
 const FIELD_ORDER: ProductField[] = [
@@ -64,7 +70,8 @@ function previewLine(values: ProductFormValues): string | null {
 
 // Create and edit one piece: exactly the API's fields, checked like the database, sending only what changed.
 // Unsaved changes ask before leaving, and survive a 401 (kept in sessionStorage, restored here after sign-in). Photos
-// are changed apart from the form (PhotoManager): each change goes to the API at once.
+// are changed apart from the form (PhotoManager): each change goes to the API at once. A saved draft can be deleted
+// (after a question); a published piece says to make it a draft first, as the API asks.
 export default function ProductEditor({ piece }: ProductEditorProps) {
   const { api } = useAdminAuth()
   const navigate = useNavigate()
@@ -77,6 +84,11 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
   const [saving, setSaving] = useState(false)
   const [gone, setGone] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [photoCount, setPhotoCount] = useState(piece?.images.length ?? 0)
+  const [askDelete, setAskDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  // Counts reloads, so the photos start again from the reloaded piece.
+  const [reloads, setReloads] = useState(0)
 
   const dirty = hasChanges(values, saved)
   const latest = useRef({ dirty, uploading, values, leaving: false })
@@ -147,6 +159,43 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
     }
   }
 
+  // After a refused delete the piece changed elsewhere (published, or already deleted): show what the API has now.
+  const reload = async (id: number) => {
+    try {
+      const fresh = await api.getProduct(id)
+      clearDraft(key)
+      setSaved(fresh)
+      setValues(formFromProduct(fresh))
+      setErrors({})
+      setFormError(null)
+      setPhotoCount(fresh.images.length)
+      setReloads((n) => n + 1)
+    } catch (error) {
+      if (error instanceof StudioError && error.code === "NOT_FOUND") setGone(true)
+      else if (!(error instanceof StudioError && error.status === 401)) studioToast.error(f.loadFailed)
+    }
+  }
+
+  const deletePiece = async () => {
+    if (!saved) return
+    setDeleting(true)
+    try {
+      await api.deleteProduct(saved.id)
+      clearDraft(key)
+      latest.current.leaving = true
+      studioToast.success(interpolate(d.deleted, { name: saved.name }))
+      navigate(studioPath("/products"), { replace: true })
+    } catch (error) {
+      setDeleting(false)
+      // A 401 has already sent the admin to sign in.
+      if (error instanceof StudioError && error.status === 401) return
+      if (error instanceof StudioError && (error.code === "CONFLICT" || error.code === "NOT_FOUND")) {
+        studioToast.error(error.message)
+        await reload(saved.id)
+      } else studioToast.error(d.failed)
+    }
+  }
+
   const textField = (field: TextField, { wide = false, numeric }: { wide?: boolean; numeric?: "decimal" | "numeric" } = {}) => (
     <Field
       id={idOf(field)}
@@ -193,7 +242,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(17.5rem,1fr)]">
         <div className="flex min-w-0 flex-col gap-4">
-          <PhotoManager productId={saved?.id ?? null} initial={saved?.images ?? []} onUploadingChange={setUploading} />
+          <PhotoManager key={reloads} productId={saved?.id ?? null} initial={saved?.images ?? []} onUploadingChange={setUploading} onCountChange={setPhotoCount} />
 
           <section aria-labelledby="details-title" className={panel}>
             <h2 id="details-title" className={panelTitle}>
@@ -273,6 +322,23 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
                 />
               </span>
             </button>
+            {saved && (
+              <div className="border-t border-border pt-5">
+                {saved.status === "draft" ? (
+                  <button
+                    type="button"
+                    disabled={deleting || uploading || saving}
+                    onClick={() => setAskDelete(true)}
+                    className="flex min-h-11 items-center gap-2.5 text-label uppercase tracking-caps text-destructive transition-opacity duration-500 disabled:opacity-60"
+                  >
+                    <Trash2 aria-hidden="true" strokeWidth={1.25} className="size-4" />
+                    {deleting ? d.deleting : d.button}
+                  </button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">{d.publishedFirst}</p>
+                )}
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="edition-title" className={panel}>
@@ -296,7 +362,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         </span>
         <button
           type="submit"
-          disabled={saving || (saved !== null && !dirty)}
+          disabled={saving || deleting || (saved !== null && !dirty)}
           className="min-h-11 bg-dark-section-foreground px-6 text-label uppercase tracking-caps text-dark-section transition-opacity duration-500 focus-visible:outline-on-photo disabled:opacity-60"
         >
           {saving ? f.saving : saved ? (dirty ? f.save : f.noChanges) : f.create}
@@ -316,6 +382,20 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
           blocker.proceed?.()
         }}
       />
+      {saved && (
+        <ConfirmDialog
+          open={askDelete}
+          title={deleteQuestion(saved.name, photoCount)}
+          text={d.text}
+          keep={d.keep}
+          confirm={d.confirm}
+          onKeep={() => setAskDelete(false)}
+          onConfirm={() => {
+            setAskDelete(false)
+            void deletePiece()
+          }}
+        />
+      )}
     </form>
   )
 }

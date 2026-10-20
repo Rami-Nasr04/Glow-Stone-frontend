@@ -6,7 +6,8 @@ import StudioShell from "@/features/studio/StudioShell"
 import { readDraft } from "@/features/studio/drafts"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { adminProductOf, bodiesOf, failure, fakeAdminAuth, stubAdminApi } from "@/test/studio"
+import type { AdminProduct } from "@/features/catalog/types"
+import { adminProductOf, bodiesOf, callsOf, failure, fakeAdminAuth, ok, stubAdminApi, unauthorized } from "@/test/studio"
 import StudioProductEdit from "./StudioProductEdit"
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -19,9 +20,9 @@ const probes = [
   { path: "/studio/sign-out", Component: Landed },
 ]
 
-// Arz: 3 of 12 remaining, published, featured, 13 photos.
-function renderEdit(id = 1, answer?: Parameters<typeof stubAdminApi>[1]) {
-  const fetch = stubAdminApi([adminProductOf(1), adminProductOf(4, { status: "draft" })], answer)
+// Arz: 3 of 12 remaining, published, featured, 13 photos. Jbeil: a draft, 19 photos.
+function renderEdit(id = 1, answer?: Parameters<typeof stubAdminApi>[1], pieces: AdminProduct[] = [adminProductOf(1), adminProductOf(4, { status: "draft" })]) {
+  const fetch = stubAdminApi(pieces, answer)
   const view = renderStudioAt(
     <StudioShell>
       <StudioProductEdit />
@@ -223,3 +224,153 @@ describe("the studio's edit page", () => {
     expect(await landedOn("/studio/products")).toBeInTheDocument()
   })
 })
+
+// Only a draft can be deleted (DELETE /admin/products/{id}): the piece, its photos and their files, at once.
+describe("deleting a piece", () => {
+  const d = f.deletePiece
+  const deleteButton = () => screen.queryByRole("button", { name: d.button })
+  const deleteCalls = (fetch: ReturnType<typeof stubAdminApi>) => callsOf(fetch).filter((call) => call === "DELETE /admin/products/4")
+  const confirmDelete = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(deleteButton() as HTMLElement)
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: d.confirm }))
+  }
+
+  it("deletes a draft after asking, then goes back to the list without asking about unsaved changes", async () => {
+    const { fetch } = renderEdit(4)
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    const user = userEvent.setup()
+    await user.type(field(labels.color), " light")
+
+    await user.click(deleteButton() as HTMLElement)
+    let dialog = await screen.findByRole("alertdialog", { name: "Delete “Jbeil” and its 19 photos?" })
+    expect(dialog).toHaveAccessibleDescription(d.text)
+    await user.click(within(dialog).getByRole("button", { name: d.keep }))
+    expect(deleteCalls(fetch)).toHaveLength(0)
+    expect(field(labels.color)).toHaveValue("Grey light")
+
+    await user.click(deleteButton() as HTMLElement)
+    dialog = await screen.findByRole("alertdialog", { name: "Delete “Jbeil” and its 19 photos?" })
+    await user.click(within(dialog).getByRole("button", { name: d.confirm }))
+    expect(await landedOn("/studio/products")).toBeInTheDocument()
+    expect(deleteCalls(fetch)).toHaveLength(1)
+    expect(toast.success).toHaveBeenCalledWith("“Jbeil” deleted.", { position: "top-center" })
+    expect(screen.queryByRole("alertdialog")).toBeNull()
+    expect(readDraft(4)).toBeNull()
+  })
+
+  it("counts the photos the piece has now", async () => {
+    renderEdit(4)
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole("button", { name: "Delete photo 1" }))
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: STUDIO_COPY.photos.confirmDelete }))
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /^Delete photo \d+$/ })).toHaveLength(18))
+    await user.click(deleteButton() as HTMLElement)
+    expect(await screen.findByRole("alertdialog", { name: "Delete “Jbeil” and its 18 photos?" })).toBeInTheDocument()
+  })
+
+  it.each([
+    [1, "Delete “Jbeil” and its 1 photo?"],
+    [0, "Delete “Jbeil”?"],
+  ])("words the question for a draft with %i photos", async (count, title) => {
+    const jbeil = adminProductOf(4, { status: "draft" })
+    renderEdit(4, undefined, [{ ...jbeil, images: jbeil.images.slice(0, count) }])
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await userEvent.setup().click(deleteButton() as HTMLElement)
+    expect(await screen.findByRole("alertdialog", { name: title })).toHaveAccessibleDescription(d.text)
+  })
+
+  it("isn't offered on a published piece, which says how instead", async () => {
+    renderEdit(1)
+    await screen.findByRole("heading", { level: 1, name: "Arz" })
+    expect(deleteButton()).toBeNull()
+    expect(screen.getByText(d.publishedFirst)).toBeInTheDocument()
+  })
+
+  it("goes by the saved status, not the unsaved choice", async () => {
+    renderEdit(4)
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await userEvent.setup().click(screen.getByRole("radio", { name: f.published }))
+    expect(deleteButton()).toBeInTheDocument()
+    expect(screen.queryByText(d.publishedFirst)).toBeNull()
+  })
+
+  it("on a 409, shows the API's message and reloads the piece", async () => {
+    let published = false
+    const message = "Set this piece to draft before deleting it."
+    const { fetch } = renderEdit(4, (method, path) => {
+      if (path !== "/admin/products/4") return undefined
+      if (method === "DELETE") {
+        published = true
+        return failure(409, "CONFLICT", message)
+      }
+      return published ? ok(adminProductOf(4, { status: "published", color: "Dark grey" })) : undefined
+    })
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await confirmDelete(userEvent.setup())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message, { position: "top-center" }))
+    expect(await screen.findByText(d.publishedFirst)).toBeInTheDocument()
+    expect(deleteButton()).toBeNull()
+    expect(field(labels.color)).toHaveValue("Dark grey")
+    expect(screen.getByRole("radio", { name: f.published })).toBeChecked()
+    expect(callsOf(fetch).filter((call) => call === "GET /admin/products/4")).toHaveLength(2)
+  })
+
+  it("on a 404, shows the API's message and reloads, which finds the piece gone", async () => {
+    let gone = false
+    renderEdit(4, (method, path) => {
+      if (path !== "/admin/products/4") return undefined
+      if (method === "DELETE") gone = true
+      return gone ? failure(404, "NOT_FOUND", "Product not found") : undefined
+    })
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await confirmDelete(userEvent.setup())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Product not found", { position: "top-center" }))
+    expect(await screen.findByRole("heading", { level: 1, name: STUDIO_COPY.notFound.title })).toBeInTheDocument()
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("says nothing when the session has ended", async () => {
+    const { auth } = renderEdit(4, (method) => (method === "DELETE" ? unauthorized() : undefined))
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await confirmDelete(userEvent.setup())
+    await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("says so when the delete doesn't reach the API, and keeps the piece", async () => {
+    renderEdit(4, (method, path) => (method === "DELETE" && path === "/admin/products/4" ? new Response("Bad gateway", { status: 502 }) : undefined))
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    await confirmDelete(userEvent.setup())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(d.failed, { position: "top-center" }))
+    expect(screen.getByRole("heading", { level: 1, name: "Jbeil" })).toBeInTheDocument()
+    expect(deleteButton()).toBeEnabled()
+  })
+
+  it("rests while the form is being saved, and the form rests while the piece is being deleted", async () => {
+    let answer: (response: Response) => void = () => {}
+    const { fetch } = renderEdit(4, (method) => (method === "PATCH" || method === "DELETE" ? new Promise<Response>((done) => (answer = done)) : undefined))
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    const user = userEvent.setup()
+    await user.type(field(labels.color), " light")
+    await user.click(saveButton())
+    expect(deleteButton()).toBeDisabled()
+    answer(ok(adminProductOf(4, { status: "draft", color: "Grey light" })))
+    await waitFor(() => expect(deleteButton()).toBeEnabled())
+    await user.type(field(labels.color), " again")
+    await confirmDelete(user)
+    expect(screen.getByRole("button", { name: d.deleting })).toBeDisabled()
+    expect(saveButton()).toBeDisabled()
+    expect(callsOf(fetch).filter((call) => call.startsWith("PATCH"))).toHaveLength(1)
+  })
+
+  it("rests while photos are being added", async () => {
+    renderEdit(4, (_method, path) => (path.endsWith("/photos/upload") ? new Promise<undefined>(() => {}) : undefined))
+    await screen.findByRole("heading", { level: 1, name: "Jbeil" })
+    const user = userEvent.setup()
+    await user.upload(screen.getByLabelText(STUDIO_COPY.photos.add), new File(["photo"], "a.jpg", { type: "image/jpeg" }))
+    await waitFor(() => expect(deleteButton()).toBeDisabled())
+  })
+})
+

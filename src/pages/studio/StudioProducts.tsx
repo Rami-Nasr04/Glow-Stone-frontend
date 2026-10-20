@@ -22,6 +22,28 @@ const columns = "grid grid-cols-[2.5rem_minmax(0,1fr)_auto_2.75rem] items-center
 
 type Load = { state: "loading" } | { state: "failed" } | { state: "ready"; pieces: AdminProduct[] }
 
+// A started publish rests the button for the 2 minutes a rebuild takes. The start is kept in this tab's sessionStorage,
+// so a visit to a piece and back doesn't offer it again too early.
+const PUBLISH_KEY = "glowstone.studio.publishStarted"
+const PUBLISH_REST_MS = 2 * 60 * 1000
+
+function restingUntil(): number | null {
+  try {
+    const until = Number(window.sessionStorage.getItem(PUBLISH_KEY)) + PUBLISH_REST_MS
+    return until > Date.now() ? until : null
+  } catch {
+    return null
+  }
+}
+
+function keepPublishStart(at: number): void {
+  try {
+    window.sessionStorage.setItem(PUBLISH_KEY, String(at))
+  } catch {
+    // Storage refused: the button still rests while this page is open.
+  }
+}
+
 function stockLabel(piece: Pick<AdminProduct, "remaining" | "editionSize">): string {
   return piece.remaining === 0 ? t.soldOut : interpolate(t.remaining, { remaining: piece.remaining, edition: piece.editionSize })
 }
@@ -30,6 +52,9 @@ export default function StudioProducts() {
   const { api } = useAdminAuth()
   const [load, setLoad] = useState<Load>({ state: "loading" })
   const saving = useRef(new Set<number>())
+  const [resting, setResting] = useState<number | null>(restingUntil)
+  const [publishing, setPublishing] = useState(false)
+  const sending = useRef(false)
 
   // A 401 has already ended the session; anything else can be tried again.
   const fetchList = useCallback(
@@ -48,6 +73,35 @@ export default function StudioProducts() {
       live = false
     }
   }, [fetchList])
+
+  useEffect(() => {
+    if (resting === null) return
+    const timer = setTimeout(() => setResting(null), resting - Date.now())
+    return () => clearTimeout(timer)
+  }, [resting])
+
+  // There's no status to follow: a 202 means the rebuild started. A second click while the first is on its way is ignored.
+  const publish = async () => {
+    if (sending.current) return
+    sending.current = true
+    setPublishing(true)
+    try {
+      await api.publish()
+      const at = Date.now()
+      keepPublishStart(at)
+      setResting(at + PUBLISH_REST_MS)
+      studioToast.success(t.publishStarted)
+    } catch (error) {
+      // A 401 has already sent the admin to sign in; the API's own message says why a publish couldn't start.
+      if (!(error instanceof StudioError && error.status === 401)) {
+        studioToast.error(error instanceof StudioError && error.code === "PUBLISH_FAILED" ? error.message : t.publishFailed)
+      }
+    } finally {
+      sending.current = false
+      setPublishing(false)
+    }
+  }
+  const publishOff = publishing || resting !== null
 
   const retry = () => {
     setLoad({ state: "loading" })
@@ -80,12 +134,22 @@ export default function StudioProducts() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-4xl font-light lg:text-[2.75rem]">{t.title}</h1>
-        <Link
-          to={studioPath("/products/new")}
-          className="flex min-h-11 items-center bg-primary px-5 text-label uppercase tracking-caps text-primary-foreground transition-colors duration-500 hover:bg-primary-hover"
-        >
-          + {t.newProduct}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={publishOff}
+            onClick={() => void publish()}
+            className="flex min-h-11 items-center border border-primary px-5 text-label uppercase tracking-caps transition-colors duration-500 enabled:hover:bg-primary enabled:hover:text-primary-foreground disabled:opacity-60"
+          >
+            {publishOff ? t.publishing : t.publish}
+          </button>
+          <Link
+            to={studioPath("/products/new")}
+            className="flex min-h-11 items-center bg-primary px-5 text-label uppercase tracking-caps text-primary-foreground transition-colors duration-500 hover:bg-primary-hover"
+          >
+            + {t.newProduct}
+          </Link>
+        </div>
       </div>
       <StudioNote>{STUDIO_COPY.website}</StudioNote>
 

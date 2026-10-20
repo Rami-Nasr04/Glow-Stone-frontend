@@ -18,6 +18,8 @@ interface PhotoManagerProps {
   initial: AdminProductImage[]
   /** True while a batch of photos is being added (the editor then asks before leaving). */
   onUploadingChange: (uploading: boolean) => void
+  /** How many photos the piece has now (the editor's delete question names it). */
+  onCountChange: (count: number) => void
 }
 
 type Action = "earlier" | "later" | "cover" | "delete"
@@ -64,7 +66,7 @@ function labelOf(i: number, count: number): string {
 // The piece's photos: add (several, one at a time), move earlier or later, make the cover, delete. Every change goes
 // to the API at once (there's no Save for photos); the server's answer is what the screen shows. Buttons, not drag,
 // so it works the same on a phone and from the keyboard.
-export default function PhotoManager({ productId, initial, onUploadingChange }: PhotoManagerProps) {
+export default function PhotoManager({ productId, initial, onUploadingChange, onCountChange }: PhotoManagerProps) {
   const { api } = useAdminAuth()
   const [photos, setPhotos] = useState(initial)
   const [busy, setBusy] = useState(false)
@@ -93,6 +95,8 @@ export default function PhotoManager({ productId, initial, onUploadingChange }: 
       if (button && !button.disabled) return button.focus()
     }
   }, [photos])
+
+  useEffect(() => onCountChange(photos.length), [photos.length, onCountChange])
 
   // The names were shown once (above); a later visit doesn't repeat them.
   useEffect(() => {

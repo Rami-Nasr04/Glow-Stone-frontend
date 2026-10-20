@@ -1,5 +1,5 @@
-// The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH /admin/products/{id}, and the
-// photo calls under /admin/products/{id}/photos), with the admin's access token. Answers are read through the
+// The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH/DELETE /admin/products/{id}, the
+// photo calls under /admin/products/{id}/photos, and POST /admin/publish), with the admin's access token. Answers are read through the
 // envelope; a 401 is judged by its status alone, because API Gateway answers it with its own {"message":"Unauthorized"}.
 import { readAdminPhoto, readAdminPhotos, readAdminProduct } from "@/features/catalog/api"
 import type { AdminProduct, AdminProductImage, ProductInput } from "@/features/catalog/types"
@@ -25,7 +25,7 @@ export const PRODUCT_INPUT_KEYS = [
 
 export type ProductField = (typeof PRODUCT_INPUT_KEYS)[number]
 
-export type StudioErrorCode = "VALIDATION" | "CONFLICT" | "NOT_FOUND" | "UNAUTHORIZED" | "NETWORK" | "UNAVAILABLE" | "UNEXPECTED" | "STORAGE"
+export type StudioErrorCode = "VALIDATION" | "CONFLICT" | "NOT_FOUND" | "PUBLISH_FAILED" | "UNAUTHORIZED" | "NETWORK" | "UNAVAILABLE" | "UNEXPECTED" | "STORAGE"
 
 export class StudioError extends Error {
   readonly status: number
@@ -61,6 +61,10 @@ export interface AdminApi {
   /** imageIds = every photo of the piece, exactly once, in the new order. */
   reorderPhotos(id: number, imageIds: number[]): Promise<AdminProductImage[]>
   deletePhoto(id: number, imageId: number): Promise<void>
+  /** Drafts only: the piece, its photos and their files. */
+  deleteProduct(id: number): Promise<void>
+  /** Asks for the shop to be rebuilt; it updates about 2 minutes later, with nothing to follow. */
+  publish(): Promise<void>
 }
 
 interface AdminApiOptions {
@@ -71,7 +75,7 @@ interface AdminApiOptions {
   onUnauthorized: () => void
 }
 
-const KNOWN_CODES: readonly StudioErrorCode[] = ["VALIDATION", "CONFLICT", "NOT_FOUND"]
+const KNOWN_CODES: readonly StudioErrorCode[] = ["VALIDATION", "CONFLICT", "NOT_FOUND", "PUBLISH_FAILED"]
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value)
 
@@ -182,6 +186,15 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     },
     async deletePhoto(id, imageId) {
       await call("DELETE", `/admin/products/${id}/photos/${imageId}`)
+    },
+    async deleteProduct(id) {
+      const path = `/admin/products/${id}`
+      const { status } = await call("DELETE", path)
+      if (status !== 204) throw unexpected(`DELETE ${path} answered ${status}, not 204`)
+    },
+    async publish() {
+      const { status, data } = await call("POST", "/admin/publish")
+      if (status !== 202 || !isObject(data) || data.started !== true) throw unexpected(`POST /admin/publish answered ${status} without started: true`)
     },
   }
 }

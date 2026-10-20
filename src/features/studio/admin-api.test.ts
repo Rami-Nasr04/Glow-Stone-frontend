@@ -245,3 +245,48 @@ describe("the admin photo calls", () => {
     expect(onUnauthorized).toHaveBeenCalledTimes(1)
   })
 })
+
+describe("deleting a piece and publishing the website", () => {
+  it("deletes a draft on a 204 with no body", async () => {
+    const { api, fetch } = setup(() => new Response(null, { status: 204 }))
+    await expect(api.deleteProduct(13)).resolves.toBeUndefined()
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/13`)
+    expect(init?.method).toBe("DELETE")
+    expect(init?.body).toBeUndefined()
+  })
+
+  it.each([
+    [409, "CONFLICT", "Set this piece to draft before deleting it."],
+    [404, "NOT_FOUND", "Product not found"],
+  ])("keeps the API's %i message for a refused delete", async (status, code, message) => {
+    const { api } = setup(() => failure(status, code, message))
+    expect(await caught(api.deleteProduct(4))).toMatchObject({ status, code, message })
+  })
+
+  it("starts a publish on a 202, sending no body", async () => {
+    const { api, fetch } = setup(() => ok({ started: true }, 202))
+    await expect(api.publish()).resolves.toBeUndefined()
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/publish`)
+    expect(init?.method).toBe("POST")
+    expect(init?.body).toBeUndefined()
+  })
+
+  it("names a publish that couldn't start, keeping the API's message", async () => {
+    const { api } = setup(() => failure(502, "PUBLISH_FAILED", "Publishing couldn't start. Try again in a minute."))
+    expect(await caught(api.publish())).toMatchObject({ status: 502, code: "PUBLISH_FAILED", message: "Publishing couldn't start. Try again in a minute." })
+  })
+
+  it("doesn't take any other answer for a started publish", async () => {
+    expect((await caught(setup(() => ok({ started: true })).api.publish())).code).toBe("UNEXPECTED")
+    expect((await caught(setup(() => ok({ started: false }, 202)).api.publish())).code).toBe("UNEXPECTED")
+  })
+
+  it("ends the session on a 401 from either", async () => {
+    const { api, onUnauthorized } = setup(unauthorized)
+    expect((await caught(api.deleteProduct(4))).status).toBe(401)
+    expect((await caught(api.publish())).status).toBe(401)
+    expect(onUnauthorized).toHaveBeenCalledTimes(2)
+  })
+})

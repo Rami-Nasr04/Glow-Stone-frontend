@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react"
+import { act, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import type { AdminProduct } from "@/features/catalog/types"
@@ -17,9 +17,10 @@ const pieces: AdminProduct[] = [
   ...[6, 5, 4, 3, 2, 1].map((id) => adminProductOf(id)),
 ]
 
-function stubApi(answers: { list?: () => Response; patch?: (body: unknown) => Response } = {}) {
+function stubApi(answers: { list?: () => Response; patch?: (body: unknown) => Response; publish?: () => Response } = {}) {
   const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(url)).pathname
+    if (path === "/admin/publish") return answers.publish?.() ?? ok({ started: true }, 202)
     if (init?.method === "PATCH") {
       const id = Number(path.split("/").pop())
       const body = JSON.parse(String(init.body)) as Partial<AdminProduct>
@@ -38,6 +39,7 @@ function renderList() {
 const rowOf = (name: string) => screen.getByRole("link", { name }).closest("li") as HTMLElement
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.mocked(toast.success).mockClear()
   vi.mocked(toast.error).mockClear()
 })
@@ -154,5 +156,83 @@ describe("the studio's products list", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(t.loadFailed)
     await userEvent.setup().click(screen.getByRole("button", { name: t.retry }))
     expect(await screen.findByRole("link", { name: "Arz" })).toBeInTheDocument()
+  })
+})
+
+// The shop is built ahead of time; Publish asks for a rebuild (POST /admin/publish). There's no status to follow, so
+// the button rests for the 2 minutes a rebuild takes, in this tab.
+describe("publishing the website", () => {
+  const publishButton = () => screen.getByRole("button", { name: new RegExp(`^(${t.publish}|${t.publishing})$`) })
+  const publishCalls = (fetch: ReturnType<typeof stubApi>) => fetch.mock.calls.filter(([url]) => String(url).endsWith("/admin/publish"))
+
+  afterEach(() => vi.useRealTimers())
+
+  it("sits in the header beside New product, under which the note still explains it", () => {
+    stubApi()
+    renderList()
+    const header = screen.getByRole("heading", { level: 1, name: t.title }).parentElement as HTMLElement
+    expect(within(header).getByRole("button", { name: t.publish })).toBeEnabled()
+    expect(within(header).getByRole("link", { name: `+ ${t.newProduct}` })).toBeInTheDocument()
+    expect(screen.getByText(STUDIO_COPY.website)).toBeInTheDocument()
+  })
+
+  it("starts a publish, says when the website updates, and rests for 2 minutes in this tab", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const fetch = stubApi()
+    const view = renderList()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    await user.click(publishButton())
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(t.publishStarted, { position: "top-center" }))
+    expect(publishCalls(fetch)).toHaveLength(1)
+    expect(publishCalls(fetch)[0][1]).toMatchObject({ method: "POST" })
+    expect(publishButton()).toBeDisabled()
+    expect(publishButton()).toHaveTextContent(t.publishing)
+
+    // Back on the list later in the same tab: still resting.
+    view.unmount()
+    await act(() => vi.advanceTimersByTimeAsync(100_000))
+    renderList()
+    expect(publishButton()).toBeDisabled()
+    await act(() => vi.advanceTimersByTimeAsync(21_000))
+    expect(publishButton()).toBeEnabled()
+    expect(publishButton()).toHaveTextContent(t.publish)
+  })
+
+  it("shows the API's message when publishing couldn't start, and stays ready", async () => {
+    const message = "Publishing couldn't start. Try again in a minute."
+    stubApi({ publish: () => failure(502, "PUBLISH_FAILED", message) })
+    renderList()
+    await userEvent.setup().click(publishButton())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message, { position: "top-center" }))
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(publishButton()).toBeEnabled()
+    expect(publishButton()).toHaveTextContent(t.publish)
+  })
+
+  it("says so in its own words when the answer isn't the API's", async () => {
+    stubApi({ publish: () => new Response("Bad gateway", { status: 502 }) })
+    renderList()
+    await userEvent.setup().click(publishButton())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.publishFailed, { position: "top-center" }))
+    expect(publishButton()).toBeEnabled()
+  })
+
+  it("says nothing when the session has ended", async () => {
+    const auth = fakeAdminAuth({ signedInAs: "omar@example.com" })
+    stubApi({ publish: () => unauthorized() })
+    renderStudioAt(<StudioProducts />, "/studio/products", { auth })
+    await userEvent.setup().click(publishButton())
+    await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("sends one publish for a double click", async () => {
+    const fetch = stubApi()
+    renderList()
+    const user = userEvent.setup()
+    await user.dblClick(publishButton())
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1))
+    expect(publishCalls(fetch)).toHaveLength(1)
   })
 })
