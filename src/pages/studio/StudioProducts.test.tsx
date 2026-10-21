@@ -17,7 +17,7 @@ const pieces: AdminProduct[] = [
   ...[6, 5, 4, 3, 2, 1].map((id) => adminProductOf(id)),
 ]
 
-function stubApi(answers: { list?: () => Response; patch?: (body: unknown) => Response; publish?: () => Response } = {}) {
+function stubApi(answers: { list?: () => Response; patch?: (body: unknown) => Response; publish?: () => Response | Promise<Response> } = {}) {
   const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(url)).pathname
     if (path === "/admin/publish") return answers.publish?.() ?? ok({ started: true }, 202)
@@ -225,6 +225,29 @@ describe("publishing the website", () => {
     await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  // Vercel takes about 7 s to accept a build and the API waits up to 20 s for it ("Publish the website"): the studio
+  // sets no shorter limit, shows the waiting state all along, and a click while it waits sends nothing.
+  it.each([7_000, 19_000])("waits %i ms for the answer: Publishing… and disabled throughout, a second click ignored", async (wait) => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const fetch = stubApi({ publish: () => new Promise((resolve) => setTimeout(() => resolve(ok({ started: true }, 202)), wait)) })
+    renderList()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    await user.click(publishButton())
+    for (let waited = 0; waited < wait - 1000; waited += 1000) {
+      await act(() => vi.advanceTimersByTimeAsync(1000))
+      expect(publishButton()).toBeDisabled()
+      expect(publishButton()).toHaveTextContent(t.publishing)
+      await user.click(publishButton())
+    }
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(toast.error).not.toHaveBeenCalled()
+    await act(() => vi.advanceTimersByTimeAsync(1000))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(t.publishStarted, { position: "top-center" }))
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(publishCalls(fetch)).toHaveLength(1)
+    expect(publishButton()).toBeDisabled()
   })
 
   it("sends one publish for a double click", async () => {
