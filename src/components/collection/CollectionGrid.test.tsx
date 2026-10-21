@@ -29,6 +29,14 @@ describe("CollectionGrid", () => {
     expect(screen.getAllByText("The marks of the chisel stay in the stone.")).toHaveLength(2)
   })
 
+  // The first row is on screen at once (three across on desktop); the rest wait until they're scrolled near.
+  it("loads the first row's covers straight away and the others lazily", () => {
+    const { container } = renderAt(<CollectionGrid pieces={all} onClear={vi.fn()} />)
+    const covers = [...container.querySelectorAll("[data-cell=piece] img:not([aria-hidden])")]
+    expect(covers.map((img) => img.getAttribute("loading"))).toEqual(["eager", "eager", "eager", "lazy", "lazy", "lazy"])
+    expect(covers.map((img) => img.getAttribute("fetchpriority"))).toEqual(["high", "high", "high", "auto", "auto", "auto"])
+  })
+
   it("leaves the two-column interlude out when no piece would follow it", () => {
     const { container } = renderAt(<CollectionGrid pieces={all.slice(0, 4)} onClear={vi.fn()} />)
     expect(cellsOf(container)).toEqual(["piece", "piece", "piece", "interlude base lg", "piece", "commission"])

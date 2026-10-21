@@ -108,7 +108,7 @@ export default function CollectionGrid({ pieces, onClear }: CollectionGridProps)
       {pieces.flatMap((piece, i) => {
         const card = (
           <li key={piece.id} data-cell="piece">
-            <PieceCard product={piece} sizes={CARD_SIZES} headingLevel={2} />
+            <PieceCard product={piece} sizes={CARD_SIZES} headingLevel={2} priority={i < COLUMNS.lg} />
           </li>
         )
         const layouts = interludes.get(i + 1)

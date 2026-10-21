@@ -25,9 +25,33 @@ describe("PieceCard", () => {
     expect(imgs[0]).toHaveAttribute("src", `${piece.images[0].url}/960.webp`)
     expect(imgs[0]).toHaveAttribute("alt", "")
     expect(imgs[0]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 22vw, 33vw")
-    expect(imgs[1]).toHaveAttribute("src", `${piece.images[1].url}/960.webp`)
     expect(imgs[1]).toHaveAttribute("aria-hidden", "true")
     expect(imgs[1].className).toContain("group-hover:opacity-100")
+  })
+
+  // A phone can't hover, so it never downloads the second photo: only a screen with hover picks the source.
+  it("downloads the second photo only where hover exists", () => {
+    const piece = summaryOf(6)
+    const { container } = renderAt(<PieceCard product={piece} sizes="33vw" />)
+    const hover = container.querySelectorAll("img")[1]
+    const source = hover.closest("picture")?.querySelector("source")
+    expect(source).toHaveAttribute("media", "(hover: hover)")
+    expect(source?.getAttribute("srcset")).toContain(`${piece.images[1].url}/960.webp`)
+    expect(source).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 22vw, 33vw")
+    expect(hover.getAttribute("src")).not.toContain(piece.images[1].url)
+    expect(hover).not.toHaveAttribute("srcset")
+    expect(hover).toHaveAttribute("loading", "lazy")
+  })
+
+  it("loads the cover lazily unless it is asked first, and the second photo always lazily", () => {
+    const piece = summaryOf(6)
+    const lazy = renderAt(<PieceCard product={piece} sizes="33vw" />).container.querySelectorAll("img")
+    expect(lazy[0]).toHaveAttribute("loading", "lazy")
+    const first = renderAt(<PieceCard product={piece} sizes="33vw" priority />).container.querySelectorAll("img")
+    expect(first[0]).toHaveAttribute("loading", "eager")
+    expect(first[0]).toHaveAttribute("fetchpriority", "high")
+    expect(first[1]).toHaveAttribute("loading", "lazy")
+    expect(first[1]).not.toHaveAttribute("fetchpriority", "high")
   })
 
   it("shows a single photo, with nothing to cross-fade to, when the piece has only one", () => {

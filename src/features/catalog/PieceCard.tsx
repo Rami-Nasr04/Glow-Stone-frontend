@@ -16,10 +16,12 @@ interface PieceCardProps {
   /** Home rail: stone and edition share one line. */
   compact?: boolean
   headingLevel?: 2 | 3
+  /** On screen at once (the collection's first row): the cover loads straight away. */
+  priority?: boolean
   className?: string
 }
 
-export default function PieceCard({ product, sizes, compact = false, headingLevel = 3, className }: PieceCardProps) {
+export default function PieceCard({ product, sizes, compact = false, headingLevel = 3, priority = false, className }: PieceCardProps) {
   const { to } = useLocale()
   const Heading = headingLevel === 2 ? "h2" : "h3"
   const [cover, hover] = product.images
@@ -29,13 +31,15 @@ export default function PieceCard({ product, sizes, compact = false, headingLeve
     <Link to={to(productPath(product))} draggable={false} className={cn("group flex flex-col", compact ? "gap-4.5" : "gap-6", className)}>
       <div className={cn("relative aspect-2/3 overflow-hidden bg-background", product.soldOut && "opacity-55 grayscale-70")}>
         {/* The name is in the link text, so the photos are decorative here. */}
-        {cover ? <Picture image={cover} alt="" sizes={sizes} draggable={false} /> : <NoPhoto />}
+        {cover ? <Picture image={cover} alt="" sizes={sizes} priority={priority} draggable={false} /> : <NoPhoto />}
+        {/* Shown on hover only (group-hover applies where hover exists), so only those screens download it. */}
         {hover && (
           <Picture
             image={hover}
             alt=""
             aria-hidden="true"
             sizes={sizes}
+            media="(hover: hover)"
             draggable={false}
             className="absolute inset-0 bg-background opacity-0 transition-opacity duration-1200 ease-slow group-hover:opacity-100"
           />

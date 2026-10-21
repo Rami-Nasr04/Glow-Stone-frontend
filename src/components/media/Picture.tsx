@@ -10,15 +10,22 @@ interface PictureProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "
   /** "contain" for product photos (a piece is never cropped); "cover" only for craft close-ups. */
   fit?: "contain" | "cover"
   priority?: boolean
+  /** Download the photo only where this media query matches (e.g. "(hover: hover)"); elsewhere the img stays empty. */
+  media?: string
 }
 
-export default function Picture({ image, alt, sizes, fit = "contain", priority = false, className, ...props }: PictureProps) {
+// A transparent 1×1 GIF: what the img shows where `media` doesn't match, so nothing is downloaded.
+const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+
+export default function Picture({ image, alt, sizes, fit = "contain", priority = false, media, className, ...props }: PictureProps) {
   const fromApi = "url" in image
-  return (
+  const src = fromApi ? photoUrl(image, 960) : imageUrl(image.key, 960)
+  const srcSet = fromApi ? photoSrcSet(image) : imageSrcSet(image.key, image.width)
+  const img = (
     <img
-      src={fromApi ? photoUrl(image, 960) : imageUrl(image.key, 960)}
-      srcSet={fromApi ? photoSrcSet(image) : imageSrcSet(image.key, image.width)}
-      sizes={capPhoneDensity(sizes)}
+      src={media ? BLANK : src}
+      srcSet={media ? undefined : srcSet}
+      sizes={media ? undefined : capPhoneDensity(sizes)}
       width={image.width}
       height={image.height}
       alt={alt}
@@ -28,5 +35,12 @@ export default function Picture({ image, alt, sizes, fit = "contain", priority =
       className={cn("block h-full w-full", fit === "contain" ? "object-contain" : "object-cover", className)}
       {...props}
     />
+  )
+  if (!media) return img
+  return (
+    <picture>
+      <source media={media} srcSet={srcSet} sizes={capPhoneDensity(sizes)} />
+      {img}
+    </picture>
   )
 }
