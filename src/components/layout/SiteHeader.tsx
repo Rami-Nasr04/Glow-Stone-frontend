@@ -113,7 +113,9 @@ export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_O
                       className="flex items-baseline justify-between border-b border-border py-1.5 font-display text-display-m font-light"
                     >
                       {m.nav[item.key]}
-                      <span className="font-sans text-label tracking-label text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                      <span aria-hidden="true" className="font-sans text-label tracking-label text-muted-foreground">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
                     </Link>
                   ))}
                 </nav>

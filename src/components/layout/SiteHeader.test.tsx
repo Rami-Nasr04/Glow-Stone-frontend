@@ -37,8 +37,10 @@ describe("SiteHeader", () => {
     renderAt("/")
     await user.click(screen.getByRole("button", { name: "Menu" }))
     const dialog = screen.getByRole("dialog")
-    expect(within(dialog).getByRole("link", { name: /Contact/ })).toHaveAttribute("href", "/contact")
-    expect(within(dialog).getByText("03")).toBeInTheDocument()
+    // The numbers are only seen: screen readers hear "Contact", not "Contact 03".
+    expect(within(dialog).getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact")
+    expect(within(dialog).getByRole("link", { name: "Collection" })).toHaveAttribute("href", "/collection")
+    expect(within(dialog).getByText("03")).toHaveAttribute("aria-hidden", "true")
     expect(within(dialog).getByRole("link", { name: "glowstone216@gmail.com" })).toHaveAttribute("href", "mailto:glowstone216@gmail.com")
     await user.click(within(dialog).getByRole("button", { name: "Close" }))
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()

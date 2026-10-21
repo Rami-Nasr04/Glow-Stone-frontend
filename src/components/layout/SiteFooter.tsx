@@ -31,7 +31,8 @@ export default function SiteFooter() {
   const { m, to } = useLocale()
 
   return (
-    <footer className="bg-dark-section px-gutter pb-10 pt-section text-dark-section-foreground">
+    // The wine focus ring hardly shows on charcoal, so the footer's ring is Frost Stone, like the email field's line.
+    <footer className="bg-dark-section px-gutter pb-10 pt-section text-dark-section-foreground [--ring:var(--dark-section-foreground)]">
       <div className="mx-auto flex max-w-content flex-col gap-16 lg:gap-28">
         <div className="flex flex-wrap items-start justify-between gap-x-16 gap-y-14">
           <Link to={to("/")} aria-label={m.nav.home} className="block w-full max-w-85">

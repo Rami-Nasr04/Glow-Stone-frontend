@@ -17,6 +17,11 @@ describe("SiteFooter", () => {
     expect(screen.getByLabelText("Your email, for new editions").parentElement?.className).toContain("focus-within:border-dark-section-foreground")
   })
 
+  it("draws the focus ring of its links and button in Frost Stone", () => {
+    renderFooter()
+    expect(screen.getByRole("contentinfo")).toHaveClass("[--ring:var(--dark-section-foreground)]")
+  })
+
   it("links the wordmark home and offers the contact email", () => {
     renderFooter()
     expect(screen.getByRole("link", { name: "Glowstone home" })).toHaveAttribute("href", "/")
