@@ -153,7 +153,7 @@ export const en = {
       "Always lift with two people; never drag the stone across the floor.",
     ],
     deliveryBody: [
-      "Delivery is free across Lebanon. Payment is in cash on delivery.",
+      "Delivery is free across Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order. Payment is in cash on delivery.",
       "[Placeholder: delivery times.]",
       "[Placeholder: returns policy.]",
     ],
@@ -267,13 +267,13 @@ export const en = {
         title: "Delivery & Returns",
         sections: [
           { heading: "Where we deliver", paragraphs: ["We deliver within Lebanon only.", "[Placeholder: any areas with special arrangements.]"] },
-          { heading: "Cost", paragraphs: ["Delivery is free for now."] },
+          {
+            heading: "Cost",
+            paragraphs: ["Delivery is free across Lebanon. For far-off areas, a delivery fee may be agreed with you on the confirmation call, before anything is sent."],
+          },
           {
             heading: "Timing",
-            paragraphs: [
-              "[Placeholder: delivery times for ready pieces.]",
-              "Made-to-order pieces are delivered once carving is complete; the lead time is shown on each piece.",
-            ],
+            paragraphs: ["[Placeholder: delivery times.]"],
           },
           { heading: "Payment", paragraphs: ["Payment is cash on delivery. We call to confirm every order before it leaves the workshop."] },
           { heading: "Returns", paragraphs: ["[Placeholder: returns policy.]"] },
