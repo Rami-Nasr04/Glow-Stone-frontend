@@ -24,7 +24,7 @@ describe("Legal", () => {
       "Delivery is free across Lebanon. For far-off areas, a delivery fee may be agreed with you on the confirmation call, before anything is sent.",
     )
     expect(screen.queryByText(/lead time|made-to-order/i)).not.toBeInTheDocument()
-    expect(screen.getByText("[Placeholder: delivery times for ready pieces.]")).toHaveClass("text-accent")
+    expect(screen.getByText("[Placeholder: delivery times.]")).toHaveClass("text-accent")
   })
 
   it("lets readers switch documents and marks the current one", () => {

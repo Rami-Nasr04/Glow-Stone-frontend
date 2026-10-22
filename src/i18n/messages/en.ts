@@ -256,7 +256,7 @@ export const en = {
           },
           {
             heading: "Timing",
-            paragraphs: ["[Placeholder: delivery times for ready pieces.]"],
+            paragraphs: ["[Placeholder: delivery times.]"],
           },
           { heading: "Payment", paragraphs: ["Payment is cash on delivery. We call to confirm every order before it leaves the workshop."] },
           { heading: "Returns", paragraphs: ["[Placeholder: returns policy.]"] },
