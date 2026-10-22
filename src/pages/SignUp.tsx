@@ -8,6 +8,7 @@ import PasswordRules from "@/features/auth/PasswordRules"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { lebanesePhone, passwordOk } from "@/features/auth/rules"
 import { AuthError } from "@/features/auth/types"
+import { subscribe } from "@/features/news/subscribe"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import { isEmail } from "@/lib/validation"
@@ -26,6 +27,8 @@ export default function SignUp() {
   const [errors, setErrors] = useState<Errors>({})
   const [emailTaken, setEmailTaken] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Ticked by default (Rami, 2026-10-24); the customer can untick it.
+  const [news, setNews] = useState(true)
   const formRef = useRef<HTMLFormElement>(null)
   const t = m.auth.signUp
 
@@ -53,6 +56,8 @@ export default function SignUp() {
     setBusy(true)
     try {
       await client.signUp({ name: fields.name.trim(), email, phone, password: fields.password })
+      // Only once the account exists, quietly: an earlier unsubscribe is respected, and no answer holds sign-up up.
+      if (news) void subscribe({ email, rejoin: false, website: "" }, { timeoutMs: 5000 })
       const nextParam = next ? `&next=${encodeURIComponent(next)}` : ""
       // Held in memory for the verify step, so the new customer is signed in straight after verifying.
       rememberPendingPassword(email, fields.password)
@@ -115,6 +120,10 @@ export default function SignUp() {
             />
           )}
         </Field>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-small">
+          <input type="checkbox" checked={news} onChange={(e) => setNews(e.target.checked)} className="size-4.5 shrink-0 accent-primary" />
+          {t.news}
+        </label>
         {errors.form && (
           <p role="alert" className="text-sm text-destructive">
             {errors.form}
