@@ -62,11 +62,12 @@ describe("NewsSignup", () => {
   })
 
   it("shows the API's message under the field on a 400", async () => {
-    answerWith(() => Promise.resolve(json(400, { success: false, error: { code: "VALIDATION_ERROR", message: "Please enter a valid email." } })))
+    // The server's words, whatever they are (here not the browser's own check).
+    answerWith(() => Promise.resolve(json(400, { success: false, error: { code: "VALIDATION", message: "Email must be at most 254 characters." } })))
     const { user, field } = setup()
     await user.type(field, "sara@example.com")
     await user.click(screen.getByRole("button", { name: "Notify me" }))
-    const message = await screen.findByText("Please enter a valid email.")
+    const message = await screen.findByText("Email must be at most 254 characters.")
     expect(field).toHaveAttribute("aria-invalid", "true")
     expect(field.getAttribute("aria-describedby")).toBe(message.id)
     expect(field).toHaveValue("sara@example.com")
@@ -74,7 +75,7 @@ describe("NewsSignup", () => {
   })
 
   it.each([
-    ["429", () => Promise.resolve(json(429)), "Please try again in a minute."],
+    ["429", () => Promise.resolve(json(429, { message: "Too Many Requests" })), "Please try again in a minute."],
     ["a network error", () => Promise.reject(new TypeError("Failed to fetch")), "Something went wrong. Please try again."],
     ["a server error", () => Promise.resolve(json(500)), "Something went wrong. Please try again."],
   ])("on %s, says so and keeps the address to try again", async (_, reply, text) => {
@@ -89,7 +90,7 @@ describe("NewsSignup", () => {
   })
 
   it("clears an old message when the visitor tries again", async () => {
-    const fetch = answerWith(() => Promise.resolve(json(429)))
+    const fetch = answerWith(() => Promise.resolve(json(429, { message: "Too Many Requests" })))
     const { user, field } = setup()
     await user.type(field, "sara@example.com")
     await user.click(screen.getByRole("button", { name: "Notify me" }))

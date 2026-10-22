@@ -15,9 +15,14 @@ describe("subscribe (POST /subscribers)", () => {
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
 
-  it("reads a 400 as a bad email, with the API's message", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => answer(400, { success: false, error: { code: "VALIDATION_ERROR", message: "Please enter a valid email." } })))
+  it("reads a 400 as a bad email, with the API's message (the live answer: code VALIDATION)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => answer(400, { success: false, error: { code: "VALIDATION", message: "Please enter a valid email." } })))
     await expect(subscribe({ email: "x", rejoin: true, website: "" })).resolves.toEqual({ ok: false, reason: "invalid", message: "Please enter a valid email." })
+  })
+
+  it("decides by the status, not the code: any 400 shows the API's own message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => answer(400, { success: false, error: { code: "SOMETHING_NEW", message: "Email must be at most 254 characters." } })))
+    await expect(subscribe({ email: "x", rejoin: true, website: "" })).resolves.toEqual({ ok: false, reason: "invalid", message: "Email must be at most 254 characters." })
   })
 
   it("reads a 400 without a readable message as a bad email all the same", async () => {
@@ -26,7 +31,8 @@ describe("subscribe (POST /subscribers)", () => {
   })
 
   it("reads a 429 as too many tries", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => answer(429)))
+    // API Gateway's own body, not the envelope.
+    vi.stubGlobal("fetch", vi.fn(async () => answer(429, { message: "Too Many Requests" })))
     await expect(subscribe({ email: "a@b.co", rejoin: true, website: "" })).resolves.toEqual({ ok: false, reason: "busy" })
   })
 
