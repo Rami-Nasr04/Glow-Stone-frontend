@@ -1,10 +1,9 @@
 import { screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { AdminAuthError } from "@/features/studio/auth/types"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { fakeAdminAuth } from "@/test/studio"
+import { fakeAdminAuth, setupUser } from "@/test/studio"
 import StudioForgotPassword from "./StudioForgotPassword"
 
 const t = STUDIO_COPY.forgot
@@ -14,13 +13,13 @@ const probes = [
 ]
 
 async function askForCode(email = "omar@example.com") {
-  const user = userEvent.setup()
+  const user = setupUser()
   await user.type(screen.getByLabelText(STUDIO_COPY.email), email)
   await user.click(screen.getByRole("button", { name: t.send }))
 }
 
 async function finish(code = "123456", password = "Limestone-2026", repeat = password) {
-  const user = userEvent.setup()
+  const user = setupUser()
   await user.click(screen.getByRole("textbox", { name: "Digit 1" }))
   await user.paste(code)
   await user.type(screen.getByLabelText(STUDIO_COPY.newPassword.password), password)
@@ -74,7 +73,7 @@ describe("the studio's reset-password page", () => {
     const auth = fakeAdminAuth()
     renderStudioAt(<StudioForgotPassword />, "/studio/forgot-password", { auth })
     await askForCode()
-    await userEvent.setup().click(screen.getByRole("button", { name: t.save }))
+    await setupUser().click(screen.getByRole("button", { name: t.save }))
     expect(screen.getByText(t.codeMissing)).toBeInTheDocument()
     await finish("123456", "short")
     expect(screen.getByLabelText(STUDIO_COPY.newPassword.password)).toHaveAccessibleDescription(expect.stringContaining(STUDIO_COPY.newPassword.weak))
@@ -88,9 +87,9 @@ describe("the studio's reset-password page", () => {
     await askForCode()
     await finish("000000")
     expect(await screen.findByText(t.wrongCode)).toBeInTheDocument()
-    await userEvent.setup().click(screen.getByRole("button", { name: t.save }))
+    await setupUser().click(screen.getByRole("button", { name: t.save }))
     expect(await screen.findByText(t.expiredCode)).toBeInTheDocument()
-    await userEvent.setup().click(screen.getByRole("button", { name: t.sendAgain }))
+    await setupUser().click(screen.getByRole("button", { name: t.sendAgain }))
     expect(auth.startPasswordReset).toHaveBeenCalledTimes(2)
   })
 

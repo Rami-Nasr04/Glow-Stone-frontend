@@ -1,15 +1,19 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { createRoutesStub, Outlet } from "react-router"
 import AdminAuthProvider from "@/features/studio/auth/AdminAuthProvider"
 import RequireAdmin from "@/features/studio/auth/RequireAdmin"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import { readDraft } from "@/features/studio/drafts"
-import { adminProductOf, bodiesOf, fakeAdminAuth, stubAdminApi, unauthorized } from "@/test/studio"
+import { adminProductOf, bodiesOf, fakeAdminAuth, setupUser, stubAdminApi, unauthorized } from "@/test/studio"
 import StudioProductEdit from "./StudioProductEdit"
 import StudioProductNew from "./StudioProductNew"
 import StudioSignIn from "./StudioSignIn"
 import StudioSignOut from "./StudioSignOut"
+
+// These tests drive the studio's full product editor (and, in some, the sign-in round trip). Profiled 2026-10-24: one
+// takes ~1.5 s of pure CPU (React's development rendering of the whole form on every key, and jsdom computing accessible
+// names for the role queries); with the suite's 8 workers on a busy PC that passed 5 s. So these files get 15 s.
+vi.setConfig({ testTimeout: 15_000 })
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -45,7 +49,7 @@ function renderStudio(path: string, auth = fakeAdminAuth({ signedInAs: "omar@exa
 
 // Pasted, as a password manager fills them: typing each key is covered by the sign-in page's own tests.
 async function signInAgain() {
-  const user = userEvent.setup()
+  const user = setupUser()
   expect(await screen.findByText(STUDIO_COPY.signIn.sessionEnded)).toBeInTheDocument()
   await user.click(screen.getByLabelText(STUDIO_COPY.email))
   await user.paste("omar@example.com")
@@ -68,7 +72,7 @@ describe("unsaved changes across a 401", () => {
     let expired = true
     const fetch = stubAdminApi([adminProductOf(1)], (method) => (method === "PATCH" && expired ? unauthorized() : undefined))
     renderStudio("/studio/products/1")
-    const user = userEvent.setup()
+    const user = setupUser()
     await screen.findByRole("heading", { level: 1, name: "Arz" })
     await user.clear(field(f.fields.price))
     await user.type(field(f.fields.price), "455")
@@ -98,7 +102,7 @@ describe("unsaved changes across a 401", () => {
     let expired = true
     stubAdminApi([], (method) => (method === "POST" && expired ? unauthorized() : undefined))
     renderStudio("/studio/products/new")
-    const user = userEvent.setup()
+    const user = setupUser()
     await screen.findByRole("heading", { level: 1, name: f.newTitle })
     await user.type(field(f.fields.name), "Half-made piece")
     await user.click(screen.getByRole("button", { name: f.create }))
@@ -123,7 +127,7 @@ describe("unsaved changes across a 401", () => {
   it("throws the kept drafts away when the admin signs out", async () => {
     stubAdminApi([adminProductOf(1)], (method) => (method === "PATCH" ? unauthorized() : undefined))
     renderStudio("/studio/products/1")
-    const user = userEvent.setup()
+    const user = setupUser()
     await screen.findByRole("heading", { level: 1, name: "Arz" })
     await user.type(field(f.fields.color), " light")
     await user.click(screen.getByRole("button", { name: f.save }))

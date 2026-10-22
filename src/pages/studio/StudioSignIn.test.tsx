@@ -1,10 +1,9 @@
 import { act, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import { AdminAuthError } from "@/features/studio/auth/types"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { fakeAdminAuth } from "@/test/studio"
+import { fakeAdminAuth, setupUser } from "@/test/studio"
 import StudioSignIn from "./StudioSignIn"
 
 const t = STUDIO_COPY.signIn
@@ -16,7 +15,7 @@ const probes = [
 ]
 
 async function signIn(email: string, password: string) {
-  const user = userEvent.setup()
+  const user = setupUser()
   await user.type(screen.getByLabelText(STUDIO_COPY.email), email)
   await user.type(screen.getByLabelText(STUDIO_COPY.password), password)
   await user.click(screen.getByRole("button", { name: t.submit }))
@@ -50,7 +49,7 @@ describe("the studio's sign-in page", () => {
   it("checks the fields before asking Cognito", async () => {
     const auth = fakeAdminAuth()
     renderStudioAt(<StudioSignIn />, "/studio/sign-in", { auth, routes: probes })
-    await userEvent.setup().click(screen.getByRole("button", { name: t.submit }))
+    await setupUser().click(screen.getByRole("button", { name: t.submit }))
     expect(screen.getByLabelText(STUDIO_COPY.email)).toHaveAccessibleDescription(STUDIO_COPY.required)
     expect(screen.getByLabelText(STUDIO_COPY.email)).toHaveFocus()
     await signIn("not-an-email", "x")
@@ -81,7 +80,7 @@ describe("the studio's sign-in page", () => {
     renderStudioAt(<StudioSignIn />, "/studio/sign-in", { auth, routes: probes })
     await signIn("omar@example.com", "x")
     expect(await screen.findByRole("alert")).toHaveTextContent(STUDIO_COPY.tooManyAttempts)
-    await userEvent.setup().click(screen.getByRole("button", { name: t.submit }))
+    await setupUser().click(screen.getByRole("button", { name: t.submit }))
     expect(await screen.findByText(STUDIO_COPY.unavailable)).toBeInTheDocument()
   })
 
