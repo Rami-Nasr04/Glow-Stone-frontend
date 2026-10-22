@@ -18,6 +18,15 @@ describe("Legal", () => {
     expect(document.getElementById("section-4")).toHaveTextContent("Payment")
   })
 
+  it("says delivery is free, a far-off fee is agreed on the call, and promises no lead time", () => {
+    renderDoc("delivery")
+    expect(document.getElementById("section-2")).toHaveTextContent(
+      "Delivery is free across Lebanon. For far-off areas, a delivery fee may be agreed with you on the confirmation call, before anything is sent.",
+    )
+    expect(screen.queryByText(/lead time|made-to-order/i)).not.toBeInTheDocument()
+    expect(screen.getByText("[Placeholder: delivery times for ready pieces.]")).toHaveClass("text-accent")
+  })
+
   it("lets readers switch documents and marks the current one", () => {
     renderDoc("terms")
     const docs = screen.getByRole("navigation", { name: "Documents" })

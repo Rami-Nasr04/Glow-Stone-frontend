@@ -62,4 +62,15 @@ describe("ProductTabs", () => {
     await user.click(screen.getByRole("tab", { name: "Delivery" }))
     expect(screen.getByText("[Placeholder: returns policy.]")).toHaveClass("text-accent")
   })
+
+  it("says delivery is free, and that Omar may agree a fee for far-off areas when he calls", async () => {
+    const user = userEvent.setup()
+    renderAt(<ProductTabs piece={piece(BATROUN)} />)
+    await user.click(screen.getByRole("tab", { name: "Delivery" }))
+    expect(
+      screen.getByText(
+        "Delivery is free across Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order. Payment is in cash on delivery.",
+      ),
+    ).toBeInTheDocument()
+  })
 })
