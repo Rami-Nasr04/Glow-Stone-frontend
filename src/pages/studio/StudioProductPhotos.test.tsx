@@ -1,5 +1,4 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { createRoutesStub, Outlet } from "react-router"
 import AdminAuthProvider from "@/features/studio/auth/AdminAuthProvider"
 import RequireAdmin from "@/features/studio/auth/RequireAdmin"
@@ -9,10 +8,15 @@ import { MAX_PHOTO_BYTES } from "@/features/studio/photos"
 import StudioShell from "@/features/studio/StudioShell"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { adminProductOf, bodiesOf, callsOf, failure, fakeAdminAuth, STORAGE_URL, stubAdminApi, unauthorized } from "@/test/studio"
+import { adminProductOf, bodiesOf, callsOf, failure, fakeAdminAuth, setupUser, STORAGE_URL, stubAdminApi, unauthorized } from "@/test/studio"
 import StudioProductEdit from "./StudioProductEdit"
 import StudioProductNew from "./StudioProductNew"
 import StudioSignIn from "./StudioSignIn"
+
+// These tests drive the studio's full product editor (and, in some, the sign-in round trip). Profiled 2026-10-24: one
+// takes ~1.5 s of pure CPU (React's development rendering of the whole form on every key, and jsdom computing accessible
+// names for the role queries); with the suite's 8 workers on a busy PC that passed 5 s. So these files get 15 s.
+vi.setConfig({ testTimeout: 15_000 })
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -114,7 +118,7 @@ describe("adding photos", () => {
     let stored = 0
     const fetch = renderPhotos((_method, path) => (path === STORAGE_URL && ++stored === 2 ? held : undefined))
     await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.upload(screen.getByLabelText(p.add), [fileOf("a.jpg"), fileOf("b.png", { type: "image/png" }), fileOf("c.webp", { type: "image/webp" })])
     expect(await screen.findByText("Adding photo 2 of 3…")).toBeInTheDocument()
     release()
@@ -132,7 +136,7 @@ describe("adding photos", () => {
     const held = new Promise<undefined>((resolve) => (release = () => resolve(undefined)))
     renderPhotos((_method, path) => (path === STORAGE_URL ? held : undefined))
     await opened()
-    await userEvent.setup().upload(screen.getByLabelText(p.add), fileOf("a.jpg"))
+    await setupUser().upload(screen.getByLabelText(p.add), fileOf("a.jpg"))
     expect(await screen.findByText(p.adding)).toBeInTheDocument()
     release()
     expect(await screen.findByText(p.addedOne)).toBeInTheDocument()
@@ -145,7 +149,7 @@ describe("adding photos", () => {
       return ++confirms === 1 ? failure(400, "VALIDATION", "This photo is too small for the website (at least 1067 px wide).") : undefined
     })
     await opened()
-    await userEvent.setup().upload(screen.getByLabelText(p.add), [fileOf("small.jpg"), fileOf("good.jpg")])
+    await setupUser().upload(screen.getByLabelText(p.add), [fileOf("small.jpg"), fileOf("good.jpg")])
     expect(await screen.findByText("Added 1 of 2 photos.")).toBeInTheDocument()
     const failures = screen.getByRole("alert")
     expect(failures).toHaveTextContent(p.notAddedTitle)
@@ -155,7 +159,7 @@ describe("adding photos", () => {
   it("refuses a photo over 30 MB before any call", async () => {
     const fetch = renderPhotos()
     await opened()
-    await userEvent.setup().upload(screen.getByLabelText(p.add), fileOf("huge.jpg", { size: MAX_PHOTO_BYTES + 1 }))
+    await setupUser().upload(screen.getByLabelText(p.add), fileOf("huge.jpg", { size: MAX_PHOTO_BYTES + 1 }))
     expect(await screen.findByText("huge.jpg: This photo is larger than 30 MB.")).toBeInTheDocument()
     expect(callsOf(fetch).filter((call) => !call.startsWith("GET"))).toEqual([])
   })
@@ -163,7 +167,7 @@ describe("adding photos", () => {
   it("refuses another type with the server's words", async () => {
     renderPhotos()
     await opened()
-    const user = userEvent.setup({ applyAccept: false })
+    const user = setupUser({ applyAccept: false })
     await user.upload(screen.getByLabelText(p.add), fileOf("IMG_1.heic", { type: "image/heic" }))
     expect(await screen.findByText("IMG_1.heic: This file isn't a JPEG, PNG or WebP photo.")).toBeInTheDocument()
   })
@@ -171,7 +175,7 @@ describe("adding photos", () => {
   it("shows the 30-photo limit as the server words it", async () => {
     renderPhotos((_method, path) => (path.endsWith("/photos/upload") ? failure(409, "CONFLICT", "A piece can have at most 30 photos.") : undefined))
     await opened()
-    await userEvent.setup().upload(screen.getByLabelText(p.add), [fileOf("a.jpg"), fileOf("b.jpg")])
+    await setupUser().upload(screen.getByLabelText(p.add), [fileOf("a.jpg"), fileOf("b.jpg")])
     expect(await screen.findByText("a.jpg: A piece can have at most 30 photos.")).toBeInTheDocument()
     expect(screen.getByText("b.jpg: A piece can have at most 30 photos.")).toBeInTheDocument()
   })
@@ -190,7 +194,7 @@ describe("adding photos", () => {
     await opened()
     const gets = () => callsOf(fetch).filter((call) => call === "GET /admin/products/5").length
     const before = gets()
-    await userEvent.setup().upload(screen.getByLabelText(p.add), fileOf("a.jpg"))
+    await setupUser().upload(screen.getByLabelText(p.add), fileOf("a.jpg"))
     expect(await screen.findByText(p.addedOne)).toBeInTheDocument()
     expect(gets()).toBe(before + 1)
     expect(screen.queryByRole("alert")).toBeNull()
@@ -202,7 +206,7 @@ describe("ordering photos", () => {
   it("moves a photo earlier with the full id list, and keeps the focus on it", async () => {
     const fetch = renderPhotos()
     const region = await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(within(region).getByRole("button", { name: "Move photo 3 earlier" }))
     await waitFor(() => expect(bodiesOf(fetch, "PUT")).toEqual([{ imageIds: ids([1, 3, 2, 4, 5, 6, 7, 8, 9]) }]))
     expect(await screen.findByText("Photo 3 is now photo 2.")).toBeInTheDocument()
@@ -213,7 +217,7 @@ describe("ordering photos", () => {
   it("moves a photo later", async () => {
     const fetch = renderPhotos()
     const region = await opened()
-    await userEvent.setup().click(within(region).getByRole("button", { name: "Move photo 1 later" }))
+    await setupUser().click(within(region).getByRole("button", { name: "Move photo 1 later" }))
     await waitFor(() => expect(bodiesOf(fetch, "PUT")).toEqual([{ imageIds: ids([2, 1, 3, 4, 5, 6, 7, 8, 9]) }]))
     expect(await screen.findByText("Photo 1 is now photo 2.")).toBeInTheDocument()
   })
@@ -221,7 +225,7 @@ describe("ordering photos", () => {
   it("makes a photo the cover, and moves the focus on when its own button is now off", async () => {
     const fetch = renderPhotos()
     const region = await opened()
-    await userEvent.setup().click(within(region).getByRole("button", { name: "Make photo 4 the cover" }))
+    await setupUser().click(within(region).getByRole("button", { name: "Make photo 4 the cover" }))
     await waitFor(() => expect(bodiesOf(fetch, "PUT")).toEqual([{ imageIds: ids([4, 1, 2, 3, 5, 6, 7, 8, 9]) }]))
     expect(await screen.findByText("Photo 4 is now the cover.")).toBeInTheDocument()
     expect(within(region).getByRole("button", { name: "Move photo 1 later" })).toHaveFocus()
@@ -231,7 +235,7 @@ describe("ordering photos", () => {
     const fetch = renderPhotos()
     const region = await opened()
     within(region).getByRole("button", { name: "Move photo 2 later" }).focus()
-    await userEvent.setup().keyboard("{Enter}")
+    await setupUser().keyboard("{Enter}")
     await waitFor(() => expect(bodiesOf(fetch, "PUT")).toEqual([{ imageIds: ids([1, 3, 2, 4, 5, 6, 7, 8, 9]) }]))
   })
 
@@ -240,7 +244,7 @@ describe("ordering photos", () => {
     const held = new Promise<undefined>((resolve) => (release = () => resolve(undefined)))
     const fetch = renderPhotos((method) => (method === "PUT" ? held : undefined))
     const region = await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(within(region).getByRole("button", { name: "Move photo 3 earlier" }))
     await user.click(within(region).getByRole("button", { name: "Move photo 5 earlier" }))
     release()
@@ -253,7 +257,7 @@ describe("ordering photos", () => {
     const region = await opened()
     const gets = () => callsOf(fetch).filter((call) => call === "GET /admin/products/5").length
     const before = gets()
-    await userEvent.setup().click(within(region).getByRole("button", { name: "Move photo 2 earlier" }))
+    await setupUser().click(within(region).getByRole("button", { name: "Move photo 2 earlier" }))
     expect(await screen.findByText(p.changed)).toBeInTheDocument()
     expect(gets()).toBe(before + 1)
   })
@@ -261,7 +265,7 @@ describe("ordering photos", () => {
   it("keeps the order and says so when the move doesn't reach the API", async () => {
     renderPhotos((method) => (method === "PUT" ? new Response("Bad gateway", { status: 502 }) : undefined))
     const region = await opened()
-    await userEvent.setup().click(within(region).getByRole("button", { name: "Move photo 2 earlier" }))
+    await setupUser().click(within(region).getByRole("button", { name: "Move photo 2 earlier" }))
     expect(await screen.findByRole("alert")).toHaveTextContent(p.orderFailed)
     expect(altTexts(region)[1]).toBe("Photo 2 of 9, Hover")
   })
@@ -272,7 +276,7 @@ describe("deleting a photo", () => {
     const confirmSpy = vi.spyOn(window, "confirm")
     const fetch = renderPhotos()
     const region = await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(within(region).getByRole("button", { name: "Delete photo 2" }))
     const dialog = await screen.findByRole("alertdialog", { name: "Delete photo 2?" })
     expect(dialog).toHaveTextContent(p.confirmText)
@@ -294,7 +298,7 @@ describe("deleting a photo", () => {
   it("shows the server's message when the photo is already gone, with the latest photos", async () => {
     renderPhotos((method) => (method === "DELETE" ? failure(404, "NOT_FOUND", "Photo not found") : undefined))
     const region = await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(within(region).getByRole("button", { name: "Delete photo 2" }))
     await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: p.confirmDelete }))
     expect(await screen.findByRole("alert")).toHaveTextContent("Photo not found")
@@ -307,7 +311,7 @@ describe("leaving and the session", () => {
     const held = new Promise<undefined>((resolve) => (release = () => resolve(undefined)))
     renderPhotos((_method, path) => (path === STORAGE_URL ? held : undefined))
     await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.upload(screen.getByLabelText(p.add), [fileOf("a.jpg"), fileOf("b.jpg")])
     await screen.findByText("Adding photo 1 of 2…")
     await user.click(screen.getByRole("link", { name: `← ${f.back}` }))
@@ -339,7 +343,7 @@ describe("leaving and the session", () => {
       </AdminAuthProvider>,
     )
     await opened()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.upload(screen.getByLabelText(p.add), [fileOf("a.jpg"), fileOf("b.jpg"), fileOf("c.jpg")])
 
     await screen.findByRole("heading", { level: 1, name: STUDIO_COPY.signIn.title })

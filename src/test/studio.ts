@@ -1,6 +1,14 @@
+import userEvent from "@testing-library/user-event"
 import { AdminAuthError, type AdminAuthClient, type SignInResult } from "@/features/studio/auth/types"
 import type { AdminProduct, AdminProductImage } from "@/features/catalog/types"
 import { productOf } from "./catalog"
+
+// user-event waits a macrotask (its default `delay: 0`) between every key and pointer step. On the studio's big forms
+// each wait costs ~20 ms in jsdom and stretches when the machine is busy, which pushed the longest tests past the 5 s
+// timeout. No studio test needs those pauses; `delay: null` keeps the same events in the same order.
+export function setupUser(options: Parameters<typeof userEvent.setup>[0] = {}) {
+  return userEvent.setup({ delay: null, ...options })
+}
 
 // A piece as GET /admin/products/{id} answers it: the public fields plus status and updatedAt, and each photo with its
 // id (the piece's id × 100 + its place) and position.

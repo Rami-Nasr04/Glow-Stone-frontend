@@ -1,10 +1,9 @@
 import { screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { AdminAuthError } from "@/features/studio/auth/types"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { fakeAdminAuth } from "@/test/studio"
+import { fakeAdminAuth, setupUser } from "@/test/studio"
 import StudioNewPassword from "./StudioNewPassword"
 
 const t = STUDIO_COPY.newPassword
@@ -14,7 +13,7 @@ const probes = [
 ]
 
 async function choose(password: string, repeat = password) {
-  const user = userEvent.setup()
+  const user = setupUser()
   await user.type(screen.getByLabelText(t.password), password)
   await user.type(screen.getByLabelText(t.repeat), repeat)
   await user.click(screen.getByRole("button", { name: t.submit }))
@@ -29,7 +28,7 @@ async function afterTemporarySignIn() {
 describe("the studio's choose-your-password page", () => {
   it("lists the policy and ticks each rule as it is met", async () => {
     renderStudioAt(<StudioNewPassword />, "/studio/sign-in/new-password", { auth: await afterTemporarySignIn() })
-    await userEvent.setup().type(screen.getByLabelText(t.password), "limestone")
+    await setupUser().type(screen.getByLabelText(t.password), "limestone")
     expect(screen.getByText(STUDIO_COPY.rules.length).parentElement).toHaveTextContent("(not yet met)")
     expect(screen.getByText(STUDIO_COPY.rules.lowercase).parentElement).toHaveTextContent("(met)")
   })
@@ -40,8 +39,8 @@ describe("the studio's choose-your-password page", () => {
     await choose("short")
     expect(screen.getByLabelText(t.password)).toHaveAccessibleDescription(expect.stringContaining(t.weak))
     expect(screen.getByLabelText(t.password)).toHaveFocus()
-    await userEvent.setup().clear(screen.getByLabelText(t.password))
-    await userEvent.setup().clear(screen.getByLabelText(t.repeat))
+    await setupUser().clear(screen.getByLabelText(t.password))
+    await setupUser().clear(screen.getByLabelText(t.repeat))
     await choose("Limestone-2026", "Limestone-2025")
     expect(screen.getByLabelText(t.repeat)).toHaveAccessibleDescription(t.mismatch)
     expect(auth.completeNewPassword).not.toHaveBeenCalled()

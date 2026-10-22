@@ -1,11 +1,15 @@
 import { screen, waitFor, within } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
-import { adminProductOf, bodiesOf, fakeAdminAuth, stubAdminApi } from "@/test/studio"
+import { adminProductOf, bodiesOf, fakeAdminAuth, setupUser, stubAdminApi } from "@/test/studio"
 import StudioProductNew from "./StudioProductNew"
+
+// These tests drive the studio's full product editor (and, in some, the sign-in round trip). Profiled 2026-10-24: one
+// takes ~1.5 s of pure CPU (React's development rendering of the whole form on every key, and jsdom computing accessible
+// names for the role queries); with the suite's 8 workers on a busy PC that passed 5 s. So these files get 15 s.
+vi.setConfig({ testTimeout: 15_000 })
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -26,7 +30,7 @@ function renderNew() {
 }
 
 async function fillRequired() {
-  const user = userEvent.setup()
+  const user = setupUser()
   await user.type(field(labels.name), "Studio check")
   await user.type(field(labels.stoneType), "Limestone")
   await user.type(field(labels.color), "Cream")
@@ -52,7 +56,7 @@ describe("the studio's new-product page", () => {
 
   it("names every missing required field and focuses the first", async () => {
     const fetch = renderNew()
-    await userEvent.setup().click(screen.getByRole("button", { name: f.create }))
+    await setupUser().click(screen.getByRole("button", { name: f.create }))
     for (const label of [labels.name, labels.stoneType, labels.color, labels.price, labels.bottles, labels.editionSize, labels.remaining]) {
       expect(field(label)).toHaveAccessibleDescription(f.errors.required)
     }
@@ -91,7 +95,7 @@ describe("the studio's new-product page", () => {
 
   it("asks before leaving with something typed", async () => {
     renderNew()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.name), "Half done")
     expect(screen.getByText(f.unsaved)).toBeInTheDocument()
     await user.click(screen.getByRole("link", { name: `← ${f.back}` }))

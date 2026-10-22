@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import type { AdminProduct } from "@/features/catalog/types"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import { renderStudioAt } from "@/test/render-studio"
-import { adminProductOf, fakeAdminAuth, failure, ok, unauthorized } from "@/test/studio"
+import { adminProductOf, failure, fakeAdminAuth, ok, setupUser, unauthorized } from "@/test/studio"
 import StudioProducts from "./StudioProducts"
 
 const t = STUDIO_COPY.list
@@ -84,7 +84,7 @@ describe("the studio's products list", () => {
     await screen.findByRole("link", { name: "Nahr" })
     const star = within(rowOf("Nahr")).getByRole("button", { name: "Feature Nahr on the home page" })
     expect(star).toHaveAttribute("aria-pressed", "false")
-    await userEvent.setup().click(star)
+    await setupUser().click(star)
     const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH")
     expect(String(patch?.[0])).toBe("https://api.test/admin/products/2")
     expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ featured: true })
@@ -97,7 +97,7 @@ describe("the studio's products list", () => {
     stubApi({ patch: () => failure(500, "INTERNAL", "Something went wrong") })
     renderList()
     await screen.findByRole("link", { name: "Arz" })
-    await userEvent.setup().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
+    await setupUser().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.featureFailed, { position: "top-center" }))
     expect(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" })).toHaveAttribute("aria-pressed", "true")
   })
@@ -108,7 +108,7 @@ describe("the studio's products list", () => {
     stubApi({ patch: () => unauthorized() })
     renderStudioAt(<StudioProducts />, "/studio/products", { auth })
     await screen.findByRole("link", { name: "Arz" })
-    await userEvent.setup().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
+    await setupUser().click(within(rowOf("Arz")).getByRole("button", { name: "Stop featuring Arz on the home page" }))
     await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
     expect(toast.error).not.toHaveBeenCalled()
   })
@@ -122,7 +122,7 @@ describe("the studio's products list", () => {
     )
     renderList()
     await screen.findByRole("link", { name: "Nahr" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(within(rowOf("Nahr")).getByRole("button", { name: "Feature Nahr on the home page" }))
     await user.click(within(rowOf("Nahr")).getByRole("button", { name: "Stop featuring Nahr on the home page" }))
     expect(fetch.mock.calls.filter(([, init]) => init?.method === "PATCH")).toHaveLength(1)
@@ -154,7 +154,7 @@ describe("the studio's products list", () => {
     stubApi({ list: () => (calls++ === 0 ? failure(503, "BUSY", "System is busy") : ok(pieces)) })
     renderList()
     expect(await screen.findByRole("alert")).toHaveTextContent(t.loadFailed)
-    await userEvent.setup().click(screen.getByRole("button", { name: t.retry }))
+    await setupUser().click(screen.getByRole("button", { name: t.retry }))
     expect(await screen.findByRole("link", { name: "Arz" })).toBeInTheDocument()
   })
 })
@@ -202,7 +202,7 @@ describe("publishing the website", () => {
     const message = "Publishing couldn't start. Try again in a minute."
     stubApi({ publish: () => failure(502, "PUBLISH_FAILED", message) })
     renderList()
-    await userEvent.setup().click(publishButton())
+    await setupUser().click(publishButton())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message, { position: "top-center" }))
     expect(toast.success).not.toHaveBeenCalled()
     expect(publishButton()).toBeEnabled()
@@ -212,7 +212,7 @@ describe("publishing the website", () => {
   it("says so in its own words when the answer isn't the API's", async () => {
     stubApi({ publish: () => new Response("Bad gateway", { status: 502 }) })
     renderList()
-    await userEvent.setup().click(publishButton())
+    await setupUser().click(publishButton())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(t.publishFailed, { position: "top-center" }))
     expect(publishButton()).toBeEnabled()
   })
@@ -221,7 +221,7 @@ describe("publishing the website", () => {
     const auth = fakeAdminAuth({ signedInAs: "omar@example.com" })
     stubApi({ publish: () => unauthorized() })
     renderStudioAt(<StudioProducts />, "/studio/products", { auth })
-    await userEvent.setup().click(publishButton())
+    await setupUser().click(publishButton())
     await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.success).not.toHaveBeenCalled()
@@ -253,7 +253,7 @@ describe("publishing the website", () => {
   it("sends one publish for a double click", async () => {
     const fetch = stubApi()
     renderList()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.dblClick(publishButton())
     await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1))
     expect(publishCalls(fetch)).toHaveLength(1)

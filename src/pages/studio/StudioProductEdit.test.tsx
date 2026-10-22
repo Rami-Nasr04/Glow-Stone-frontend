@@ -7,8 +7,13 @@ import { readDraft } from "@/features/studio/drafts"
 import Landed from "@/test/Landed"
 import { landedOn, renderStudioAt } from "@/test/render-studio"
 import type { AdminProduct } from "@/features/catalog/types"
-import { adminProductOf, bodiesOf, callsOf, failure, fakeAdminAuth, ok, stubAdminApi, unauthorized } from "@/test/studio"
+import { adminProductOf, bodiesOf, callsOf, failure, fakeAdminAuth, ok, setupUser, stubAdminApi, unauthorized } from "@/test/studio"
 import StudioProductEdit from "./StudioProductEdit"
+
+// These tests drive the studio's full product editor (and, in some, the sign-in round trip). Profiled 2026-10-24: one
+// takes ~1.5 s of pure CPU (React's development rendering of the whole form on every key, and jsdom computing accessible
+// names for the role queries); with the suite's 8 workers on a busy PC that passed 5 s. So these files get 15 s.
+vi.setConfig({ testTimeout: 15_000 })
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -78,7 +83,7 @@ describe("the studio's edit page", () => {
     await screen.findByRole("heading", { name: "Arz" })
     expect(saveButton()).toBeDisabled()
     expect(saveButton()).toHaveTextContent(f.noChanges)
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.clear(field(labels.price))
     await user.type(field(labels.price), "420.00")
     await user.type(field(labels.name), "  ")
@@ -89,7 +94,7 @@ describe("the studio's edit page", () => {
   it("sends only what changed, then has nothing left to save", async () => {
     const { fetch } = renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.clear(field(labels.price))
     await user.type(field(labels.price), "450")
     expect(screen.getByText(f.unsaved)).toBeInTheDocument()
@@ -103,7 +108,7 @@ describe("the studio's edit page", () => {
   it("hides a piece by making it a draft, and features it with the switch", async () => {
     const { fetch } = renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(screen.getByRole("radio", { name: f.draft }))
     await user.click(screen.getByRole("switch", { name: f.featured }))
     await user.click(saveButton())
@@ -113,7 +118,7 @@ describe("the studio's edit page", () => {
   it("checks the values before sending, and focuses the first problem", async () => {
     const { fetch } = renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.clear(field(labels.remaining))
     await user.type(field(labels.remaining), "13")
     await user.clear(field(labels.price))
@@ -129,7 +134,7 @@ describe("the studio's edit page", () => {
   it("puts the API's message on the field it names", async () => {
     renderEdit(1, (method) => (method === "PATCH" ? failure(400, "VALIDATION", "remaining can't be more than editionSize") : undefined))
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.clear(field(labels.remaining))
     await user.type(field(labels.remaining), "4")
     await user.click(saveButton())
@@ -140,7 +145,7 @@ describe("the studio's edit page", () => {
   it("puts a name clash on the name", async () => {
     renderEdit(4, (method) => (method === "PATCH" ? failure(409, "CONFLICT", "A published piece already has that name") : undefined))
     await screen.findByRole("heading", { name: "Jbeil" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(screen.getByRole("radio", { name: f.published }))
     await user.click(saveButton())
     await waitFor(() => expect(field(labels.name)).toHaveAccessibleDescription("A published piece already has that name"))
@@ -149,7 +154,7 @@ describe("the studio's edit page", () => {
   it("keeps a message the API doesn't tie to a field for the whole form", async () => {
     renderEdit(1, (method) => (method === "PATCH" ? failure(400, "VALIDATION", "That value isn't allowed") : undefined))
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
     await user.click(saveButton())
     expect(await screen.findByRole("alert")).toHaveTextContent("That value isn't allowed")
@@ -158,7 +163,7 @@ describe("the studio's edit page", () => {
   it("says so when the save doesn't reach the API", async () => {
     renderEdit(1, (method) => (method === "PATCH" ? new Response("Bad gateway", { status: 502 }) : undefined))
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
     await user.click(saveButton())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(f.saveFailed, { position: "top-center" }))
@@ -174,7 +179,7 @@ describe("the studio's edit page", () => {
     let calls = 0
     renderEdit(1, () => (calls++ === 0 ? new Response("Bad gateway", { status: 502 }) : undefined))
     expect(await screen.findByRole("alert")).toHaveTextContent(f.loadFailed)
-    await userEvent.setup().click(screen.getByRole("button", { name: f.retry }))
+    await setupUser().click(screen.getByRole("button", { name: f.retry }))
     expect(await screen.findByRole("heading", { name: "Arz" })).toBeInTheDocument()
   })
 
@@ -193,7 +198,7 @@ describe("the studio's edit page", () => {
     renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
     expect(screen.getByText("Shown on the site as “Edition of 12 — 3 remaining”.")).toBeInTheDocument()
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.clear(field(labels.remaining))
     await user.type(field(labels.remaining), "0")
     expect(screen.getByText("Shown on the site as “Sold out”.")).toBeInTheDocument()
@@ -202,7 +207,7 @@ describe("the studio's edit page", () => {
   it("asks before leaving with unsaved changes, by a link or by signing out", async () => {
     renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
     await user.click(screen.getByRole("link", { name: `← ${f.back}` }))
     const dialog = await screen.findByRole("alertdialog", { name: STUDIO_COPY.leave.title })
@@ -216,7 +221,7 @@ describe("the studio's edit page", () => {
   it("leaves without asking once everything is saved", async () => {
     renderEdit()
     await screen.findByRole("heading", { name: "Arz" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
     await user.click(saveButton())
     await waitFor(() => expect(saveButton()).toHaveTextContent(f.noChanges))
@@ -238,7 +243,7 @@ describe("deleting a piece", () => {
   it("deletes a draft after asking, then goes back to the list without asking about unsaved changes", async () => {
     const { fetch } = renderEdit(4)
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
 
     await user.click(deleteButton() as HTMLElement)
@@ -261,7 +266,7 @@ describe("deleting a piece", () => {
   it("counts the photos the piece has now", async () => {
     renderEdit(4)
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.click(screen.getByRole("button", { name: "Delete photo 1" }))
     await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: STUDIO_COPY.photos.confirmDelete }))
     await waitFor(() => expect(screen.getAllByRole("button", { name: /^Delete photo \d+$/ })).toHaveLength(18))
@@ -276,7 +281,7 @@ describe("deleting a piece", () => {
     const jbeil = adminProductOf(4, { status: "draft" })
     renderEdit(4, undefined, [{ ...jbeil, images: jbeil.images.slice(0, count) }])
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await userEvent.setup().click(deleteButton() as HTMLElement)
+    await setupUser().click(deleteButton() as HTMLElement)
     expect(await screen.findByRole("alertdialog", { name: title })).toHaveAccessibleDescription(d.text)
   })
 
@@ -290,7 +295,7 @@ describe("deleting a piece", () => {
   it("goes by the saved status, not the unsaved choice", async () => {
     renderEdit(4)
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await userEvent.setup().click(screen.getByRole("radio", { name: f.published }))
+    await setupUser().click(screen.getByRole("radio", { name: f.published }))
     expect(deleteButton()).toBeInTheDocument()
     expect(screen.queryByText(d.publishedFirst)).toBeNull()
   })
@@ -307,7 +312,7 @@ describe("deleting a piece", () => {
       return published ? ok(adminProductOf(4, { status: "published", color: "Dark grey" })) : undefined
     })
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await confirmDelete(userEvent.setup())
+    await confirmDelete(setupUser())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message, { position: "top-center" }))
     expect(await screen.findByText(d.publishedFirst)).toBeInTheDocument()
     expect(deleteButton()).toBeNull()
@@ -324,7 +329,7 @@ describe("deleting a piece", () => {
       return gone ? failure(404, "NOT_FOUND", "Product not found") : undefined
     })
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await confirmDelete(userEvent.setup())
+    await confirmDelete(setupUser())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Product not found", { position: "top-center" }))
     expect(await screen.findByRole("heading", { level: 1, name: STUDIO_COPY.notFound.title })).toBeInTheDocument()
     expect(toast.success).not.toHaveBeenCalled()
@@ -333,7 +338,7 @@ describe("deleting a piece", () => {
   it("says nothing when the session has ended", async () => {
     const { auth } = renderEdit(4, (method) => (method === "DELETE" ? unauthorized() : undefined))
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await confirmDelete(userEvent.setup())
+    await confirmDelete(setupUser())
     await waitFor(() => expect(auth.clearSession).toHaveBeenCalled())
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.success).not.toHaveBeenCalled()
@@ -342,7 +347,7 @@ describe("deleting a piece", () => {
   it("says so when the delete doesn't reach the API, and keeps the piece", async () => {
     renderEdit(4, (method, path) => (method === "DELETE" && path === "/admin/products/4" ? new Response("Bad gateway", { status: 502 }) : undefined))
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    await confirmDelete(userEvent.setup())
+    await confirmDelete(setupUser())
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(d.failed, { position: "top-center" }))
     expect(screen.getByRole("heading", { level: 1, name: "Jbeil" })).toBeInTheDocument()
     expect(deleteButton()).toBeEnabled()
@@ -352,7 +357,7 @@ describe("deleting a piece", () => {
     let answer: (response: Response) => void = () => {}
     const { fetch } = renderEdit(4, (method) => (method === "PATCH" || method === "DELETE" ? new Promise<Response>((done) => (answer = done)) : undefined))
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.type(field(labels.color), " light")
     await user.click(saveButton())
     expect(deleteButton()).toBeDisabled()
@@ -368,7 +373,7 @@ describe("deleting a piece", () => {
   it("rests while photos are being added", async () => {
     renderEdit(4, (_method, path) => (path.endsWith("/photos/upload") ? new Promise<undefined>(() => {}) : undefined))
     await screen.findByRole("heading", { level: 1, name: "Jbeil" })
-    const user = userEvent.setup()
+    const user = setupUser()
     await user.upload(screen.getByLabelText(STUDIO_COPY.photos.add), new File(["photo"], "a.jpg", { type: "image/jpeg" }))
     await waitFor(() => expect(deleteButton()).toBeDisabled())
   })
