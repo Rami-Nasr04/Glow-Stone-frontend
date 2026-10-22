@@ -28,8 +28,7 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
 
   // Opens the drawer; past a limit (5 pieces in all, or the pieces remaining) it adds nothing and the drawer says why.
   const addToCart = () => {
-    addPiece(piece.id, quantity, piece.remaining)
-    setQuantity(1)
+    if (addPiece(piece.id, quantity, piece.remaining) === "added") setQuantity(1)
   }
 
   return (

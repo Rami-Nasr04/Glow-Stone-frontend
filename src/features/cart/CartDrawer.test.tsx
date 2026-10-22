@@ -130,6 +130,21 @@ describe("CartDrawer", () => {
     expect(within(drawer).getByRole("link", { name: "Contact Omar" })).toHaveAttribute("href", "/contact")
   })
 
+  it("lets + pass sold-out and missing lines: only what can be ordered counts toward the 5", async () => {
+    stubApi()
+    const { user, drawer } = await openWith([
+      [NAHR, 2],
+      [99, 1],
+      [BATROUN, 4],
+    ])
+    const line = (await screen.findByRole("heading", { name: "Batroun" })).closest("li")!
+    await user.click(within(line).getByRole("button", { name: "One more Batroun" }))
+    expect(within(line).getByRole("status")).toHaveTextContent("5")
+    await user.click(within(line).getByRole("button", { name: "One more Batroun" }))
+    expect(within(line).getByRole("status")).toHaveTextContent("5")
+    expect(within(drawer).getByText("For larger orders, please contact Omar.")).toBeInTheDocument()
+  })
+
   it("shows the lines without prices or a total when the API can't be reached, and tries again", async () => {
     const fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")))
     vi.stubGlobal("fetch", fetch)

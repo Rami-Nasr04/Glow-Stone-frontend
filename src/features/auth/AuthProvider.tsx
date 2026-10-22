@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { clearCart } from "@/features/cart/cart"
 import { AuthContext, type AuthStatus } from "./auth-context"
 import { authClient } from "./client"
 import type { AuthClient, AuthUser } from "./types"
@@ -43,8 +42,6 @@ export default function AuthProvider({ client = authClient, children }: AuthProv
 
   const signOut = useCallback(async () => {
     await client.signOut()
-    // A shared computer must not keep the last customer's cart.
-    clearCart()
     setUser(null)
     setStatus("signedOut")
   }, [client])

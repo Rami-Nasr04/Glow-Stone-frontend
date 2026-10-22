@@ -13,7 +13,7 @@ import type { ProductSummary } from "@/features/catalog/types"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
-import { type CartLine, closeCart, fitToStock, openCart, pieceCount, removeFromCart, setQuantity, useCart } from "./cart"
+import { type CartLine, closeCart, noteStock, openCart, pieceCount, removeFromCart, setQuantity, useCart } from "./cart"
 
 type Live =
   | { status: "loading" }
@@ -36,7 +36,7 @@ function useLivePieces(hasLines: boolean): [Live, () => void] {
       (list) => {
         const pieces = new Map(list.map((piece) => [piece.id, piece]))
         lastKnown = pieces
-        const lowered = fitToStock(new Map(list.map((piece) => [piece.id, piece.remaining])))
+        const lowered = noteStock(new Map(list.map((piece) => [piece.id, piece.remaining])))
         setLive({ status: "ready", pieces, lowered })
       },
       () => {

@@ -4,8 +4,8 @@ import {
   CART_KEY,
   clearCart,
   closeCart,
-  fitToStock,
   MAX_PIECES,
+  noteStock,
   openCart,
   pieceCount,
   removeFromCart,
@@ -83,7 +83,7 @@ describe("cart", () => {
     addToCart(3, 3, 9)
     addToCart(5, 1, 9)
     addToCart(2, 1, 9)
-    const capped = fitToStock(
+    const capped = noteStock(
       new Map([
         [3, 1],
         [5, 4],
@@ -96,6 +96,34 @@ describe("cart", () => {
       { productId: 5, quantity: 1 },
       { productId: 2, quantity: 1 },
     ])
+  })
+
+  it("counts only the lines that can still be ordered toward the 5", () => {
+    localStorage.setItem(
+      CART_KEY,
+      JSON.stringify([
+        { productId: 2, quantity: 3 },
+        { productId: 99, quantity: 1 },
+        { productId: 3, quantity: 1 },
+      ]),
+    )
+    resetCart()
+    // Nahr (2) is sold out and 99 isn't in the list any more: neither blocks a piece that can be bought.
+    noteStock(new Map([[3, 9], [5, 4], [2, 0]]))
+    expect(addToCart(5, 4, 4)).toBe("added")
+    expect(addToCart(3, 1, 9)).toBe("total")
+    expect(stored()).toEqual([
+      { productId: 2, quantity: 3 },
+      { productId: 99, quantity: 1 },
+      { productId: 3, quantity: 1 },
+      { productId: 5, quantity: 4 },
+    ])
+  })
+
+  it("counts every line while the stock isn't known yet (the server checks again)", () => {
+    localStorage.setItem(CART_KEY, JSON.stringify([{ productId: 2, quantity: 3 }]))
+    resetCart()
+    expect(addToCart(5, 3, 4)).toBe("total")
   })
 
   it("clearCart empties the cart and the stored copy", () => {

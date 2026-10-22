@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { createRoutesStub } from "react-router"
+import AuthProvider from "@/features/auth/AuthProvider"
+import { createMockAuth } from "@/features/auth/mock-auth"
 import LocaleLayout from "./locale-layout"
+
+// The root puts every page inside the customer AuthProvider.
+const inRoot = (tree: React.ReactElement) => <AuthProvider client={createMockAuth(null)}>{tree}</AuthProvider>
 
 function renderAt(path: string) {
   const Stub = createRoutesStub([
@@ -10,7 +15,7 @@ function renderAt(path: string) {
       children: [{ index: true, Component: () => <h1>Home page</h1> }],
     },
   ])
-  render(<Stub initialEntries={[path]} />)
+  render(inRoot(<Stub initialEntries={[path]} />))
 }
 
 describe("LocaleLayout", () => {
@@ -54,10 +59,10 @@ describe("LocaleLayout", () => {
         ],
       },
     ])
-    const { unmount } = render(<Stub initialEntries={["/about"]} />)
+    const { unmount } = render(inRoot(<Stub initialEntries={["/about"]} />))
     expect(screen.getByRole("main").className).toContain("pt-16")
     unmount()
-    render(<Stub initialEntries={["/"]} />)
+    render(inRoot(<Stub initialEntries={["/"]} />))
     expect(screen.getByRole("main").className).not.toContain("pt-16")
   })
 
@@ -69,7 +74,7 @@ describe("LocaleLayout", () => {
         children: [{ path: "sign-in", Component: () => <h1>Sign in</h1>, handle: { bare: true } }],
       },
     ])
-    render(<Stub initialEntries={["/sign-in"]} />)
+    render(inRoot(<Stub initialEntries={["/sign-in"]} />))
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument()
     expect(screen.queryByRole("banner")).not.toBeInTheDocument()
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument()
@@ -84,7 +89,7 @@ describe("LocaleLayout", () => {
         children: [{ path: "sign-in", Component: () => <h1>Sign in</h1>, handle: { bare: true } }],
       },
     ])
-    render(<Stub initialEntries={["/ar/sign-in"]} />)
+    render(inRoot(<Stub initialEntries={["/ar/sign-in"]} />))
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("This stone hasn't been carved yet.")
     expect(screen.getByRole("banner")).toBeInTheDocument()
   })

@@ -1,10 +1,11 @@
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { Navigate, useParams } from "react-router"
 import BuyBox from "@/components/product/BuyBox"
 import Gallery from "@/components/product/Gallery"
 import ProductTabs from "@/components/product/ProductTabs"
 import { relatedPieces } from "@/components/product/related"
 import StickyAddBar from "@/components/product/StickyAddBar"
+import { noteStock } from "@/features/cart/cart"
 import { useLiveStock, withLiveStock } from "@/features/catalog/live-stock"
 import PieceCard from "@/features/catalog/PieceCard"
 import { productPath, readableName } from "@/features/catalog/product-path"
@@ -26,6 +27,10 @@ export default function Product({ piece: built, products }: ProductProps) {
   const { m, to } = useLocale()
   const addButton = useRef<HTMLButtonElement>(null)
   const live = useLiveStock()
+  // The cart learns the stock too: sold-out lines in it then stop counting toward its limit.
+  useEffect(() => {
+    if (live) noteStock(new Map([...live].map(([id, { remaining }]) => [id, remaining])))
+  }, [live])
   if (!built) return <NotFound />
   // Found by id only: a missing or outdated name in the address is corrected in place, never a 404.
   if (name !== readableName(built.name)) return <Navigate replace to={to(productPath(built))} />

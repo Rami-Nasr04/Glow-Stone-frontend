@@ -27,6 +27,8 @@ const EMPTY: CartState = { lines: [], open: false, notice: null }
 
 let state: CartState | null = null
 const listeners = new Set<() => void>()
+// The stock the shop last read (GET /products), in memory only: which lines can still be ordered. Null until then.
+let stock: ReadonlyMap<number, number> | null = null
 
 const isCount = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 1
 
@@ -96,6 +98,10 @@ export function pieceCount(lines: readonly CartLine[]): number {
   return lines.reduce((sum, line) => sum + line.quantity, 0)
 }
 
+// Sold-out lines and pieces gone from the list can't be bought, so they don't count toward MAX_PIECES. Until the
+// stock is known every line counts; the server checks again at checkout.
+const orderable = (line: CartLine) => stock === null || (stock.get(line.productId) ?? 0) > 0
+
 const quantityOf = (lines: readonly CartLine[], productId: number) => lines.find((l) => l.productId === productId)?.quantity ?? 0
 
 // The one rule for every change: never more of a piece than remain, never more than MAX_PIECES in all.
@@ -105,7 +111,8 @@ function change(productId: number, quantity: number, remaining: number): CartCha
     update({ notice: { kind: "stock", remaining } })
     return "stock"
   }
-  if (pieceCount(lines) - quantityOf(lines, productId) + quantity > MAX_PIECES) {
+  const others = lines.filter((line) => line.productId !== productId && orderable(line))
+  if (pieceCount(others) + quantity > MAX_PIECES) {
     update({ notice: { kind: "total" } })
     return "total"
   }
@@ -132,10 +139,12 @@ export function removeFromCart(productId: number) {
 }
 
 /**
- * Lowers every line to the stock the API reports (pieces sold since they were added) and returns the ids it lowered.
+ * Takes the stock from a fresh GET /products (every published piece: an id missing from it can't be ordered),
+ * lowers every line to what remains (pieces sold since they were added) and returns the ids it lowered.
  * Sold-out (0) and missing pieces keep their lines, so the drawer can say what happened.
  */
-export function fitToStock(remaining: ReadonlyMap<number, number>): number[] {
+export function noteStock(remaining: ReadonlyMap<number, number>): number[] {
+  stock = remaining
   const lowered: number[] = []
   const next = current().lines.map((line) => {
     const left = remaining.get(line.productId)
@@ -163,4 +172,5 @@ export function closeCart() {
 /** Forgets the cart in memory so the next read comes from storage again (tests, and a fresh page). */
 export function resetCart() {
   state = null
+  stock = null
 }
