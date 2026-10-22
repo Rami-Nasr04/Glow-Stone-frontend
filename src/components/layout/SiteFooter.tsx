@@ -1,6 +1,6 @@
-import { MoveRight } from "lucide-react"
 import { Link } from "react-router"
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, instagramProfile, WHATSAPP_NUMBER, whatsappLink } from "@/config/site"
+import NewsSignup from "@/features/news/NewsSignup"
 import { useLocale } from "@/i18n/useLocale"
 
 const heading = "mb-1.5 text-label uppercase tracking-label text-dark-muted-foreground"
@@ -39,27 +39,10 @@ export default function SiteFooter() {
             <img src="/brand/glowstone-wordmark-on-dark.svg" alt="" width={340} height={45} className="h-auto w-full" />
           </Link>
 
-          {/* New-editions signup: wired to POST /subscribers in phase B7. */}
-          <form className="flex w-full max-w-105 flex-col gap-3.5" onSubmit={(e) => e.preventDefault()}>
+          <div className="flex w-full max-w-105 flex-col gap-3.5">
             <p className={heading}>{m.footer.newEditions}</p>
-            <div className="flex items-center gap-5 border-b border-dark-border transition-[border-color,box-shadow] duration-500 focus-within:border-dark-section-foreground focus-within:shadow-[0_1px_0_var(--dark-section-foreground)]">
-              <label htmlFor="footer-email" className="sr-only">
-                {m.footer.emailPlaceholder}
-              </label>
-              <input
-                id="footer-email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder={m.footer.emailPlaceholder}
-                className="min-h-11 min-w-0 flex-1 bg-transparent py-2.5 text-body text-dark-section-foreground placeholder:text-dark-muted-foreground focus:outline-none"
-              />
-              <button type="submit" className="flex min-h-11 items-center gap-3.5 text-label uppercase tracking-label">
-                {m.footer.subscribe}
-                <MoveRight className="size-4.5 rtl:-scale-x-100" strokeWidth={1.1} aria-hidden="true" />
-              </button>
-            </div>
-          </form>
+            <NewsSignup id="footer-news" tone="dark" />
+          </div>
         </div>
 
         <div className="grid gap-10 border-t border-dark-border pt-12 sm:grid-cols-3">

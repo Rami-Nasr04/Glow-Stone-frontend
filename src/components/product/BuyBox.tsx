@@ -3,9 +3,11 @@ import { useState } from "react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 import { ActionLink, actionVariants } from "@/components/ui/action-link"
+import { Eyebrow } from "@/components/ui/rule"
 import EditionLine from "@/features/catalog/EditionLine"
 import { noBreak, stoneLabel } from "@/features/catalog/format"
 import type { Product } from "@/features/catalog/types"
+import NewsSignup from "@/features/news/NewsSignup"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
@@ -58,11 +60,17 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
       </div>
 
       {piece.soldOut ? (
-        <div className="mt-6 flex flex-col gap-10">
+        <div className="mt-6 flex flex-col gap-5">
           <p className={cn(caps, "flex h-15 items-center justify-center border border-primary/40")}>{m.product.soldOut}</p>
+          {/* The prototype's sold-out sign-up (POST /subscribers, rejoin). */}
+          <div className="mt-5 flex flex-col gap-4">
+            <Eyebrow>{m.footer.newEditions}</Eyebrow>
+            <p className="font-display text-2xl leading-snug font-light text-pretty">{m.product.soldOutNews}</p>
+            <NewsSignup id="sold-out-news" tone="light" />
+          </div>
           {/* One wording for every piece: Omar can carve something similar on request. */}
-          <div className="flex flex-col gap-5">
-            <p className="font-display text-2xl leading-snug font-light text-pretty">{m.product.soldOutSimilar}</p>
+          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-7">
+            <p className="text-small text-pretty text-muted-foreground">{m.product.soldOutSimilar}</p>
             <ActionLink to={to("/contact")} className="self-start">
               {m.product.contactOmar}
             </ActionLink>

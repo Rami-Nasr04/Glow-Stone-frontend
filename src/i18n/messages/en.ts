@@ -31,6 +31,17 @@ export const en = {
     delivery: "Delivery & Returns",
     madeInLebanon: "Made in Lebanon.",
   },
+  // The new-editions sign-up: the footer field and "notify me" on a sold-out piece.
+  news: {
+    email: "Email",
+    placeholder: "you@example.com",
+    notifyMe: "Notify me",
+    sending: "Sending…",
+    thanks: "Thank you. You'll hear about new editions.",
+    invalidEmail: "Please enter a valid email.",
+    tooMany: "Please try again in a minute.",
+    failed: "Something went wrong. Please try again.",
+  },
   edition: {
     remaining: "Edition of {edition} — {remaining} remaining",
     remainingCount: "{remaining} remaining",
@@ -118,7 +129,8 @@ export const en = {
     orderingSoon: "Online ordering opens soon. Write to Omar to reserve this piece.",
     deliveryNote: "Free delivery across Lebanon · Cash on delivery",
     soldOut: "Sold out",
-    soldOutSimilar: "This edition has found its homes. For a similar piece, write to Omar.",
+    soldOutNews: "This edition has found its homes. Be the first to know when a new edition is released.",
+    soldOutSimilar: "For a similar piece, write to Omar.",
     contactOmar: "Contact Omar",
     loadFailed: "This piece couldn't be loaded.",
     loadFailedLead: "Please check your connection and try again in a moment.",

@@ -47,14 +47,34 @@ describe("BuyBox", () => {
     expect(toast.success).toHaveBeenCalledWith("Online ordering opens soon. Write to Omar to reserve this piece.")
   })
 
-  it("invites people to ask Omar for a similar piece when it is sold out", () => {
+  it("replaces the button with Sold out and the new-editions sign-up when it is sold out", () => {
     renderAt(<BuyBox piece={piece(NAHR)} />)
     expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument()
     expect(screen.queryByText(/0 remaining/)).not.toBeInTheDocument()
     expect(screen.getByText("Edition of 15 — sold out")).toBeInTheDocument()
     expect(screen.getAllByText("Sold out")).toHaveLength(1)
-    expect(screen.getByText("This edition has found its homes. For a similar piece, write to Omar.")).toBeInTheDocument()
+    expect(screen.getByText("New editions")).toBeInTheDocument()
+    expect(screen.getByText("This edition has found its homes. Be the first to know when a new edition is released.")).toBeInTheDocument()
+    expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email")
+    expect(screen.getByRole("button", { name: "Notify me" })).toBeInTheDocument()
+    // Omar can still carve something similar on request.
+    expect(screen.getByText("For a similar piece, write to Omar.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Contact Omar" })).toHaveAttribute("href", "/contact")
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+  })
+
+  it("notify me asks to rejoin the news list", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal("fetch", fetch)
+    const user = userEvent.setup()
+    renderAt(<BuyBox piece={piece(NAHR)} />)
+    await user.type(screen.getByLabelText("Email"), "sara@example.com")
+    await user.click(screen.getByRole("button", { name: "Notify me" }))
+    expect(await screen.findByText("Thank you. You'll hear about new editions.")).toBeInTheDocument()
+    expect(JSON.parse(String((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body))).toEqual({ email: "sara@example.com", rejoin: true, website: "" })
+  })
+
+  it("has no sign-up while the piece is available", () => {
+    renderAt(<BuyBox piece={piece(QADISHA)} />)
+    expect(screen.queryByRole("button", { name: "Notify me" })).not.toBeInTheDocument()
   })
 })

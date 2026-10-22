@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { createRoutesStub } from "react-router"
 import SiteFooter from "./SiteFooter"
 
@@ -26,7 +27,18 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("link", { name: "Delivery & Returns" })).toHaveAttribute("href", "/legal/delivery")
     expect(screen.getByLabelText("Your email, for new editions")).toHaveAttribute("type", "email")
     // Visible focus on charcoal: the line turns Frost Stone (wine is too dark there).
-    expect(screen.getByLabelText("Your email, for new editions").parentElement?.className).toContain("focus-within:border-dark-section-foreground")
+    expect(screen.getByLabelText("Your email, for new editions").closest(".border-b")?.className).toContain("focus-within:border-dark-section-foreground")
+  })
+
+  it("adds the email to the news list and thanks the visitor", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal("fetch", fetch)
+    const user = userEvent.setup()
+    renderFooter()
+    await user.type(screen.getByLabelText("Your email, for new editions"), "sara@example.com")
+    await user.click(screen.getByRole("button", { name: "Subscribe" }))
+    expect(await screen.findByText("Thank you. You'll hear about new editions.")).toBeInTheDocument()
+    expect(JSON.parse(String((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body))).toEqual({ email: "sara@example.com", rejoin: true, website: "" })
   })
 
   it("draws the focus ring of its links and button in Frost Stone", () => {
