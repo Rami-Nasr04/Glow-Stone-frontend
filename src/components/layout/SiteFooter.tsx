@@ -1,6 +1,6 @@
 import { MoveRight } from "lucide-react"
 import { Link } from "react-router"
-import { CONTACT_EMAIL, INSTAGRAM_URL, WHATSAPP_URL } from "@/config/site"
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE, instagramProfile, WHATSAPP_NUMBER, whatsappLink } from "@/config/site"
 import { useLocale } from "@/i18n/useLocale"
 
 const heading = "mb-1.5 text-label uppercase tracking-label text-dark-muted-foreground"
@@ -72,20 +72,16 @@ export default function SiteFooter() {
           <div className="flex flex-col">
             <p className={heading}>{m.footer.writeToUs}</p>
             <a href={`mailto:${CONTACT_EMAIL}`} className={plainLink}>{CONTACT_EMAIL}</a>
-            {(INSTAGRAM_URL || WHATSAPP_URL) && (
-              <div className="mt-2 flex gap-3">
-                {INSTAGRAM_URL && (
-                  <a href={INSTAGRAM_URL} aria-label="Instagram" className={socialLink}>
-                    <InstagramIcon />
-                  </a>
-                )}
-                {WHATSAPP_URL && (
-                  <a href={WHATSAPP_URL} aria-label="WhatsApp" className={socialLink}>
-                    <WhatsAppIcon />
-                  </a>
-                )}
-              </div>
-            )}
+            <div className="mt-2 flex gap-3">
+              {INSTAGRAM_HANDLE && (
+                <a href={instagramProfile(INSTAGRAM_HANDLE)} aria-label="Instagram" className={socialLink}>
+                  <InstagramIcon />
+                </a>
+              )}
+              <a href={whatsappLink(WHATSAPP_NUMBER)} aria-label="WhatsApp" className={socialLink}>
+                <WhatsAppIcon />
+              </a>
+            </div>
           </div>
           <div className="flex flex-col">
             <p className={heading}>{m.footer.information}</p>

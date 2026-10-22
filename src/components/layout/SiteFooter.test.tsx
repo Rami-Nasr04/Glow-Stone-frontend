@@ -2,6 +2,18 @@ import { render, screen } from "@testing-library/react"
 import { createRoutesStub } from "react-router"
 import SiteFooter from "./SiteFooter"
 
+const site = vi.hoisted(() => ({ instagram: null as string | null }))
+vi.mock("@/config/site", async (original) => ({
+  ...(await original<typeof import("@/config/site")>()),
+  get INSTAGRAM_HANDLE() {
+    return site.instagram
+  },
+}))
+
+afterEach(() => {
+  site.instagram = null
+})
+
 function renderFooter() {
   const Stub = createRoutesStub([{ path: "/:lang?/*", Component: () => <SiteFooter /> }])
   render(<Stub initialEntries={["/"]} />)
@@ -28,9 +40,15 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("link", { name: "glowstone216@gmail.com" })).toHaveAttribute("href", "mailto:glowstone216@gmail.com")
   })
 
-  it("hides social links until their addresses are set", () => {
+  it("links Omar's WhatsApp, and hides Instagram until its handle is set", () => {
     renderFooter()
+    expect(screen.getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", "https://wa.me/96171284863")
     expect(screen.queryByRole("link", { name: "Instagram" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "WhatsApp" })).not.toBeInTheDocument()
+  })
+
+  it("links the Instagram profile once the handle is set", () => {
+    site.instagram = "glowstone.test"
+    renderFooter()
+    expect(screen.getByRole("link", { name: "Instagram" })).toHaveAttribute("href", "https://instagram.com/glowstone.test")
   })
 })

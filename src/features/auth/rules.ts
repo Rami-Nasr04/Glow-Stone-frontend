@@ -28,3 +28,8 @@ export function displayPhone(e164: string): string {
   const head = digits.length === 8 ? 2 : 1
   return `${digits.slice(0, head)} ${digits.slice(head, head + 3)} ${digits.slice(head + 3)}`
 }
+
+/** "+961 71 234 567", for text a person reads. */
+export function internationalPhone(e164: string): string {
+  return `${COUNTRY} ${displayPhone(e164)}`
+}

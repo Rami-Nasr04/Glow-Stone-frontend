@@ -2,7 +2,7 @@ import { MoveRight } from "lucide-react"
 import ContactForm from "@/components/contact/ContactForm"
 import { actionVariants } from "@/components/ui/action-link"
 import { Rule } from "@/components/ui/rule"
-import { CONTACT_EMAIL, INSTAGRAM_URL, WHATSAPP_URL } from "@/config/site"
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE, instagramProfile, WHATSAPP_NUMBER, whatsappLink } from "@/config/site"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
@@ -11,7 +11,7 @@ const arrow = <MoveRight aria-hidden="true" strokeWidth={1.1} className="size-4.
 
 export default function Contact() {
   const { m } = useLocale()
-  const whatsapp = WHATSAPP_URL
+  const whatsapp = whatsappLink(WHATSAPP_NUMBER)
 
   return (
     <section className="px-gutter pt-[clamp(4.25rem,11vw,9.75rem)] pb-[clamp(7.5rem,13vw,12rem)]">
@@ -22,35 +22,31 @@ export default function Contact() {
           <p className="text-pretty text-muted-foreground">{m.contact.intro}</p>
 
           {/* Phones: WhatsApp, the quickest channel, comes before the form. */}
-          {whatsapp && (
-            <div className="mt-2 flex flex-col gap-4 border-y border-border py-7 md:hidden">
-              <p className={label}>{m.contact.whatsapp}</p>
-              <p className="text-small text-muted-foreground">{m.contact.whatsappLead}</p>
-              <a href={whatsapp} className={cn(actionVariants({ variant: "solid" }), "w-full")}>
-                {m.contact.chatOnWhatsApp}
-                {arrow}
-              </a>
-            </div>
-          )}
+          <div className="mt-2 flex flex-col gap-4 border-y border-border py-7 md:hidden">
+            <p className={label}>{m.contact.whatsapp}</p>
+            <p className="text-small text-muted-foreground">{m.contact.whatsappLead}</p>
+            <a href={whatsapp} className={cn(actionVariants({ variant: "solid" }), "w-full")}>
+              {m.contact.chatOnWhatsApp}
+              {arrow}
+            </a>
+          </div>
 
           <ContactForm />
         </div>
 
         <aside className="flex max-w-100 flex-[1_1_18.75rem] flex-col md:pt-[clamp(0rem,8vw,9.5rem)]">
-          {whatsapp && (
-            <div className="hidden flex-col gap-4 border-b border-border pb-9 md:flex">
-              <p className={label}>{m.contact.whatsapp}</p>
-              <p className="text-small text-muted-foreground">{m.contact.whatsappLead}</p>
-              <a href={whatsapp} className={cn(actionVariants({ variant: "outline" }), "mt-2 self-start")}>
-                {m.contact.chatOnWhatsApp}
-                {arrow}
-              </a>
-            </div>
-          )}
-          {INSTAGRAM_URL && (
+          <div className="hidden flex-col gap-4 border-b border-border pb-9 md:flex">
+            <p className={label}>{m.contact.whatsapp}</p>
+            <p className="text-small text-muted-foreground">{m.contact.whatsappLead}</p>
+            <a href={whatsapp} className={cn(actionVariants({ variant: "outline" }), "mt-2 self-start")}>
+              {m.contact.chatOnWhatsApp}
+              {arrow}
+            </a>
+          </div>
+          {INSTAGRAM_HANDLE && (
             <div className="flex flex-col gap-2 border-b border-border py-9">
               <p className={label}>{m.contact.instagram}</p>
-              <a href={INSTAGRAM_URL} className="flex min-h-11 items-center font-display text-lead transition-colors duration-500 hover:text-accent">
+              <a href={instagramProfile(INSTAGRAM_HANDLE)} className="flex min-h-11 items-center font-display text-lead transition-colors duration-500 hover:text-accent">
                 {m.contact.instagramLink}
               </a>
             </div>
