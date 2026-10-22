@@ -1,11 +1,9 @@
-import { screen } from "@testing-library/react"
+import { renderHook, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { toast } from "sonner"
+import { CART_KEY, resetCart, useCart } from "@/features/cart/cart"
 import { productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import BuyBox from "./BuyBox"
-
-vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
 
 const NAHR = 2
 const QADISHA = 5
@@ -40,11 +38,25 @@ describe("BuyBox", () => {
     expect(more).toBeDisabled()
   })
 
-  it("says honestly that ordering isn't open yet, without claiming the piece was added", async () => {
+  it("adds the chosen quantity to the cart and opens the drawer", async () => {
+    const user = userEvent.setup()
+    renderAt(<BuyBox piece={piece(QADISHA)} />)
+    await user.click(screen.getByRole("button", { name: "One more" }))
+    await user.click(screen.getByRole("button", { name: "Add to cart" }))
+    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: QADISHA, quantity: 2 }])
+    expect(renderHook(() => useCart()).result.current.open).toBe(true)
+    // Back to one, ready for the next add.
+    expect(screen.getAllByRole("status")[0]).toHaveTextContent("1")
+  })
+
+  it("adds nothing past 5 pieces in all (the drawer says why)", async () => {
+    localStorage.setItem(CART_KEY, JSON.stringify([{ productId: 3, quantity: 5 }]))
+    resetCart()
     const user = userEvent.setup()
     renderAt(<BuyBox piece={piece(QADISHA)} />)
     await user.click(screen.getByRole("button", { name: "Add to cart" }))
-    expect(toast.success).toHaveBeenCalledWith("Online ordering opens soon. Write to Omar to reserve this piece.")
+    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: 3, quantity: 5 }])
+    expect(renderHook(() => useCart()).result.current.notice).toEqual({ kind: "total" })
   })
 
   it("replaces the button with Sold out and the new-editions sign-up when it is sold out", () => {

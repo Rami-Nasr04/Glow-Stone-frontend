@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { createRoutesStub, useLocation } from "react-router"
+import { CART_KEY, resetCart } from "@/features/cart/cart"
 import type { Product as ProductData } from "@/features/catalog/types"
-import { PRODUCTS, productOf } from "@/test/catalog"
+import { PRODUCTS, productOf, stubApi } from "@/test/catalog"
 import Product from "./Product"
 
 function renderAt(path: string, piece: ProductData | null = productOf(5)) {
@@ -60,6 +62,20 @@ describe("Product", () => {
     expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument()
     expect(container.querySelector("[data-sticky-bar]")).toBeNull()
     vi.unstubAllEnvs()
+  })
+
+  it("tells the cart the live stock, so a sold-out line in it doesn't block this piece", async () => {
+    localStorage.setItem(CART_KEY, JSON.stringify([{ productId: 2, quantity: 4 }]))
+    resetCart()
+    stubApi()
+    const user = userEvent.setup()
+    renderAt("/collection/5/qadisha")
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    await user.click(screen.getByRole("button", { name: "One more" }))
+    await waitFor(async () => {
+      await user.click(screen.getAllByRole("button", { name: "Add to cart" })[0])
+      expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toContainEqual({ productId: 5, quantity: 2 })
+    })
   })
 
   it("shows the missing page for an unknown or unpublished piece", () => {

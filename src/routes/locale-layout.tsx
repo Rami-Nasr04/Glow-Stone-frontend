@@ -1,6 +1,7 @@
 import { Outlet, useLocation, useMatches, useParams } from "react-router"
 import SiteFooter from "@/components/layout/SiteFooter"
 import SiteHeader from "@/components/layout/SiteHeader"
+import { useClearCartOnSignOut } from "@/features/cart/useClearCartOnSignOut"
 import { knownPrefix } from "@/i18n/paths"
 import { useLocale } from "@/i18n/useLocale"
 import type { RouteHandle } from "@/lib/route-handle"
@@ -12,6 +13,7 @@ export default function LocaleLayout() {
   const { pathname } = useLocation()
   const { m, to } = useLocale()
   const matches = useMatches()
+  useClearCartOnSignOut()
   // ":lang?" matches any first segment; anything that is not a published locale is a missing page (inside the
   // site frame). Arabic and French stay unpublished until the I18N phase.
   const unknownPrefix = !knownPrefix(lang)

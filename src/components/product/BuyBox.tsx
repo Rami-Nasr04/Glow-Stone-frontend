@@ -1,9 +1,9 @@
 import { MoveRight } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router"
-import { toast } from "sonner"
 import { ActionLink, actionVariants } from "@/components/ui/action-link"
 import { Eyebrow } from "@/components/ui/rule"
+import { addToCart as addPiece } from "@/features/cart/cart"
 import EditionLine from "@/features/catalog/EditionLine"
 import { noBreak, stoneLabel } from "@/features/catalog/format"
 import type { Product } from "@/features/catalog/types"
@@ -28,8 +28,10 @@ export default function BuyBox({ piece, addButtonRef, className }: BuyBoxProps) 
   const [quantity, setQuantity] = useState(1)
   const name = noBreak(piece.name)
 
-  // The cart arrives in F4; until then the button says plainly that ordering isn't open (nothing is stored).
-  const addToCart = () => toast.success(m.product.orderingSoon)
+  // Opens the drawer; past a limit (5 pieces in all, or the pieces remaining) it adds nothing and the drawer says why.
+  const addToCart = () => {
+    if (addPiece(piece.id, quantity, piece.remaining) === "added") setQuantity(1)
+  }
 
   return (
     <div className={cn("flex max-w-130 flex-col", className)}>

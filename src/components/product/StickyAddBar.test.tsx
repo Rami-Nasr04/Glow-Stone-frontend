@@ -1,4 +1,5 @@
-import { fireEvent, screen } from "@testing-library/react"
+import { fireEvent, renderHook, screen } from "@testing-library/react"
+import { CART_KEY, useCart } from "@/features/cart/cart"
 import { productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import StickyAddBar from "./StickyAddBar"
@@ -33,5 +34,14 @@ describe("StickyAddBar", () => {
     expect(screen.getByRole("button", { name: "Add to cart" })).toBeInTheDocument()
     scrollButtonTo(button, 300)
     expect(bar).toHaveAttribute("aria-hidden", "true")
+  })
+
+  it("adds one piece to the cart and opens the drawer", () => {
+    const { button } = setup()
+    scrollButtonTo(button, -1100)
+    fireEvent.click(screen.getByRole("button", { name: "Add to cart" }))
+    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: 3, quantity: 1 }])
+    const { result } = renderHook(() => useCart())
+    expect(result.current.open).toBe(true)
   })
 })

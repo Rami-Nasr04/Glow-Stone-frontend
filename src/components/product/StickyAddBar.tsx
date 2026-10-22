@@ -1,7 +1,7 @@
 import { MoveRight } from "lucide-react"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 import Picture from "@/components/media/Picture"
+import { addToCart } from "@/features/cart/cart"
 import { noBreak } from "@/features/catalog/format"
 import type { Product } from "@/features/catalog/types"
 import { formatPrice } from "@/i18n/format"
@@ -58,7 +58,7 @@ export default function StickyAddBar({ piece, target }: StickyAddBarProps) {
         </div>
         <button
           type="button"
-          onClick={() => toast.success(m.product.orderingSoon)}
+          onClick={() => addToCart(piece.id, 1, piece.remaining)}
           className="flex min-h-12 shrink-0 items-center gap-3.5 bg-background px-6 text-label uppercase tracking-label text-foreground transition-colors duration-500 hover:bg-on-photo"
         >
           {m.product.addToCart}
