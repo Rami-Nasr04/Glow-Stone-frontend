@@ -34,7 +34,8 @@ describe("NewsSignup", () => {
     answer(json(204))
     const thanks = await screen.findByText("Thank you. You'll hear about new editions.")
     expect(thanks.closest("[role=status]")).not.toBeNull()
-    expect(thanks).toHaveFocus()
+    // Focus moves in an effect after the thanks is drawn.
+    await waitFor(() => expect(thanks).toHaveFocus())
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
   })
 
