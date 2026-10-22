@@ -18,7 +18,7 @@ describe("SiteHeader", () => {
 
   it("names icon-only links for screen readers", () => {
     renderAt("/")
-    expect(screen.getByRole("link", { name: "Cart" })).toHaveAttribute("href", "/cart")
+    expect(screen.getByRole("button", { name: "Cart, empty" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account")
     expect(screen.getByRole("link", { name: "Glowstone home" })).toHaveAttribute("href", "/")
   })
@@ -44,6 +44,16 @@ describe("SiteHeader", () => {
     expect(within(dialog).getByRole("link", { name: "glowstone216@gmail.com" })).toHaveAttribute("href", "mailto:glowstone216@gmail.com")
     await user.click(within(dialog).getByRole("button", { name: "Close" }))
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("opens the cart from the menu, closing the menu", async () => {
+    const user = userEvent.setup()
+    renderAt("/")
+    await user.click(screen.getByRole("button", { name: "Menu" }))
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cart, empty" }))
+    expect(screen.getByRole("dialog", { name: "Your selection" })).toBeInTheDocument()
+    expect(screen.queryByRole("dialog", { name: "Menu" })).not.toBeInTheDocument()
+    expect(screen.getByRole("dialog", { name: "Your selection" })).toContainElement(document.activeElement as HTMLElement)
   })
 
   it("closes the menu with Escape", async () => {

@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Link, NavLink } from "react-router"
 import { CONTACT_EMAIL } from "@/config/site"
 import { ACCOUNTS_OPEN } from "@/features/auth/client"
+import { openCart, pieceCount, useCart } from "@/features/cart/cart"
+import CartDrawer from "@/features/cart/CartDrawer"
+import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
@@ -42,6 +45,13 @@ export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_O
 
   const solid = !overHero || scrolled
   const closeMenu = () => setMenuOpen(false)
+  const { lines, open: cartOpen } = useCart()
+  const count = pieceCount(lines)
+  const cartLabel = count === 0 ? m.cart.buttonEmpty : count === 1 ? m.cart.buttonOne : interpolate(m.cart.button, { count })
+  const openCartFromMenu = () => {
+    setMenuOpen(false)
+    openCart()
+  }
 
   return (
     <header
@@ -82,14 +92,15 @@ export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_O
               <User className="size-5" strokeWidth={1.1} />
             </Link>
           )}
-          <Link to={to("/cart")} aria-label={m.nav.cart} className={iconLink}>
-            <ShoppingBag className="size-5" strokeWidth={1.1} />
-          </Link>
+          <CartDrawer />
 
           <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
             <Dialog.Trigger className={cn(navLabel, "ps-3 lg:hidden")}>{m.nav.menu}</Dialog.Trigger>
             <Dialog.Portal>
-              <Dialog.Content className="fixed inset-0 z-50 flex flex-col bg-background px-5 pb-10 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-700">
+              <Dialog.Content
+                onCloseAutoFocus={(e) => cartOpen && e.preventDefault()}
+                className="fixed inset-0 z-50 flex flex-col bg-background px-5 pb-10 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-700"
+              >
                 <div className="flex h-16 items-center justify-between">
                   <Dialog.Title className="sr-only">{m.nav.menu}</Dialog.Title>
                   <Dialog.Description className="sr-only">{m.meta.siteName}</Dialog.Description>
@@ -97,9 +108,10 @@ export default function SiteHeader({ overHero = false, accountsOpen = ACCOUNTS_O
                     <Wordmark />
                   </Link>
                   <div className="flex items-center gap-1">
-                    <Link to={to("/cart")} aria-label={m.nav.cart} onClick={closeMenu} className={iconLink}>
-                      <ShoppingBag className="size-5" strokeWidth={1.1} />
-                    </Link>
+                    <button type="button" aria-label={cartLabel} onClick={openCartFromMenu} className={cn(iconLink, "gap-1.5 text-label tracking-wide")}>
+                      <ShoppingBag className="size-5" strokeWidth={1.1} aria-hidden="true" />
+                      <span aria-hidden="true">{count}</span>
+                    </button>
                     <Dialog.Close className={cn(navLabel, "ps-3")}>{m.nav.close}</Dialog.Close>
                   </div>
                 </div>
