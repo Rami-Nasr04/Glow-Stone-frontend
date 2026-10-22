@@ -1,0 +1,23 @@
+import { ACCOUNTS_OPEN } from "@/features/auth/client"
+import RequireAuth from "@/features/auth/RequireAuth"
+import { toLocale } from "@/i18n/locales"
+import { MESSAGES } from "@/i18n/useLocale"
+import NotFound from "@/pages/NotFound"
+import Account from "@/pages/Account"
+import type { Route } from "./+types/account"
+
+// Closed on built sites until the customer pool is live (like the sign-in pages): the missing page, in the site frame.
+export function meta({ params }: Route.MetaArgs) {
+  const m = MESSAGES[toLocale(params.lang)]
+  return [{ title: ACCOUNTS_OPEN ? m.orders.accountMetaTitle : m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
+}
+
+function Page() {
+  return (
+    <RequireAuth>
+      <Account />
+    </RequireAuth>
+  )
+}
+
+export default ACCOUNTS_OPEN ? Page : NotFound

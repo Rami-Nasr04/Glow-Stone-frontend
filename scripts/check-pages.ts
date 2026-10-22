@@ -181,6 +181,9 @@ const notBuilt: Expected[] = [
   // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until the customer pool is live: the 404 page, in the
   // site frame. When they open, it is full screen: h1 en.auth.signIn.title and no header logo to follow.
   { path: "/sign-in", h1: en.notFound.title },
+  // Checkout and the account wait for the customer pool too.
+  { path: "/checkout", h1: en.notFound.title },
+  { path: "/account", h1: en.notFound.title },
   { path: "/collection/99999/no-such-piece", h1: en.notFound.title },
 ]
 const canonicalOf = (path: string) => `${base}${path}`

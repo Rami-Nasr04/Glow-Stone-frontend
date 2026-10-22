@@ -11,6 +11,7 @@ import {
   removeFromCart,
   resetCart,
   setQuantity,
+  showCartNotice,
   useCart,
 } from "./cart"
 
@@ -124,6 +125,12 @@ describe("cart", () => {
     localStorage.setItem(CART_KEY, JSON.stringify([{ productId: 2, quantity: 3 }]))
     resetCart()
     expect(addToCart(5, 3, 4)).toBe("total")
+  })
+
+  it("opens the drawer with the server's words about a piece (a refused order)", () => {
+    const { result } = renderHook(() => useCart())
+    act(() => showCartNotice({ kind: "server", message: "Nahr is sold out.", productId: 2 }))
+    expect(result.current).toMatchObject({ open: true, notice: { kind: "server", message: "Nahr is sold out.", productId: 2 } })
   })
 
   it("clearCart empties the cart and the stored copy", () => {

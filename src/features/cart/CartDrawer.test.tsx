@@ -2,8 +2,19 @@ import { act, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { PRODUCTS, stubApi } from "@/test/catalog"
 import { renderAt } from "@/test/render"
-import { addToCart, CART_KEY, closeCart, openCart } from "./cart"
+import { addToCart, CART_KEY, closeCart, openCart, showCartNotice } from "./cart"
 import CartDrawer from "./CartDrawer"
+
+const accounts = vi.hoisted(() => ({ open: true }))
+vi.mock("@/features/auth/client", async (original) => ({
+  ...(await original<typeof import("@/features/auth/client")>()),
+  get ACCOUNTS_OPEN() {
+    return accounts.open
+  },
+}))
+afterEach(() => {
+  accounts.open = true
+})
 
 const SANNINE = 6 // $560, 2 remaining
 const QADISHA = 5 // $890, 4 remaining
@@ -160,7 +171,29 @@ describe("CartDrawer", () => {
     expect(within(drawer).queryByText("Couldn't load the latest prices.")).not.toBeInTheDocument()
   })
 
-  it("keeps Checkout in view but says ordering opens soon, in the drawer", async () => {
+  it("goes to checkout once customer accounts are open", async () => {
+    stubApi()
+    const { user, drawer } = await openWith([[BATROUN, 1]])
+    await screen.findByRole("heading", { name: "Batroun" })
+    const checkout = within(drawer).getByRole("link", { name: "Checkout" })
+    expect(checkout).toHaveAttribute("href", "/checkout")
+    await user.click(checkout)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("shows the server's words at the top and under the piece they are about", async () => {
+    stubApi()
+    fill([[BATROUN, 1], [QADISHA, 1]])
+    renderAt(<CartDrawer />)
+    act(() => showCartNotice({ kind: "server", message: "The price of Qadisha has changed. Please check your cart.", productId: QADISHA }))
+    const drawer = screen.getByRole("dialog", { name: "Your selection" })
+    expect(within(drawer).getAllByText("The price of Qadisha has changed. Please check your cart.")).toHaveLength(1)
+    const line = (await screen.findByRole("heading", { name: "Qadisha" })).closest("li")!
+    expect(within(line).getByText("The price of Qadisha has changed. Please check your cart.")).toBeInTheDocument()
+  })
+
+  it("keeps Checkout in view but says ordering opens soon, in the drawer, while accounts are closed", async () => {
+    accounts.open = false
     stubApi()
     const { user, drawer } = await openWith([[BATROUN, 1]])
     await screen.findByRole("heading", { name: "Batroun" })

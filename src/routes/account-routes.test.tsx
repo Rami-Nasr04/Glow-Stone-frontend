@@ -3,8 +3,12 @@ import { createRoutesStub } from "react-router"
 import AuthProvider from "@/features/auth/AuthProvider"
 import { createMockAuth } from "@/features/auth/mock-auth"
 import { MESSAGES } from "@/i18n/useLocale"
+import * as account from "./account"
+import * as accountOrder from "./account-order"
+import * as checkout from "./checkout"
 import * as forgotPassword from "./forgot-password"
 import LocaleLayout from "./locale-layout"
+import * as orderPlaced from "./order-placed"
 import * as signIn from "./sign-in"
 import * as signUp from "./sign-up"
 import * as verify from "./verify"
@@ -27,6 +31,10 @@ describe("account pages while accounts are closed", () => {
     ["/sign-up", signUp],
     ["/verify?email=a%40b.co", verify],
     ["/forgot-password", forgotPassword],
+    ["/checkout", checkout],
+    ["/checkout/thanks/1", orderPlaced],
+    ["/account", account],
+    ["/account/orders/1", accountOrder],
   ] as [string, AccountRoute][])("%s shows the missing page inside the site frame", (path, route) => {
     const Stub = createRoutesStub([
       { path: "/:lang?", Component: LocaleLayout, children: [{ path: path.split("?")[0].slice(1), Component: route.default, handle: route.handle }] },

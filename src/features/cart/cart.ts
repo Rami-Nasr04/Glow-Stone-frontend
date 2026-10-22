@@ -8,8 +8,11 @@ export interface CartLine {
   quantity: number
 }
 
-/** Why an add or a "+" was stopped, shown at the top of the drawer. */
-export type CartNotice = { kind: "total" } | { kind: "stock"; remaining: number }
+/** Why an add or a "+" was stopped, or what the server said when it refused an order; shown at the top of the drawer. */
+export type CartNotice =
+  | { kind: "total" }
+  | { kind: "stock"; remaining: number }
+  | { kind: "server"; message: string; productId: number | null }
 
 export interface CartState {
   lines: readonly CartLine[]
@@ -159,6 +162,11 @@ export function noteStock(remaining: ReadonlyMap<number, number>): number[] {
 /** Empties the cart here and in storage. Signing out must call it (a shared computer). */
 export function clearCart() {
   update({ lines: [], notice: null })
+}
+
+/** Opens the drawer with a notice: checkout sends the customer back here when the server refused the order. */
+export function showCartNotice(notice: CartNotice) {
+  update({ open: true, notice })
 }
 
 export function openCart() {
