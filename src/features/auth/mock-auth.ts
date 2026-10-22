@@ -34,6 +34,29 @@ async function hash(password: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
+/** Who a demo access token belongs to, as the demo orders API reads it (the real API reads the Cognito token). */
+export interface DemoCustomer {
+  id: string
+  email: string
+  name: string
+  phone: string
+}
+
+const TOKEN_PREFIX = "demo."
+
+/** The customer a demo token names, or null for anything that isn't one. */
+export function readDemoToken(token: string): DemoCustomer | null {
+  if (!token.startsWith(TOKEN_PREFIX)) return null
+  try {
+    const value = JSON.parse(decodeURIComponent(token.slice(TOKEN_PREFIX.length))) as Partial<DemoCustomer>
+    return typeof value.id === "string" && typeof value.email === "string" && typeof value.name === "string" && typeof value.phone === "string"
+      ? { id: value.id, email: value.email, name: value.name, phone: value.phone }
+      : null
+  } catch {
+    return null
+  }
+}
+
 export function createMockAuth(storage: Storage | null = browserStorage()): AuthClient {
   let state: DemoState | null = null
 
@@ -112,6 +135,13 @@ export function createMockAuth(storage: Storage | null = browserStorage()): Auth
     },
     async signOut() {
       save({ ...(await load()), session: null })
+    },
+    async accessToken() {
+      const { users, session } = await load()
+      const user = users.find((candidate) => candidate.id === session)
+      if (!user) throw new AuthError("unavailable")
+      const { id, email, name, phone } = user
+      return TOKEN_PREFIX + encodeURIComponent(JSON.stringify({ id, email, name, phone }))
     },
   }
 }

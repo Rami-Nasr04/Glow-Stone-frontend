@@ -1,4 +1,4 @@
-import { createMockAuth, DEMO_CODE, DEMO_USER } from "./mock-auth"
+import { createMockAuth, DEMO_CODE, DEMO_USER, readDemoToken } from "./mock-auth"
 import { AuthError } from "./types"
 
 function memoryStorage(): Storage {
@@ -36,6 +36,14 @@ describe("demo auth client", () => {
     expect(await auth.currentUser()).toEqual(user)
     await auth.signOut()
     expect(await auth.currentUser()).toBeNull()
+  })
+
+  it("gives the signed-in customer a demo access token that names them, and none when signed out", async () => {
+    const auth = createMockAuth(null)
+    await expect(auth.accessToken()).rejects.toThrow()
+    await auth.signIn(DEMO_USER.email, DEMO_USER.password)
+    expect(readDemoToken(await auth.accessToken())).toEqual({ id: "demo-user", email: DEMO_USER.email, name: DEMO_USER.name, phone: DEMO_USER.phone })
+    expect(readDemoToken("eyJ.real.jwt")).toBeNull()
   })
 
   it("gives the same answer for a wrong password and an unknown email", async () => {

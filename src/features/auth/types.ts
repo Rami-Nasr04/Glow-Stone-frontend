@@ -41,4 +41,6 @@ export interface AuthClient {
   forgotPassword(email: string): Promise<void>
   confirmForgotPassword(email: string, code: string, password: string): Promise<void>
   signOut(): Promise<void>
+  /** The signed-in customer's access token for the API (`Authorization: Bearer …`); throws when signed out. */
+  accessToken(): Promise<string>
 }
