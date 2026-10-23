@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react"
 import { useOrders } from "./client"
-import type { Order } from "./types"
+import { type Order, OrderError } from "./types"
 
-export type Loaded<T> = { status: "loading" } | { status: "ready"; value: T } | { status: "missing" } | { status: "failed" }
+/** Why the customer's data isn't there: no answer (try again), signed out on the server (401), or refused (403). */
+export type Failure = { status: "failed" } | { status: "signIn" } | { status: "refused"; message: string }
+
+export type Loaded<T> = { status: "loading" } | { status: "ready"; value: T } | { status: "missing" } | Failure
+
+export type NotReady = Exclude<Loaded<unknown>, { status: "ready" }>
+
+export function failureOf(error: unknown): Failure {
+  if (error instanceof OrderError && error.code === "UNAUTHORIZED") return { status: "signIn" }
+  if (error instanceof OrderError && error.code === "FORBIDDEN") return { status: "refused", message: error.message }
+  return { status: "failed" }
+}
 
 /** One of the customer's orders (GET /me/orders/{id}); `initial` is the order checkout just placed. */
 export function useOrder(id: number, initial?: Order): [Loaded<Order>, (order: Order) => void, () => void] {
@@ -15,7 +26,7 @@ export function useOrder(id: number, initial?: Order): [Loaded<Order>, (order: O
     let live = true
     orders.get(id).then(
       (order) => live && setState(order ? { status: "ready", value: order } : { status: "missing" }),
-      () => live && setState({ status: "failed" }),
+      (error: unknown) => live && setState(failureOf(error)),
     )
     return () => {
       live = false

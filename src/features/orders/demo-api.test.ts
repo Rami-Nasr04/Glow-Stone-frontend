@@ -34,6 +34,14 @@ describe("demo orders API (the contract, in this browser)", () => {
     expect(await refusal(anonymous.me())).toMatchObject({ status: 401, code: "UNAUTHORIZED" })
   })
 
+  // Like API Gateway: its own body, not the envelope.
+  it("refuses a missing token the way API Gateway does", async () => {
+    const fetch = createDemoFetch({ storage: localStorage, products: async () => PRODUCTS })
+    const answer = await fetch("https://demo.invalid/me/orders", { headers: { Authorization: "Bearer nothing" } })
+    expect(answer.status).toBe(401)
+    expect(await answer.json()).toEqual({ message: "Unauthorized" })
+  })
+
   it("places an order with the server's totals, the account holder as recipient, and a GS number", async () => {
     const placed = await demo().place(order({ items: [{ productId: 5, quantity: 2, unitPrice: 890 }, { productId: 3, quantity: 1, unitPrice: 180 }] }))
     expect(placed).toMatchObject({
@@ -47,38 +55,51 @@ describe("demo orders API (the contract, in this browser)", () => {
       recipient: { name: "Sara Khoury", phone: "+96171234567", isAccountHolder: true },
       canCancel: true,
     })
-    expect(placed.items[0]).toMatchObject({ productId: 5, name: "Qadisha", quantity: 2, unitPrice: 890, lineTotal: 1780 })
-    expect(placed.items[0].image?.url).toMatch(/^https:\/\//)
+    // Lines in productId order, with each piece's stone and colour.
+    expect(placed.items.map((item) => item.productId)).toEqual([3, 5])
+    expect(placed.items[1]).toMatchObject({ productId: 5, name: "Qadisha", stoneType: "Limestone", color: "Cream", quantity: 2, unitPrice: 890, lineTotal: 1780 })
+    expect(placed.items[1].image?.url).toMatch(/^https:\/\//)
     expect((await demo().place(order({ items: [{ productId: 3, quantity: 1, unitPrice: 180 }] }))).number).toBe("GS-0002")
   })
 
   it("keeps someone else as the recipient", async () => {
-    const placed = await demo().place(order({ recipient: { name: "Maya", phone: "03 123 456" }, isGift: true, giftMessage: "For the new house." }))
-    // The server keeps the phone in the sign-up's form.
+    const placed = await demo().place(order({ recipient: { name: " Maya ", phone: "+9613123456" }, isGift: true, giftMessage: "For the new house." }))
     expect(placed.recipient).toEqual({ name: "Maya", phone: "+9613123456", isAccountHolder: false })
     expect(placed).toMatchObject({ isGift: true, giftMessage: "For the new house." })
   })
 
   it.each([
-    ["no city", order({ city: " " }), "city is required"],
-    ["no address", order({ address: "" }), "address is required"],
-    ["a city too long", order({ city: "x".repeat(101) }), "city must be at most 100 characters"],
-    ["an address too long", order({ address: "x".repeat(301) }), "address must be at most 300 characters"],
-    ["notes too long", order({ deliveryNotes: "x".repeat(501) }), "deliveryNotes must be at most 500 characters"],
-    ["a card without a gift", order({ giftMessage: "Hi" }), "giftMessage is only allowed for a gift"],
-    ["a card too long", order({ isGift: true, giftMessage: "x".repeat(201) }), "giftMessage must be at most 200 characters"],
+    ["no city", order({ city: " " }), "Please enter the city (up to 100 characters)."],
+    ["no address", order({ address: "" }), "Please enter the address (up to 300 characters)."],
+    ["a city too long", order({ city: "x".repeat(101) }), "Please enter the city (up to 100 characters)."],
+    ["an address too long", order({ address: "x".repeat(301) }), "Please enter the address (up to 300 characters)."],
+    ["notes too long", order({ deliveryNotes: "x".repeat(501) }), "Delivery notes can be up to 500 characters."],
+    ["a card too long", order({ isGift: true, giftMessage: "x".repeat(201) }), "The card message can be up to 200 characters."],
+    // The API takes the phone only in the sign-up's form (+961 and 7 or 8 digits); the shop sends it that way.
     ["a recipient's bad phone", order({ recipient: { name: "Maya", phone: "+3312" } }), "Please enter a Lebanese number, like 71 234 567."],
-    ["a recipient without a name", order({ recipient: { name: " ", phone: "+96103123456" } }), "recipient name is required"],
-    ["no items", order({ items: [] }), "items must hold at least one piece"],
-    ["a piece twice", order({ items: [{ productId: 5, quantity: 1, unitPrice: 890 }, { productId: 5, quantity: 1, unitPrice: 890 }] }), "each piece may appear only once"],
-    ["a quantity of 0", order({ items: [{ productId: 5, quantity: 0, unitPrice: 890 }] }), "quantity must be at least 1"],
+    ["a recipient's phone as typed", order({ recipient: { name: "Maya", phone: "03 123 456" } }), "Please enter a Lebanese number, like 71 234 567."],
+    ["a recipient without a name", order({ recipient: { name: " ", phone: "+9613123456" } }), "Please enter the recipient's name (up to 100 characters)."],
+    ["no items", order({ items: [] }), "Your cart is empty."],
+    ["a piece twice", order({ items: [{ productId: 5, quantity: 1, unitPrice: 890 }, { productId: 5, quantity: 1, unitPrice: 890 }] }), "Each piece can only be in the order once."],
   ])("400 VALIDATION for %s, saving nothing", async (_, input, message) => {
     expect(await refusal(demo().place(input))).toMatchObject({ status: 400, code: "VALIDATION", message })
     expect(await demo().list()).toEqual([])
   })
 
+  // The shop's client never sends one (it drops a card without the gift), so this asks the demo directly.
+  it("400 VALIDATION for a card without a gift", async () => {
+    const fetch = createDemoFetch({ storage: localStorage, products: async () => PRODUCTS })
+    const answer = await fetch("https://demo.invalid/orders", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token()}` },
+      body: JSON.stringify(order({ giftMessage: "Hi" })),
+    })
+    expect(answer.status).toBe(400)
+    expect(await answer.json()).toEqual({ success: false, error: { code: "VALIDATION", message: "Card messages are only for gifts." } })
+  })
+
   it.each([
-    ["a piece no longer in the collection", [{ productId: 99, quantity: 1, unitPrice: 100 }], "This piece is no longer available.", 99],
+    ["a piece no longer in the collection", [{ productId: 99, quantity: 1, unitPrice: 100 }], "One piece in your cart is no longer available.", 99],
     ["a sold-out piece", [{ productId: 2, quantity: 1, unitPrice: 290 }], "Nahr is sold out.", 2],
     ["more than are left", [{ productId: 6, quantity: 3, unitPrice: 560 }], "Sannine has only 2 left.", 6],
   ])("409 UNAVAILABLE for %s, naming the piece", async (_, items, message, productId) => {
@@ -92,6 +113,16 @@ describe("demo orders API (the contract, in this browser)", () => {
       message: "The price of Qadisha has changed. Please check your cart.",
       productId: 5,
     })
+  })
+
+  // The API checks the limit first, then the pieces in productId order, and reports the first problem.
+  it("checks the 5-piece limit before the pieces, then the pieces in productId order", async () => {
+    expect(await refusal(demo().place(order({ items: [{ productId: 2, quantity: 6, unitPrice: 290 }] })))).toMatchObject({ code: "ORDER_LIMIT" })
+    const items = [
+      { productId: 6, quantity: 1, unitPrice: 1 },
+      { productId: 2, quantity: 1, unitPrice: 290 },
+    ]
+    expect(await refusal(demo().place(order({ items })))).toMatchObject({ code: "UNAVAILABLE", productId: 2 })
   })
 
   it("409 ORDER_LIMIT when this order and the customer's pending ones pass 5 pieces; cancelled ones don't count", async () => {
@@ -112,11 +143,20 @@ describe("demo orders API (the contract, in this browser)", () => {
     await demo().place(order({ items: [{ productId: 5, quantity: 2, unitPrice: 890 }, { productId: 3, quantity: 1, unitPrice: 180 }] }))
     await demo({ ...SARA, id: "u-other" }).place(order({ items: [{ productId: 3, quantity: 1, unitPrice: 180 }] }))
     const list = await demo().list()
-    expect(list.map((o) => [o.number, o.itemCount, o.total])).toEqual([
-      ["GS-0002", 3, 1960],
-      ["GS-0001", 1, 180],
+    expect(list.map((o) => [o.number, o.itemCount, o.total, o.items])).toEqual([
+      [
+        "GS-0002",
+        3,
+        1960,
+        [
+          { name: "Batroun", quantity: 1 },
+          { name: "Qadisha", quantity: 2 },
+        ],
+      ],
+      ["GS-0001", 1, 180, [{ name: "Batroun", quantity: 1 }]],
     ])
-    expect(list[0].image?.url).toMatch(/products\/5\//)
+    // The first line's cover (lines in productId order).
+    expect(list[0].image?.url).toMatch(/products\/3\//)
   })
 
   it("shows one order to its customer only (404 for anyone else)", async () => {
@@ -143,5 +183,18 @@ describe("demo orders API (the contract, in this browser)", () => {
     expect(localStorage.getItem(DEMO_REFUSE_KEY)).toBeNull()
     await expect(demo().place(order())).resolves.toBeTruthy()
     expect(JSON.parse(localStorage.getItem(DEMO_ORDERS_KEY)!).orders).toHaveLength(1)
+  })
+
+  // The two refusals of a signed-in customer that any route can give, to show each page's answer in the browser.
+  it("can be told to answer the next call of any route with 401 or 403", async () => {
+    localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
+    expect(await refusal(demo().list())).toMatchObject({
+      status: 403,
+      code: "FORBIDDEN",
+      message: "Your account isn't ready yet. Please sign out and sign in again.",
+    })
+    localStorage.setItem(DEMO_REFUSE_KEY, "UNAUTHORIZED")
+    expect(await refusal(demo().me())).toMatchObject({ status: 401, code: "UNAUTHORIZED" })
+    await expect(demo().me()).resolves.toMatchObject({ email: SARA.email })
   })
 })

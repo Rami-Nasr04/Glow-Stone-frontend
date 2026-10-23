@@ -12,9 +12,11 @@ import NoPhoto from "@/features/catalog/NoPhoto"
 import type { ProductSummary } from "@/features/catalog/types"
 import { useOrders } from "@/features/orders/client"
 import { type Me, OrderError } from "@/features/orders/types"
+import { type Failure, failureOf } from "@/features/orders/use-order"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
+import OrderMissing from "./OrderMissing"
 
 type Key = "theirName" | "theirPhone" | "city" | "street" | "floor" | "notes" | "giftMessage"
 type Errors = Partial<Record<Key, string>>
@@ -49,7 +51,7 @@ export default function Checkout() {
   const { lines, open: cartOpen } = useCart()
   const formRef = useRef<HTMLFormElement>(null)
 
-  const [me, setMe] = useState<Remote<Me>>({ status: "loading" })
+  const [me, setMe] = useState<Remote<Me> | Failure>({ status: "loading" })
   const [pieces, setPieces] = useState<Remote<ReadonlyMap<number, ProductSummary>>>({ status: "loading" })
   const [attempt, setAttempt] = useState(0)
   const [receiver, setReceiver] = useState<"me" | "someoneElse">("me")
@@ -63,7 +65,7 @@ export default function Checkout() {
     let live = true
     orders.me().then(
       (value) => live && setMe({ status: "ready", value }),
-      () => live && setMe({ status: "failed" }),
+      (error: unknown) => live && setMe(failureOf(error)),
     )
     return () => {
       live = false
@@ -104,6 +106,8 @@ export default function Checkout() {
       </p>
     )
   }
+  // The API refused the session (sign in again and come back) or the account (its words).
+  if (me.status === "signIn" || me.status === "refused") return <OrderMissing state={me} />
   if (me.status === "failed") {
     return (
       <section className="mx-auto flex max-w-110 flex-col items-center gap-6 px-gutter py-24 text-center">
@@ -185,7 +189,7 @@ export default function Checkout() {
       if (error.code === "PRICE_CHANGED" || error.code === "UNAVAILABLE") showCartNotice({ kind: "server", message: error.message, productId: error.productId })
       else if (error.code === "UNAUTHORIZED") navigate(`${to("/sign-in")}?next=${encodeURIComponent(to("/checkout"))}`)
       else if (error.code === "ORDER_LIMIT") setRefusal({ message: error.message, contact: true })
-      else if (error.code === "VALIDATION") setRefusal({ message: error.message, contact: false })
+      else if (error.code === "VALIDATION" || error.code === "FORBIDDEN") setRefusal({ message: error.message, contact: false })
       else setRefusal({ message: t.failed, contact: false })
     }
   }

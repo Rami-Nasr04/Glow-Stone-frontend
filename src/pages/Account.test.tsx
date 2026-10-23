@@ -1,13 +1,15 @@
 import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
+import { DEMO_REFUSE_KEY } from "@/features/orders/demo-api"
 import { demoCustomer, placeOrder } from "@/test/orders"
 import { renderAt } from "@/test/render"
 import Account from "./Account"
 import AccountOrder from "./AccountOrder"
 
 function Probe() {
-  return <p>landed: {useLocation().pathname}</p>
+  const { pathname, search } = useLocation()
+  return <p>landed: {pathname + search}</p>
 }
 
 describe("Account", () => {
@@ -21,12 +23,31 @@ describe("Account", () => {
     const rows = await screen.findAllByRole("link", { name: /^Order GS-/ })
     expect(rows.map((r) => r.getAttribute("href"))).toEqual(["/account/orders/2", "/account/orders/1"])
     expect(rows[0]).toHaveTextContent("GS-0002")
-    expect(rows[0]).toHaveTextContent("3 pieces")
+    // The prototype's row: each piece by name, "× n" when there are several.
+    expect(rows[0]).toHaveTextContent("Batroun × 2, Qadisha")
     expect(rows[0]).toHaveTextContent("$1,250")
     expect(rows[0]).toHaveTextContent("Cancelled")
-    expect(rows[1]).toHaveTextContent("1 piece")
+    expect(rows[1]).toHaveTextContent("Batroun")
     expect(rows[1]).toHaveTextContent("Pending")
     expect(rows[1]).toHaveTextContent(/\d{1,2} [A-Z][a-z]+ 20\d\d/)
+  })
+
+  it("on a 401, sends the customer to sign in and back to the account", async () => {
+    const { auth } = await demoCustomer()
+    localStorage.setItem(DEMO_REFUSE_KEY, "UNAUTHORIZED")
+    renderAt(<Account />, "/account", { auth, routes: [{ path: "/sign-in", Component: Probe }] })
+    expect(await screen.findByText("landed: /sign-in?next=%2Faccount")).toBeInTheDocument()
+  })
+
+  it("on a 403, shows the server's words and signs out from there", async () => {
+    const { auth } = await demoCustomer()
+    localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
+    const user = userEvent.setup({ delay: null })
+    renderAt(<Account />, "/account", { auth, routes: [{ path: "/sign-in", Component: Probe }] })
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your account isn't ready yet. Please sign out and sign in again.")
+    await user.click(screen.getByRole("button", { name: "Sign out" }))
+    expect(await screen.findByText("landed: /sign-in?next=%2Faccount")).toBeInTheDocument()
+    expect(await auth.currentUser()).toBeNull()
   })
 
   it("says when there are no orders yet", async () => {
@@ -70,9 +91,30 @@ describe("AccountOrder", () => {
     expect(steps[0]).toHaveTextContent(/\d{1,2} [A-Z][a-z]+ 20\d\d/)
     expect(steps[1]).not.toHaveTextContent(/20\d\d/)
     expect(screen.getByRole("region", { name: "Summary" })).toHaveTextContent("$1,250")
+    // Each line: the piece, its stone and colour, and how many.
+    expect(screen.getByText("Limestone · Cream · Qty 1")).toBeInTheDocument()
+    expect(screen.getByText("Limestone · Taupe · Qty 2")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Deliver to" })).toHaveTextContent("Maya Saad · +961 3 123 456")
     expect(screen.getByRole("region", { name: "Gift" })).toHaveTextContent("“For the new house.”")
     expect(screen.getByRole("link", { name: /All orders/ })).toHaveAttribute("href", "/account")
+  })
+
+  it("on a 401 while cancelling, sends the customer to sign in and back to the order", async () => {
+    const { auth, orders } = await demoCustomer()
+    const order = await placeOrder(orders)
+    const user = userEvent.setup({ delay: null })
+    renderAt(<p />, `/account/orders/${order.id}`, {
+      auth,
+      routes: [
+        { path: "/account/orders/:id", Component: AccountOrder },
+        { path: "/sign-in", Component: Probe },
+      ],
+    })
+    await user.click(await screen.findByRole("button", { name: "Cancel order" }))
+    localStorage.setItem(DEMO_REFUSE_KEY, "UNAUTHORIZED")
+    await user.click(screen.getByRole("button", { name: "Yes, cancel it" }))
+    expect(await screen.findByText(`landed: /sign-in?next=${encodeURIComponent(`/account/orders/${order.id}`)}`)).toBeInTheDocument()
+    expect(await orders.get(order.id)).toMatchObject({ status: "pending" })
   })
 
   it("cancels a pending order after asking, and the timeline turns to cancelled", async () => {

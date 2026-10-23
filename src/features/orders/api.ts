@@ -1,5 +1,15 @@
 import type { ProductImage } from "@/features/catalog/types"
-import { type Me, type Order, OrderError, type OrderItem, type OrdersClient, ORDER_STATUSES, type OrderStatus, type OrderSummary } from "./types"
+import {
+  type Me,
+  type Order,
+  OrderError,
+  type OrderItem,
+  type OrdersClient,
+  ORDER_STATUSES,
+  type OrderStatus,
+  type OrderSummary,
+  type PlaceOrderInput,
+} from "./types"
 
 // The customers and orders routes, exactly as the contract shows them. Every answer is read field by field: a shape
 // that doesn't match is an INVALID_ANSWER, never half an order on screen. Refusals keep the API's own message.
@@ -36,8 +46,14 @@ function readMe(value: unknown): Me {
   return { email: text(value, "email"), name: text(value, "name"), phone: text(value, "phone") }
 }
 
+function readSummaryItem(value: unknown): OrderSummary["items"][number] {
+  if (!isObject(value)) fail("items")
+  return { name: text(value, "name"), quantity: count(value, "quantity") }
+}
+
 function readSummary(value: unknown): OrderSummary {
   if (!isObject(value)) fail("order")
+  if (!Array.isArray(value.items)) fail("items")
   return {
     id: count(value, "id"),
     number: text(value, "number"),
@@ -45,6 +61,7 @@ function readSummary(value: unknown): OrderSummary {
     createdAt: text(value, "createdAt"),
     itemCount: count(value, "itemCount"),
     total: money(value, "total"),
+    items: value.items.map(readSummaryItem),
     image: photo(value.image),
   }
 }
@@ -54,6 +71,8 @@ function readItem(value: unknown): OrderItem {
   return {
     productId: count(value, "productId"),
     name: text(value, "name"),
+    stoneType: text(value, "stoneType"),
+    color: text(value, "color"),
     quantity: count(value, "quantity"),
     unitPrice: money(value, "unitPrice"),
     lineTotal: money(value, "lineTotal"),
@@ -84,6 +103,22 @@ function readOrder(value: unknown): Order {
   }
 }
 
+const optional = (value: string | null) => value?.trim() || null
+
+// The body exactly as the API takes it: only its keys (any other is a 400), required texts trimmed, and an empty
+// optional text as null. A card message goes only with a gift.
+function orderBody(input: PlaceOrderInput): PlaceOrderInput {
+  return {
+    items: input.items.map(({ productId, quantity, unitPrice }) => ({ productId, quantity, unitPrice })),
+    recipient: input.recipient ? { name: input.recipient.name.trim(), phone: input.recipient.phone } : null,
+    city: input.city.trim(),
+    address: input.address.trim(),
+    deliveryNotes: optional(input.deliveryNotes),
+    isGift: input.isGift,
+    giftMessage: input.isGift ? optional(input.giftMessage) : null,
+  }
+}
+
 /** The routes over `fetchImpl` (the browser's fetch, or the demo API while the customer pool isn't live). */
 export function createHttpOrders(base: string, token: () => Promise<string>, fetchImpl: typeof fetch = (...args) => fetch(...args)): OrdersClient {
   // The envelope's data; a refusal becomes an OrderError with the API's code and message.
@@ -102,6 +137,8 @@ export function createHttpOrders(base: string, token: () => Promise<string>, fet
     } catch {
       throw new OrderError(0, "NETWORK", "No answer from the server.")
     }
+    // API Gateway answers a missing, expired or foreign token itself, with its own body: the status says it all.
+    if (response.status === 401) throw new OrderError(401, "UNAUTHORIZED", "Please sign in again.")
     const json: unknown = await response.json().catch(() => null)
     if (!isObject(json)) throw new OrderError(response.status, "INVALID_ANSWER", `${method} ${path}: ${response.status}`)
     if (response.ok && json.success === true) return { status: response.status, data: json.data }
@@ -123,7 +160,8 @@ export function createHttpOrders(base: string, token: () => Promise<string>, fet
 
   return {
     me: () => read("GET", "/me", readMe),
-    place: (input) => read("POST", "/orders", readOrder, input),
+    // Sent once: a POST is never retried by itself (it could place the order twice).
+    place: (input) => read("POST", "/orders", readOrder, orderBody(input)),
     list: () => read("GET", "/me/orders", (data) => (Array.isArray(data) ? data.map(readSummary) : fail("list"))),
     async get(id) {
       try {

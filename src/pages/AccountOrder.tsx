@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router"
 import { actionVariants } from "@/components/ui/action-link"
 import { useOrders } from "@/features/orders/client"
 import { DeliverTo, GiftInfo, OrderItems, OrderTotals, StatusBadge } from "@/features/orders/OrderParts"
-import { useOrder } from "@/features/orders/use-order"
+import { type Failure, failureOf, useOrder } from "@/features/orders/use-order"
 import { type Order, OrderError, type OrderStatus } from "@/features/orders/types"
 import { formatDate, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
@@ -57,8 +57,10 @@ export default function AccountOrder() {
   const [asking, setAsking] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [said, setSaid] = useState<{ text: string; alert: boolean } | null>(null)
+  const [failure, setFailure] = useState<Failure | null>(null)
 
-  if (state.status !== "ready") return <OrderMissing state={state.status} retry={retry} />
+  if (failure) return <OrderMissing state={failure} />
+  if (state.status !== "ready") return <OrderMissing state={state} retry={retry} />
   const order = state.value
 
   const cancel = async () => {
@@ -69,6 +71,10 @@ export default function AccountOrder() {
       setSaid({ text: t.cancelled, alert: false })
     } catch (error) {
       if (!(error instanceof OrderError)) throw error
+      if (error.code === "UNAUTHORIZED") {
+        setFailure(failureOf(error))
+        return
+      }
       setSaid({ text: error.message, alert: true })
       // It changed elsewhere (Omar confirmed it, or another device cancelled it): show it as it is now.
       const now = await orders.get(order.id).catch(() => null)

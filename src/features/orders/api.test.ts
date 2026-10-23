@@ -10,7 +10,7 @@ const ORDER: Order = {
   number: "GS-0007",
   status: "pending",
   createdAt: "2026-11-06T14:03:00Z",
-  items: [{ productId: 5, name: "Qadisha", quantity: 2, unitPrice: 890, lineTotal: 1780, image }],
+  items: [{ productId: 5, name: "Qadisha", stoneType: "Limestone", color: "Sand", quantity: 2, unitPrice: 890, lineTotal: 1780, image }],
   subtotal: 1780,
   deliveryFee: 0,
   total: 1780,
@@ -67,13 +67,41 @@ describe("orders API client", () => {
     expect(JSON.parse(String(init.body))).toEqual(INPUT)
   })
 
+  // Optional texts: "" (or only spaces) is null, as the API stores it; the required ones go trimmed.
+  it("sends empty optional texts as null and trims the rest", async () => {
+    const { orders, fetch } = client(() => ok(ORDER, 201))
+    await orders.place({
+      ...INPUT,
+      recipient: { name: "  Maya Saad ", phone: "+9613123456" },
+      city: " Jounieh ",
+      address: " Main road ",
+      deliveryNotes: "   ",
+      isGift: true,
+      giftMessage: "",
+    })
+    expect(JSON.parse(String(fetch.mock.calls[0][1].body))).toEqual({
+      ...INPUT,
+      recipient: { name: "Maya Saad", phone: "+9613123456" },
+      city: "Jounieh",
+      address: "Main road",
+      deliveryNotes: null,
+      isGift: true,
+      giftMessage: null,
+    })
+  })
+
+  it("never sends a card message without the gift", async () => {
+    const { orders, fetch } = client(() => ok(ORDER, 201))
+    await orders.place({ ...INPUT, isGift: false, giftMessage: "Hi" })
+    expect(JSON.parse(String(fetch.mock.calls[0][1].body))).toMatchObject({ isGift: false, giftMessage: null })
+  })
+
   it.each([
-    [400, "VALIDATION", "city is required"],
+    [400, "VALIDATION", "Please enter the city (up to 100 characters)."],
     [409, "UNAVAILABLE", "Qadisha has only 2 left."],
     [409, "PRICE_CHANGED", "The price of Qadisha has changed. Please check your cart."],
     [409, "ORDER_LIMIT", "For larger orders, please contact Omar."],
-    [401, "UNAUTHORIZED", "Please sign in."],
-    [403, "FORBIDDEN", "No customer account."],
+    [403, "FORBIDDEN", "Your account isn't ready yet. Please sign out and sign in again."],
   ])("a %i %s refusal keeps the status, the code and the API's message as it is", async (status, code, message) => {
     const { orders } = client(() => refusal(status, code, message))
     const e = await error(orders.place(INPUT))
@@ -81,13 +109,46 @@ describe("orders API client", () => {
     expect(e).toMatchObject({ status, code, message, productId: null })
   })
 
+  // API Gateway refuses the token itself: its own body, not the envelope. The status is what counts.
+  it.each([
+    ["API Gateway's own body", () => new Response('{"message":"Unauthorized"}', { status: 401 })],
+    ["no body", () => new Response(null, { status: 401 })],
+    ["the envelope", () => refusal(401, "UNAUTHORIZED", "Please sign in.")],
+  ])("a 401 with %s means signing in again", async (_, answer) => {
+    expect(await error(client(answer).orders.list())).toMatchObject({ status: 401, code: "UNAUTHORIZED" })
+  })
+
+  it("asks to sign in again when there is no token to send, without calling the API", async () => {
+    const fetch = vi.fn()
+    const orders = createHttpOrders(BASE, () => Promise.reject(new Error("signed out")), fetch as unknown as typeof globalThis.fetch)
+    expect(await error(orders.me())).toMatchObject({ status: 401, code: "UNAUTHORIZED" })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it("keeps the piece a refusal names, when the API sends it", async () => {
     const { orders } = client(() => refusal(409, "UNAVAILABLE", "Nahr is sold out.", { productId: 2 }))
     expect(await error(orders.place(INPUT))).toMatchObject({ code: "UNAVAILABLE", productId: 2 })
   })
 
-  it("GET /me/orders reads the list", async () => {
-    const row = { id: 7, number: "GS-0007", status: "pending", createdAt: "2026-11-06T14:03:00Z", itemCount: 3, total: 2070, image }
+  it("names a piece that no longer exists by its id only", async () => {
+    const { orders } = client(() => refusal(409, "UNAVAILABLE", "One piece in your cart is no longer available.", { productId: 9 }))
+    expect(await error(orders.place(INPUT))).toMatchObject({ code: "UNAVAILABLE", message: "One piece in your cart is no longer available.", productId: 9 })
+  })
+
+  it("GET /me/orders reads the list, with each order's pieces", async () => {
+    const row = {
+      id: 7,
+      number: "GS-0007",
+      status: "pending",
+      createdAt: "2026-11-06T14:03:00Z",
+      itemCount: 3,
+      total: 2070,
+      items: [
+        { name: "Qadisha", quantity: 2 },
+        { name: "Arz", quantity: 1 },
+      ],
+      image,
+    }
     const { orders, fetch } = client(() => ok([row, { ...row, id: 6, image: null }]))
     await expect(orders.list()).resolves.toEqual([row, { ...row, id: 6, image: null }])
     expect(fetch.mock.calls[0][0]).toBe("https://api.test/me/orders")
@@ -118,6 +179,10 @@ describe("orders API client", () => {
   it("says INVALID_ANSWER for an answer it can't read, or a status without the envelope", async () => {
     expect(await error(client(() => ok({ id: "seven" })).orders.get(7))).toMatchObject({ code: "INVALID_ANSWER" })
     expect(await error(client(() => ok([{ ...ORDER, status: "lost" }])).orders.list())).toMatchObject({ code: "INVALID_ANSWER" })
+    const row = { id: 7, number: "GS-0007", status: "pending", createdAt: "2026-11-06T14:03:00Z", itemCount: 1, total: 890, image: null }
+    expect(await error(client(() => ok([row])).orders.list())).toMatchObject({ code: "INVALID_ANSWER" })
+    const { stoneType: _, ...noStone } = ORDER.items[0]
+    expect(await error(client(() => ok({ ...ORDER, items: [noStone] })).orders.get(7))).toMatchObject({ code: "INVALID_ANSWER" })
     expect(await error(client(() => new Response("<html>", { status: 502 })).orders.me())).toMatchObject({ status: 502, code: "INVALID_ANSWER" })
   })
 

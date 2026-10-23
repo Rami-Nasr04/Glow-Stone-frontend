@@ -9,6 +9,7 @@ import NoPhoto from "@/features/catalog/NoPhoto"
 import { useOrders } from "@/features/orders/client"
 import { StatusBadge } from "@/features/orders/OrderParts"
 import type { Me, OrderSummary } from "@/features/orders/types"
+import { type Failure, failureOf } from "@/features/orders/use-order"
 import { formatDate, formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
@@ -16,7 +17,7 @@ import OrderMissing from "./OrderMissing"
 
 const caps = "text-label uppercase tracking-label"
 
-type Remote = { status: "loading" } | { status: "ready"; me: Me; orders: OrderSummary[] } | { status: "failed" }
+type Remote = { status: "loading" } | { status: "ready"; me: Me; orders: OrderSummary[] } | Failure
 
 const tab = cn(caps, "flex min-h-11 items-center border-b border-transparent text-muted-foreground transition-colors duration-500 data-[state=active]:border-accent data-[state=active]:text-foreground")
 
@@ -34,7 +35,7 @@ export default function Account() {
     let live = true
     Promise.all([orders.me(), orders.list()]).then(
       ([me, list]) => live && setState({ status: "ready", me, orders: list }),
-      () => live && setState({ status: "failed" }),
+      (error: unknown) => live && setState(failureOf(error)),
     )
     return () => {
       live = false
@@ -44,7 +45,7 @@ export default function Account() {
   if (state.status !== "ready") {
     return (
       <OrderMissing
-        state={state.status}
+        state={state}
         retry={() => {
           setState({ status: "loading" })
           setAttempt((n) => n + 1)
@@ -105,7 +106,9 @@ export default function Account() {
                         <span className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</span>
                       </span>
                       <span className="font-display text-xl font-light max-sm:col-start-2">
-                        {order.itemCount === 1 ? t.piece : interpolate(t.pieces, { count: order.itemCount })}
+                        {order.items
+                          .map(({ name, quantity }) => (quantity > 1 ? interpolate(t.nameTimes, { name, count: quantity }) : name))
+                          .join(t.listSeparator)}
                       </span>
                       <span className="text-sm tracking-price max-sm:col-start-2">{formatPrice(order.total)}</span>
                       <StatusBadge status={order.status} className="max-sm:col-start-2" />

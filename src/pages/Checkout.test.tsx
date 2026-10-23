@@ -147,9 +147,10 @@ describe("Checkout", () => {
     expect(await screen.findByText("landed: /checkout/thanks/1")).toBeInTheDocument()
     expect(placed()[0]).toMatchObject({
       number: "GS-0001",
+      // The server keeps the lines in productId order.
       items: [
-        { productId: QADISHA, quantity: 1, unitPrice: 890 },
         { productId: BATROUN, quantity: 2, unitPrice: 180 },
+        { productId: QADISHA, quantity: 1, unitPrice: 890 },
       ],
       recipient: { name: "Nour Haddad", phone: "+96171234567", isAccountHolder: true },
       city: "Jounieh",
@@ -208,7 +209,57 @@ describe("Checkout", () => {
     await fillAddress(user)
     localStorage.setItem(DEMO_REFUSE_KEY, "VALIDATION")
     await user.click(screen.getByRole("button", { name: "Place order" }))
-    expect(await screen.findByRole("alert")).toHaveTextContent("city is required")
+    expect(await screen.findByRole("alert")).toHaveTextContent("Please enter the city (up to 100 characters).")
+  })
+
+  it("on a 403, shows the server's words", async () => {
+    const user = await open()
+    await within(screen.getByRole("complementary", { name: "Order summary" })).findByText("Qadisha")
+    await fillAddress(user)
+    localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
+    await user.click(screen.getByRole("button", { name: "Place order" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your account isn't ready yet. Please sign out and sign in again.")
+    expect(placed()).toEqual([])
+  })
+
+  // API Gateway refused the token (expired, revoked): sign in again and come back, the cart as it was.
+  it("on a 401, sends the customer to sign in and back to checkout, keeping the cart", async () => {
+    const user = await open()
+    await within(screen.getByRole("complementary", { name: "Order summary" })).findByText("Qadisha")
+    await fillAddress(user)
+    localStorage.setItem(DEMO_REFUSE_KEY, "UNAUTHORIZED")
+    await user.click(screen.getByRole("button", { name: "Place order" }))
+    expect(await screen.findByText("landed: /sign-in?next=%2Fcheckout")).toBeInTheDocument()
+    expect(cart().lines).toHaveLength(2)
+  })
+
+  it("on a 401 while reading the customer, sends them to sign in and back", async () => {
+    localStorage.setItem(DEMO_REFUSE_KEY, "UNAUTHORIZED")
+    fillCart([[QADISHA, 1]])
+    stubApi()
+    renderAt(<Checkout />, "/checkout", { auth: await signedIn(), routes: probes })
+    expect(await screen.findByText("landed: /sign-in?next=%2Fcheckout")).toBeInTheDocument()
+  })
+
+  it("on a 403 while reading the customer, shows the server's words and a way to sign out", async () => {
+    localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
+    fillCart([[QADISHA, 1]])
+    stubApi()
+    renderAt(<Checkout />, "/checkout", { auth: await signedIn(), routes: probes })
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your account isn't ready yet. Please sign out and sign in again.")
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument()
+  })
+
+  it("names a piece that no longer exists on its cart line", async () => {
+    const user = await open()
+    await within(screen.getByRole("complementary", { name: "Order summary" })).findByText("Qadisha")
+    await fillAddress(user)
+    // Qadisha is deleted between the page loading and the order.
+    stubApi((list) => list.filter((piece) => piece.id !== QADISHA))
+    await user.click(screen.getByRole("button", { name: "Place order" }))
+    await waitFor(() => expect(cart().open).toBe(true))
+    expect(cart().notice).toEqual({ kind: "server", productId: QADISHA, message: "One piece in your cart is no longer available." })
   })
 
   it("shows the empty state when nothing can be ordered", async () => {

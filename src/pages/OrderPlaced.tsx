@@ -19,7 +19,7 @@ export default function OrderPlaced() {
   const handed = (useLocation().state as { order?: Order } | null)?.order
   const [state, , retry] = useOrder(id, handed)
 
-  if (state.status !== "ready") return <OrderMissing state={state.status} retry={retry} />
+  if (state.status !== "ready") return <OrderMissing state={state} retry={retry} />
   const order = state.value
 
   return (

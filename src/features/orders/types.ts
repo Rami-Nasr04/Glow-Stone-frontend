@@ -1,7 +1,7 @@
 import type { ProductImage } from "@/features/catalog/types"
 
-// The customers and orders API (contract: "API contract: customers and orders", draft 2026-10-23). Money is in USD
-// with up to 2 decimals, and every total comes from the server.
+// The customers and orders API (contract: "API contract: customers and orders", revised 2026-10-23 night). Money is
+// in USD with up to 2 decimals, and every total comes from the server.
 
 /** GET /me */
 export interface Me {
@@ -42,14 +42,18 @@ export interface OrderSummary {
   createdAt: string
   itemCount: number
   total: number
+  /** The order's pieces, in its line order. */
+  items: { name: string; quantity: number }[]
   /** The first line's cover photo. */
   image: ProductImage | null
 }
 
 export interface OrderItem {
   productId: number
-  /** The piece's current name. */
+  /** The piece's current name, stone and colour. */
   name: string
+  stoneType: string
+  color: string
   quantity: number
   /** The price paid. */
   unitPrice: number
@@ -76,7 +80,8 @@ export interface Order {
   canCancel: boolean
 }
 
-/** The API's refusal codes, plus NETWORK when no answer came and INVALID_ANSWER when it couldn't be read. */
+/** The API's refusal codes (UNAUTHORIZED: any 401, API Gateway's own included), plus NETWORK when no answer came and
+ * INVALID_ANSWER when it couldn't be read. */
 export type OrderErrorCode =
   | "VALIDATION"
   | "UNAUTHORIZED"
@@ -93,7 +98,7 @@ export type OrderErrorCode =
 export class OrderError extends Error {
   readonly status: number
   readonly code: OrderErrorCode
-  /** The piece a 409 UNAVAILABLE / PRICE_CHANGED is about, when the API says (not in the contract yet). */
+  /** The piece a 409 UNAVAILABLE / PRICE_CHANGED is about. */
   readonly productId: number | null
 
   constructor(status: number, code: OrderErrorCode, message: string, productId: number | null = null) {

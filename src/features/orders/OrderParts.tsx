@@ -41,7 +41,9 @@ export function OrderItems({ order }: { order: Order }) {
           </div>
           <div className="flex min-w-0 flex-col gap-1.5">
             <span className="font-display text-2xl leading-tight font-light">{noBreak(item.name)}</span>
-            <span className="text-label uppercase tracking-caps text-muted-foreground">{interpolate(m.orders.qty, { count: item.quantity })}</span>
+            <span className="text-label uppercase tracking-caps text-muted-foreground">
+              {[item.stoneType, item.color, interpolate(m.orders.qty, { count: item.quantity })].filter(Boolean).join(" · ")}
+            </span>
           </div>
           {/* The price paid, as the server keeps it. */}
           <span className="text-sm tracking-price">{formatPrice(item.lineTotal)}</span>
