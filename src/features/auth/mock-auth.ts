@@ -1,6 +1,7 @@
 import { AuthError, type AuthClient, type AuthUser } from "./types"
 
-// Stand-in for the customer pool until B3: accounts live in this browser only, and every emailed code is DEMO_CODE.
+// The demo accounts (tests, `npm run dev:demo`, or the dev server without the customer pool ids): accounts live in
+// this browser only, and every emailed code is DEMO_CODE.
 export const DEMO_CODE = "123456"
 export const DEMO_USER = { email: "demo@glowstone.test", password: "Stone2026", name: "Nour Haddad", phone: "+96171234567" }
 

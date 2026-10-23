@@ -6,7 +6,7 @@ import NotFound from "@/pages/NotFound"
 import OrderPlaced from "@/pages/OrderPlaced"
 import type { Route } from "./+types/order-placed"
 
-// Closed on built sites until the customer pool is live (like the sign-in pages): the missing page, in the site frame.
+// Closed on built sites until VITE_ACCOUNTS_OPEN=true (like the sign-in pages): the missing page, in the site frame.
 export function meta({ params }: Route.MetaArgs) {
   const m = MESSAGES[toLocale(params.lang)]
   return [{ title: ACCOUNTS_OPEN ? m.orders.thanksMetaTitle : m.notFound.metaTitle }, { name: "robots", content: "noindex" }]

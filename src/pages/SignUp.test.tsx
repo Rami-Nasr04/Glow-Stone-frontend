@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
 import { takePendingPassword } from "@/features/auth/pending-password"
+import { AuthError } from "@/features/auth/types"
 import { renderAt } from "@/test/render"
 import SignUp from "./SignUp"
 
@@ -107,6 +108,46 @@ describe("SignUp", () => {
     await fill({ ...valid, email: DEMO_USER.email })
     await screen.findByRole("alert")
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("keeps the name within the pool's 100 characters and sends it trimmed", async () => {
+    const auth = createMockAuth(null)
+    const spy = vi.spyOn(auth, "signUp")
+    renderAt(<SignUp />, "/sign-up", { auth })
+    expect(screen.getByLabelText("Full name")).toHaveAttribute("maxLength", "100")
+    await fill({ ...valid, name: "  Rana Khoury  " })
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled())
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ name: "Rana Khoury", phone: "+96171000000" }))
+  })
+
+  // The pool's pre-sign-up check: its own words, shown as they are.
+  it("shows the pool's refusal in its own words", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "signUp").mockRejectedValueOnce(new AuthError("rejected", "Please enter a Lebanese number, like 71 234 567."))
+    renderAt(<SignUp />, "/sign-up", { auth })
+    await fill(valid)
+    expect(await screen.findByRole("alert")).toHaveTextContent(/^Please enter a Lebanese number, like 71 234 567\.$/)
+  })
+
+  it.each([
+    ["network", "We couldn't reach Glowstone. Check your connection and try again."],
+    ["too_many_attempts", "Too many attempts. Please wait a few minutes and try again."],
+    ["unavailable", "Something went wrong on our side. Please try again in a moment."],
+  ] as const)("explains %s", async (code, words) => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "signUp").mockRejectedValueOnce(new AuthError(code))
+    renderAt(<SignUp />, "/sign-up", { auth })
+    await fill(valid)
+    expect(await screen.findByRole("alert")).toHaveTextContent(words)
+  })
+
+  it("puts a password the pool refuses under the password", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "signUp").mockRejectedValueOnce(new AuthError("weak_password"))
+    renderAt(<SignUp />, "/sign-up", { auth })
+    await fill(valid)
+    expect(await screen.findByText("Choose a password that meets all three rules below.")).toBeInTheDocument()
+    expect(screen.getByLabelText("Password")).toHaveFocus()
   })
 
   it("offers to sign in when the email already has an account", async () => {

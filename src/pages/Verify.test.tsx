@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_CODE } from "@/features/auth/mock-auth"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
+import { AuthError } from "@/features/auth/types"
 import { renderAt } from "@/test/render"
 import Verify from "./Verify"
 
@@ -56,6 +57,22 @@ describe("Verify", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("That code isn't right.")
     expect(screen.getByLabelText("Digit 1")).toHaveAttribute("aria-invalid", "true")
     expect(screen.getByLabelText("Digit 1")).toHaveFocus()
+  })
+
+  it("explains an expired code and points to a new one", async () => {
+    const auth = await newAccount()
+    vi.spyOn(auth, "confirmSignUp").mockRejectedValueOnce(new AuthError("expired_code"))
+    renderAt(<Verify />, "/verify?email=rana%40example.com", { auth })
+    await enter("123456")
+    expect(await screen.findByRole("alert")).toHaveTextContent("This code has expired. Please ask for a new one.")
+  })
+
+  it("says when the connection failed", async () => {
+    const auth = await newAccount()
+    vi.spyOn(auth, "confirmSignUp").mockRejectedValueOnce(new AuthError("network"))
+    renderAt(<Verify />, "/verify?email=rana%40example.com", { auth })
+    await enter("123456")
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't reach Glowstone.")
   })
 
   it("signs a brand-new customer straight in and continues to where they were going", async () => {

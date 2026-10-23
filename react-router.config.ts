@@ -3,6 +3,7 @@ import { join } from "node:path"
 import type { Config } from "@react-router/dev/config"
 import { loadEnv } from "vite"
 import { readSiteParts, readStudioBase } from "./src/config/studio.ts"
+import { customerAuthSetup } from "./src/features/auth/setup.ts"
 import { fetchProducts, requireApiUrl } from "./src/features/catalog/api.ts"
 import { prerenderPaths } from "./src/i18n/paths.ts"
 import { requireClientId, requireFlag, requirePoolId, requireUrl } from "./src/lib/env.ts"
@@ -11,7 +12,8 @@ export default {
   appDirectory: "src",
   ssr: false,
   // The product pages come from GET /products. A missing or bad VITE_SITE_URL, VITE_ALLOW_INDEXING, VITE_API_URL,
-  // VITE_SITE_PARTS/VITE_STUDIO_BASE or (with the studio) VITE_ADMIN_*, or a bad answer, stops the build. A
+  // VITE_SITE_PARTS/VITE_STUDIO_BASE, (with the shop) VITE_CUSTOMER_* / VITE_ACCOUNTS_OPEN or (with the studio)
+  // VITE_ADMIN_*, or a bad answer, stops the build. A
   // studio-only build prerenders nothing: every address gets the SPA shell.
   async prerender() {
     const env = loadEnv("production", process.cwd(), "VITE_")
@@ -25,6 +27,13 @@ export default {
       requireClientId("VITE_ADMIN_APP_CLIENT_ID", env.VITE_ADMIN_APP_CLIENT_ID)
     }
     if (!parts.includes("shop")) return []
+    customerAuthSetup({
+      dev: false,
+      mode: "production",
+      poolId: env.VITE_CUSTOMER_USER_POOL_ID,
+      clientId: env.VITE_CUSTOMER_APP_CLIENT_ID,
+      accountsOpen: env.VITE_ACCOUNTS_OPEN,
+    })
     return prerenderPaths(await fetchProducts(api))
   },
   // With nothing prerendered (the studio alone) React Router writes the app shell as index.html. vercel.json rewrites

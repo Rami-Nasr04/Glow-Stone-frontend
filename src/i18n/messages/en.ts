@@ -461,6 +461,8 @@ export const en = {
     weakPassword: "Choose a password that meets all three rules below.",
     unavailable: "Something went wrong on our side. Please try again in a moment.",
     tooManyAttempts: "Too many attempts. Please wait a few minutes and try again.",
+    network: "We couldn't reach Glowstone. Check your connection and try again.",
+    expiredCode: "This code has expired. Please ask for a new one.",
     madeInLebanon: "Made in Lebanon.",
     signIn: {
       metaTitle: "Sign in — Glowstone",

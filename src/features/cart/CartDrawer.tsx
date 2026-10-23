@@ -295,7 +295,7 @@ function CartLineItem({ line, live, flag }: CartLineItemProps) {
   )
 }
 
-// Checkout needs customer accounts: while they are closed (built sites, until the customer pool is live) the button
+// Checkout needs customer accounts: while they are closed (built sites without VITE_ACCOUNTS_OPEN=true) the button
 // says ordering opens soon. This is the one place that decides.
 function CheckoutButton({ disabled }: { disabled: boolean }) {
   const { m, to } = useLocale()

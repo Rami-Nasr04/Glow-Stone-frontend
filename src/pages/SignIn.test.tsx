@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
 import { takePendingPassword } from "@/features/auth/pending-password"
+import { AuthError } from "@/features/auth/types"
 import { renderAt } from "@/test/render"
 import SignIn from "./SignIn"
 
@@ -76,6 +77,14 @@ describe("SignIn", () => {
     expect(resend).toHaveBeenCalledWith("rana@example.com")
     // Verifying then signs them straight in: the password waits in memory.
     expect(takePendingPassword("rana@example.com")).toBe("Cedar2026")
+  })
+
+  it("says when the connection failed", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "signIn").mockRejectedValueOnce(new AuthError("network"))
+    renderAt(<SignIn />, "/sign-in", { auth })
+    await signIn(DEMO_USER.email, DEMO_USER.password)
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't reach Glowstone. Check your connection and try again.")
   })
 
   it("pre-fills the email from the link and shows the demo note", () => {

@@ -1,4 +1,4 @@
-// Must equal the customer pool's password policy (B3).
+// Must equal the customer pool's password policy: 8+ characters, a number, a capital letter.
 export const PASSWORD_RULES = [
   { key: "length", test: (password: string) => password.length >= 8 },
   { key: "number", test: (password: string) => /\d/.test(password) },

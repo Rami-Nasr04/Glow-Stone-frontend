@@ -5,6 +5,7 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import PasswordRules from "@/features/auth/PasswordRules"
+import { authFailureText } from "@/features/auth/messages"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { lebanesePhone, passwordOk } from "@/features/auth/rules"
 import { AuthError } from "@/features/auth/types"
@@ -68,7 +69,10 @@ export default function SignUp() {
       if (code === "email_taken") {
         setErrors({ email: t.emailTaken })
         setEmailTaken(true)
-      } else setErrors({ form: code === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable })
+      } else if (code === "weak_password") {
+        setErrors({ password: m.auth.weakPassword })
+        formRef.current?.querySelector<HTMLElement>("#signup-password")?.focus()
+      } else setErrors({ form: authFailureText(error, m) })
     }
   }
 
@@ -76,7 +80,7 @@ export default function SignUp() {
     <AuthFrame title={t.title} intro={t.intro}>
       <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-8">
         <Field id="signup-name" label={m.auth.fullName} error={errors.name}>
-          {(control) => <input type="text" autoComplete="name" value={fields.name} onChange={set("name")} className={inputClass} {...control} />}
+          {(control) => <input type="text" autoComplete="name" maxLength={100} value={fields.name} onChange={set("name")} className={inputClass} {...control} />}
         </Field>
         <div className="flex flex-col gap-1">
           <Field id="signup-email" label={m.auth.email} error={errors.email} announce={emailTaken}>

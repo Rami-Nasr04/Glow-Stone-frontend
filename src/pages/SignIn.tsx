@@ -6,6 +6,7 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import { AFTER_SIGN_IN, safeNext } from "@/features/auth/next-path"
+import { authFailureText } from "@/features/auth/messages"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { AuthError } from "@/features/auth/types"
 import { interpolate } from "@/i18n/format"
@@ -57,7 +58,7 @@ export default function SignIn() {
         return
       }
       if (code === "wrong_credentials") setErrors({ password: t.wrongCredentials })
-      else setErrors({ form: code === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable })
+      else setErrors({ form: authFailureText(error, m) })
     }
   }
 

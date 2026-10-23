@@ -22,6 +22,9 @@ describe("the build", () => {
     vi.stubEnv("VITE_ALLOW_INDEXING", "false")
     vi.stubEnv("VITE_ADMIN_USER_POOL_ID", "eu-central-1_Test123")
     vi.stubEnv("VITE_ADMIN_APP_CLIENT_ID", "testclient123")
+    vi.stubEnv("VITE_CUSTOMER_USER_POOL_ID", "")
+    vi.stubEnv("VITE_CUSTOMER_APP_CLIENT_ID", "")
+    vi.stubEnv("VITE_ACCOUNTS_OPEN", "")
   })
   afterEach(() => vi.unstubAllEnvs())
 
@@ -99,6 +102,35 @@ describe("the build", () => {
     const files = Object.fromEntries(readdirSync(join(dir, "client")).map((name) => [name, readFileSync(join(dir, "client", name), "utf8")]))
     expect(files).toEqual(after)
     rmSync(dir, { recursive: true, force: true })
+  })
+
+  // The demo accounts keep accounts in the visitor's browser and say every code is 123456: a built site never opens them.
+  it("refuses VITE_ACCOUNTS_OPEN=true without the customer pool, before asking the API", async () => {
+    const fetch = stubApi()
+    vi.stubEnv("VITE_ACCOUNTS_OPEN", "true")
+    vi.stubEnv("VITE_CUSTOMER_USER_POOL_ID", "")
+    vi.stubEnv("VITE_CUSTOMER_APP_CLIENT_ID", "")
+    await expect(prerender()).rejects.toThrow("VITE_ACCOUNTS_OPEN=true needs VITE_CUSTOMER_USER_POOL_ID and VITE_CUSTOMER_APP_CLIENT_ID")
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ VITE_CUSTOMER_USER_POOL_ID: "eu-central-1_Test123", VITE_CUSTOMER_APP_CLIENT_ID: "" }, "VITE_CUSTOMER_APP_CLIENT_ID is not set"],
+    [{ VITE_CUSTOMER_USER_POOL_ID: "cSYvqogY8", VITE_CUSTOMER_APP_CLIENT_ID: "shopclient123" }, "VITE_CUSTOMER_USER_POOL_ID must look like"],
+    [{ VITE_ACCOUNTS_OPEN: "yes" }, "VITE_ACCOUNTS_OPEN"],
+  ])("refuses a bad customer pool setting %j before asking the API", async (vars, message) => {
+    const fetch = stubApi()
+    for (const [name, value] of Object.entries(vars)) vi.stubEnv(name, value)
+    await expect(prerender()).rejects.toThrow(message)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("builds with the customer pool and accounts left closed (Vercel until Rami opens them)", async () => {
+    stubApi()
+    vi.stubEnv("VITE_CUSTOMER_USER_POOL_ID", "eu-central-1_Test123")
+    vi.stubEnv("VITE_CUSTOMER_APP_CLIENT_ID", "shopclient123")
+    vi.stubEnv("VITE_ACCOUNTS_OPEN", "")
+    expect(await prerender()).toContain("/collection/5/qadisha")
   })
 
   it("refuses a missing VITE_API_URL", async () => {

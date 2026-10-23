@@ -6,6 +6,7 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import { emptyCode } from "@/features/auth/code"
+import { authFailureText } from "@/features/auth/messages"
 import CodeInput from "@/features/auth/CodeInput"
 import PasswordRules from "@/features/auth/PasswordRules"
 import { passwordOk } from "@/features/auth/rules"
@@ -53,10 +54,13 @@ export default function ForgotPassword() {
   const fail = (failure: unknown, codeStep: boolean) => {
     setBusy(false)
     const reason = failure instanceof AuthError ? failure.code : "unavailable"
-    if (codeStep && reason === "wrong_code") {
-      setErrors({ code: m.auth.verify.wrongCode })
+    if (codeStep && (reason === "wrong_code" || reason === "expired_code")) {
+      setErrors({ code: authFailureText(failure, m) })
       document.getElementById("reset-code-0")?.focus()
-    } else setErrors({ form: reason === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable })
+    } else if (codeStep && reason === "weak_password") {
+      setErrors({ password: m.auth.weakPassword })
+      document.getElementById("reset-password")?.focus()
+    } else setErrors({ form: authFailureText(failure, m) })
   }
 
   const send = async (e: React.FormEvent) => {

@@ -14,7 +14,7 @@ function browserStorage(): Storage | null {
   }
 }
 
-// The real routes once the customer pool is live; until then the demo accounts talk to the demo API in this browser.
+// The real routes with the real customer pool; the demo accounts talk to the demo API in this browser.
 export function ordersFor(auth: AuthClient): OrdersClient {
   const token = () => auth.accessToken()
   if (auth.mode === "live") return createHttpOrders(apiBase(), token)

@@ -2,6 +2,7 @@ import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_CODE, DEMO_USER } from "@/features/auth/mock-auth"
+import { AuthError } from "@/features/auth/types"
 import { renderAt } from "@/test/render"
 import ForgotPassword from "./ForgotPassword"
 
@@ -61,6 +62,37 @@ describe("ForgotPassword", () => {
     await user.keyboard("000000")
     await user.click(screen.getByRole("button", { name: "Save new password" }))
     expect(await screen.findByRole("alert")).toHaveTextContent("That code isn't right.")
+  })
+
+  it("explains an expired code under the code", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "confirmForgotPassword").mockRejectedValueOnce(new AuthError("expired_code"))
+    renderAt(<ForgotPassword />, "/forgot-password", { auth })
+    const user = await requestCode(DEMO_USER.email)
+    await screen.findByLabelText("Digit 1")
+    await choose(user, DEMO_CODE, "Granite2027")
+    expect(await screen.findByRole("alert")).toHaveTextContent("This code has expired. Please ask for a new one.")
+    expect(screen.getByLabelText("Digit 1")).toHaveAttribute("aria-invalid", "true")
+  })
+
+  it("puts a password the pool refuses under the password", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "confirmForgotPassword").mockRejectedValueOnce(new AuthError("weak_password"))
+    renderAt(<ForgotPassword />, "/forgot-password", { auth })
+    const user = await requestCode(DEMO_USER.email)
+    await screen.findByLabelText("Digit 1")
+    await choose(user, DEMO_CODE, "Granite2027")
+    expect(await screen.findByText("Choose a password that meets all three rules below.")).toBeInTheDocument()
+  })
+
+  it("says too many requests and a failed connection plainly when sending the code", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "forgotPassword").mockRejectedValueOnce(new AuthError("too_many_attempts")).mockRejectedValueOnce(new AuthError("network"))
+    renderAt(<ForgotPassword />, "/forgot-password", { auth })
+    const user = await requestCode(DEMO_USER.email)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many attempts.")
+    await user.click(screen.getByRole("button", { name: "Send code" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't reach Glowstone.")
   })
 
   it("saves the new password and sends the customer to sign in with it", async () => {
