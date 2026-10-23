@@ -37,6 +37,8 @@ export const STUDIO_COPY = {
     uppercase: "An uppercase letter",
     lowercase: "A lowercase letter",
     number: "A number",
+    met: "(met)",
+    notMet: "(not yet met)",
   },
   forgot: {
     title: "Reset your password",

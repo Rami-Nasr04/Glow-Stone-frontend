@@ -5,7 +5,7 @@ import { Field, inputClass } from "@/components/ui/field"
 import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
-import { MESSAGES } from "@/i18n/useLocale"
+import { EDITION_EN } from "@/i18n/messages/edition"
 import { cn } from "@/lib/utils"
 import StudioNotFound from "@/pages/studio/StudioNotFound"
 import { type ProductField, StudioError } from "./admin-api"
@@ -64,8 +64,7 @@ function previewLine(values: ProductFormValues): string | null {
   const remaining = Number(values.remaining)
   if (!values.editionSize.trim() || !values.remaining.trim() || !Number.isInteger(edition) || !Number.isInteger(remaining)) return null
   if (edition <= 0 || remaining < 0 || remaining > edition) return null
-  const m = MESSAGES.en.edition
-  return remaining === 0 ? m.soldOut : interpolate(m.remaining, { edition, remaining })
+  return remaining === 0 ? EDITION_EN.soldOut : interpolate(EDITION_EN.remaining, { edition, remaining })
 }
 
 // Create and edit one piece: exactly the API's fields, checked like the database, sending only what changed.

@@ -171,6 +171,9 @@ if (!withShop) {
   if (pages.length > 0) fail(`the studio-only build prerendered ${pages.map((p) => p.path).join(", ")}`)
   const shell = readFileSync(join(BUILD, "__spa-fallback.html"), "utf8")
   if (!/<meta name="robots" content="noindex, nofollow"/.test(shell)) fail("the studio-only shell has no robots noindex tag")
+  // The studio shows the shop's edition line in its preview, and nothing else of the shop's words.
+  const shopWords = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes(en.home.quote))
+  if (shopWords.length > 0) fail(`the studio-only build carries the shop's dictionary: ${shopWords.join(", ")}`)
 }
 // Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
 // page's title (accepted).

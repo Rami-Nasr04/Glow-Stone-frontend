@@ -5,7 +5,7 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { safeStudioNext, studioPath } from "@/config/studio"
 import { emptyCode } from "@/features/auth/code"
 import CodeInput from "@/features/auth/CodeInput"
-import PasswordRules from "@/features/auth/PasswordRules"
+import PasswordChecklist from "@/features/auth/PasswordChecklist"
 import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { ADMIN_PASSWORD_RULES, adminPasswordOk } from "@/features/studio/auth/password"
 import { AdminAuthError } from "@/features/studio/auth/types"
@@ -160,7 +160,7 @@ export default function StudioForgotPassword() {
           id="studio-reset-password"
           label={STUDIO_COPY.newPassword.password}
           error={errors.password}
-          hint={<PasswordRules password={password} rules={ADMIN_PASSWORD_RULES} />}
+          hint={<PasswordChecklist password={password} rules={ADMIN_PASSWORD_RULES} metLabel={STUDIO_COPY.rules.met} notMetLabel={STUDIO_COPY.rules.notMet} />}
         >
           {(control) => (
             <PasswordInput

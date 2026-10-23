@@ -1,3 +1,5 @@
+import { EDITION_EN } from "./edition.ts"
+
 // English is the source of truth for message keys. Arabic and French dictionaries are added in the
 // Arabic/French pass and must provide every key (enforced by the Messages type).
 export const en = {
@@ -41,13 +43,7 @@ export const en = {
     tooMany: "Please try again in a minute.",
     failed: "Something went wrong. Please try again.",
   },
-  edition: {
-    remaining: "Edition of {edition} — {remaining} remaining",
-    remainingCount: "{remaining} remaining",
-    of: "Edition of {edition}",
-    soldOut: "Sold out",
-    editionSoldOut: "Edition of {edition} — sold out",
-  },
+  edition: EDITION_EN,
   catalog: {
     photoAlt: "{name}, photo {n} of {total}",
     unnamedPiece: "a Glowstone piece",
