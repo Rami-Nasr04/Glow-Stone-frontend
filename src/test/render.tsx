@@ -6,8 +6,8 @@ import type { AuthClient } from "@/features/auth/types"
 interface RenderOptions {
   /** Wraps the page in an AuthProvider with this client (use a fresh createMockAuth(null) per test). */
   auth?: AuthClient
-  /** Extra routes, e.g. a probe at "/sign-in" to assert a redirect. */
-  routes?: { path: string; Component: React.ComponentType }[]
+  /** Extra routes, e.g. a probe at "/sign-in" to assert a redirect (a loader makes arriving there take a moment). */
+  routes?: { path: string; Component: React.ComponentType; loader?: () => Promise<unknown> }[]
 }
 
 // Renders a component inside the router, as if the browser were at `path` ("/ar/..." selects Arabic).

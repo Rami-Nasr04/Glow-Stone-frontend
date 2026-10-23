@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
+import RequireAuth from "@/features/auth/RequireAuth"
 import { DEMO_REFUSE_KEY } from "@/features/orders/demo-api"
 import { demoCustomer, placeOrder } from "@/test/orders"
 import { renderAt } from "@/test/render"
@@ -39,6 +40,23 @@ describe("Account", () => {
     expect(await screen.findByText("landed: /sign-in?next=%2Faccount")).toBeInTheDocument()
   })
 
+  it("on a 403, signs out to sign-in and back here, inside RequireAuth as the route has it", async () => {
+    const { auth } = await demoCustomer()
+    localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
+    const user = userEvent.setup({ delay: null })
+    const slow = () => new Promise((done) => setTimeout(() => done(null), 50))
+    renderAt(
+      <RequireAuth>
+        <Account />
+      </RequireAuth>,
+      "/account",
+      { auth, routes: [{ path: "/sign-in", Component: Probe, loader: slow }] },
+    )
+    await user.click(await screen.findByRole("button", { name: "Sign out" }))
+    expect(await screen.findByText("landed: /sign-in?next=%2Faccount")).toBeInTheDocument()
+    expect(await auth.currentUser()).toBeNull()
+  })
+
   it("on a 403, shows the server's words and signs out from there", async () => {
     const { auth } = await demoCustomer()
     localStorage.setItem(DEMO_REFUSE_KEY, "FORBIDDEN")
@@ -66,6 +84,29 @@ describe("Account", () => {
     expect(within(profile).getByText("demo@glowstone.test")).toBeInTheDocument()
     expect(within(profile).getByText("+961 71 234 567")).toBeInTheDocument()
     expect(within(profile).queryByRole("textbox")).not.toBeInTheDocument()
+  })
+
+  // The route wraps the page in RequireAuth, which sends a signed-out visitor to sign in: going home must win.
+  it("signs out and goes home, not to sign-in, inside RequireAuth as the route has it", async () => {
+    const { auth } = await demoCustomer()
+    const user = userEvent.setup({ delay: null })
+    renderAt(
+      <RequireAuth>
+        <Account />
+      </RequireAuth>,
+      "/account",
+      {
+        auth,
+        routes: [
+          // Like the real home route, whose code loads first: the navigation finishes a moment later.
+          { path: "/", Component: Probe, loader: () => new Promise((done) => setTimeout(() => done(null), 50)) },
+          { path: "/sign-in", Component: Probe },
+        ],
+      },
+    )
+    await user.click(await screen.findByRole("button", { name: "Sign out" }))
+    expect(await screen.findByText("landed: /")).toBeInTheDocument()
+    expect(await auth.currentUser()).toBeNull()
   })
 
   it("signs out and goes home", async () => {

@@ -1,5 +1,7 @@
 import { screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
+import { useAuth } from "./auth-context"
 import { renderAt } from "@/test/render"
 import { createMockAuth, DEMO_USER } from "./mock-auth"
 import RequireAuth from "./RequireAuth"
@@ -26,6 +28,33 @@ describe("RequireAuth", () => {
     renderAt(page, "/account", { auth: createMockAuth(null) })
     expect(screen.queryByRole("heading", { name: "My account" })).not.toBeInTheDocument()
     expect(screen.getByRole("status")).toHaveTextContent("Checking your session…")
+  })
+
+  // The page's own Sign out decides where the customer goes; a redirect to sign-in here would beat it (it renders
+  // first, while the router's navigation is still a transition).
+  it("doesn't send a customer who signs out on the page to sign in", async () => {
+    const auth = createMockAuth(null)
+    await auth.signIn(DEMO_USER.email, DEMO_USER.password)
+    function SignOutHere() {
+      const { signOut } = useAuth()
+      return (
+        <button type="button" onClick={() => void signOut()}>
+          Sign out
+        </button>
+      )
+    }
+    renderAt(
+      <RequireAuth>
+        <SignOutHere />
+      </RequireAuth>,
+      "/account",
+      { auth, routes: [{ path: "/sign-in", Component: SignInProbe }] },
+    )
+    await userEvent.setup({ delay: null }).click(await screen.findByRole("button", { name: "Sign out" }))
+    expect(await auth.currentUser()).toBeNull()
+    await new Promise((done) => setTimeout(done, 50))
+    expect(screen.queryByText(/sign-in page/)).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument()
   })
 
   it("shows the page to a signed-in customer", async () => {
