@@ -66,6 +66,49 @@ describe("SignUp", () => {
     expect(takePendingPassword("rana@example.com")).toBeNull()
   })
 
+  it("offers news of new editions, ticked by default", () => {
+    renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null) })
+    expect(screen.getByRole("checkbox", { name: "Email me when new editions arrive" })).toBeChecked()
+  })
+
+  it("adds the new customer to the news list quietly once the account exists (rejoin false)", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal("fetch", fetch)
+    renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null), routes: probes })
+    await fill({ ...valid, email: " Rana@Example.com " })
+    await screen.findByText(/landed: \/verify/)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe("https://api.test/subscribers")
+    expect(JSON.parse(String(init.body))).toEqual({ email: "rana@example.com", rejoin: false, website: "" })
+  })
+
+  it("sends nothing to the news list when the box is unticked", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal("fetch", fetch)
+    renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null), routes: probes })
+    await userEvent.setup({ delay: null }).click(screen.getByRole("checkbox", { name: "Email me when new editions arrive" }))
+    await fill(valid)
+    await screen.findByText(/landed: \/verify/)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("never lets the news list hold up or block the sign-up", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})))
+    renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null), routes: probes })
+    await fill(valid)
+    expect(await screen.findByText("landed: /verify?email=rana%40example.com without password")).toBeInTheDocument()
+  })
+
+  it("adds nobody to the list when the account isn't created", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal("fetch", fetch)
+    renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null) })
+    await fill({ ...valid, email: DEMO_USER.email })
+    await screen.findByRole("alert")
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it("offers to sign in when the email already has an account", async () => {
     renderAt(<SignUp />, "/sign-up", { auth: createMockAuth(null) })
     await fill({ ...valid, email: DEMO_USER.email })

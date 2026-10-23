@@ -481,6 +481,7 @@ export const en = {
       submit: "Create account",
       submitting: "Creating account…",
       emailTaken: "An account already exists for this email.",
+      news: "Email me when new editions arrive",
       signInInstead: "Sign in instead",
       haveAccount: "Already have an account?",
       signIn: "Sign in",
