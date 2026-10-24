@@ -168,6 +168,19 @@
       scroll-padding-top: calc(var(--studio-header) + 1rem);
     }
   }
+  /* The delivery slip prints on its own A5 page, on plain paper (no grain), and nothing else of the page prints. */
+  @page slip {
+    size: A5 portrait;
+    margin: 12mm;
+  }
+  @media print {
+    [data-slip] {
+      page: slip;
+    }
+    html:has([data-slip]) body {
+      background: none;
+    }
+  }
   /* On phones the tab bar is fixed at the bottom too, with the save bar just above it. */
   @media (width < 40rem) {
     html:has([data-studio-tab-bar]) {
