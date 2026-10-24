@@ -72,7 +72,7 @@ describe("local site server (same rules as Vercel)", () => {
     expect(res.body).toBe(body)
   })
 
-  it.each(["/sign-in", "/collection/99", "/collection/99/x"])(
+  it.each(["/sign-in"])(
     "answers %s with the app shell and status 200, like the rewrites in vercel.json",
     async (path) => {
       const res = await get(path)
@@ -81,7 +81,7 @@ describe("local site server (same rules as Vercel)", () => {
     },
   )
 
-  it.each(["/nothing-here", "/studios", "/collection/abc", "/legal/unknown", "/ar/collection", "/assets/missing.js", "/%E0%A4%A"])(
+  it.each(["/nothing-here", "/studios", "/collection/abc", "/collection/99", "/collection/99/x", "/legal/unknown", "/ar/collection", "/assets/missing.js", "/%E0%A4%A"])(
     "answers %s with 404.html and status 404, like Vercel",
     async (path) => {
       const res = await get(path)

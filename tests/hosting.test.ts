@@ -18,9 +18,10 @@ function addresses(entries: RouteConfigEntry[], parent = ""): string[] {
   })
 }
 
-// Pages that are not prerendered (sign-in, the studio, a piece published since the build) load the app shell; every
-// other address is a real 404 (Vercel serves 404.html, the same shell, which shows the 404 page), except the studio's
-// old addresses on the shop, which are redirected to its own host.
+// Pages that are not prerendered (sign-in, the studio) load the app shell; every other address is a real 404 (Vercel
+// serves 404.html, the same shell, which shows the 404 page), except the studio's old addresses on the shop, which are
+// redirected to its own host. Every published piece is prerendered (Publish rebuilds the site), so a piece's address
+// that wasn't built is a 404 too; in the browser the shell still corrects an old name or a bare id to the piece.
 describe("vercel.json", () => {
   const config = JSON.parse(readFileSync("vercel.json", "utf8")) as VercelConfig
   const headersFor = (source: string) => config.headers.find((h) => h.source === source && !h.has)?.headers ?? []
@@ -66,8 +67,14 @@ describe("vercel.json", () => {
     ["/sign-up", true],
     ["/verify", true],
     ["/forgot-password", true],
-    ["/collection/99", true],
-    ["/collection/99/a-piece-published-since", true],
+    ["/checkout", true],
+    ["/checkout/thanks/7", true],
+    ["/account", true],
+    ["/account/orders/7", true],
+    ["/checkout/thanks/seven", false],
+    ["/collection/99", false],
+    ["/collection/99/x", false],
+    ["/collection/5/an-old-name", false],
     ["/nothing-here", false],
     ["/collection/abc", false],
     ["/collection/5/qadisha/extra", false],

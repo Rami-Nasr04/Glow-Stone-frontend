@@ -1,11 +1,12 @@
 import { useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router"
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { actionVariants } from "@/components/ui/action-link"
 import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import { AFTER_SIGN_IN, safeNext } from "@/features/auth/next-path"
+import { authFailureText } from "@/features/auth/messages"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { AuthError } from "@/features/auth/types"
 import { interpolate } from "@/i18n/format"
@@ -17,7 +18,7 @@ type Errors = Partial<Record<"email" | "password" | "form", string>>
 
 export default function SignIn() {
   const { m, to } = useLocale()
-  const { signIn, client } = useAuth()
+  const { signIn, client, status } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get("next")
@@ -28,6 +29,10 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const t = m.auth.signIn
+
+  // Already signed in (in another tab, or coming back to this address): nothing to do here. While this page is signing
+  // in, its own navigate leads on, after the welcome toast.
+  if (status === "signedIn" && !busy) return <Navigate replace to={safeNext(next, to(AFTER_SIGN_IN))} />
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,7 +62,7 @@ export default function SignIn() {
         return
       }
       if (code === "wrong_credentials") setErrors({ password: t.wrongCredentials })
-      else setErrors({ form: code === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable })
+      else setErrors({ form: authFailureText(error, m) })
     }
   }
 

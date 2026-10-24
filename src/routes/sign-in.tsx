@@ -6,7 +6,7 @@ import NotFound from "@/pages/NotFound"
 import SignIn from "@/pages/SignIn"
 import type { Route } from "./+types/sign-in"
 
-// Closed on built sites until the customer pool is live: the missing page, inside the site frame.
+// Closed on built sites until VITE_ACCOUNTS_OPEN=true: the missing page, inside the site frame.
 export const handle: RouteHandle = { bare: ACCOUNTS_OPEN }
 
 export function meta({ params }: Route.MetaArgs) {

@@ -1,5 +1,4 @@
-// Provisional until B3: the customer pool (Cognito) and the customers table are being designed now.
-// F3-live implements AuthClient with Cognito; the screens only ever see this interface.
+// What the shop's screens see of the customer sign-in: the Cognito client (cognito.ts) or the demo (mock-auth.ts).
 
 export interface AuthUser {
   /** The Cognito `sub`, also the customers.id. */
@@ -16,13 +15,26 @@ export interface SignUpInput {
   password: string
 }
 
-export type AuthErrorCode = "wrong_credentials" | "not_confirmed" | "email_taken" | "wrong_code" | "too_many_attempts" | "unavailable"
+export type AuthErrorCode =
+  | "wrong_credentials"
+  | "not_confirmed"
+  | "email_taken"
+  | "wrong_code"
+  | "expired_code"
+  | "weak_password"
+  /** The pool's pre-sign-up check refused the email, name or phone; the message is its own words. */
+  | "rejected"
+  | "too_many_attempts"
+  /** No answer: the customer's connection, most likely. */
+  | "network"
+  | "unavailable"
 
 export class AuthError extends Error {
   readonly code: AuthErrorCode
 
-  constructor(code: AuthErrorCode) {
-    super(code)
+  /** For "rejected", the words to show; otherwise the code. */
+  constructor(code: AuthErrorCode, message: string = code) {
+    super(message)
     this.name = "AuthError"
     this.code = code
   }
@@ -41,4 +53,6 @@ export interface AuthClient {
   forgotPassword(email: string): Promise<void>
   confirmForgotPassword(email: string, code: string, password: string): Promise<void>
   signOut(): Promise<void>
+  /** The signed-in customer's access token for the API (`Authorization: Bearer …`); throws when signed out. */
+  accessToken(): Promise<string>
 }

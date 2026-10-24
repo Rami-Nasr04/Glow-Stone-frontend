@@ -5,9 +5,11 @@ import { Field, inputClass, PasswordInput } from "@/components/ui/field"
 import { useAuth } from "@/features/auth/auth-context"
 import AuthFrame from "@/features/auth/AuthFrame"
 import PasswordRules from "@/features/auth/PasswordRules"
+import { authFailureText } from "@/features/auth/messages"
 import { rememberPendingPassword } from "@/features/auth/pending-password"
 import { lebanesePhone, passwordOk } from "@/features/auth/rules"
 import { AuthError } from "@/features/auth/types"
+import { subscribe } from "@/features/news/subscribe"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import { isEmail } from "@/lib/validation"
@@ -26,6 +28,8 @@ export default function SignUp() {
   const [errors, setErrors] = useState<Errors>({})
   const [emailTaken, setEmailTaken] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Ticked by default (Rami, 2026-10-24); the customer can untick it.
+  const [news, setNews] = useState(true)
   const formRef = useRef<HTMLFormElement>(null)
   const t = m.auth.signUp
 
@@ -53,6 +57,8 @@ export default function SignUp() {
     setBusy(true)
     try {
       await client.signUp({ name: fields.name.trim(), email, phone, password: fields.password })
+      // Only once the account exists, quietly: an earlier unsubscribe is respected, and no answer holds sign-up up.
+      if (news) void subscribe({ email, rejoin: false, website: "" }, { timeoutMs: 5000 })
       const nextParam = next ? `&next=${encodeURIComponent(next)}` : ""
       // Held in memory for the verify step, so the new customer is signed in straight after verifying.
       rememberPendingPassword(email, fields.password)
@@ -63,7 +69,10 @@ export default function SignUp() {
       if (code === "email_taken") {
         setErrors({ email: t.emailTaken })
         setEmailTaken(true)
-      } else setErrors({ form: code === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable })
+      } else if (code === "weak_password") {
+        setErrors({ password: m.auth.weakPassword })
+        formRef.current?.querySelector<HTMLElement>("#signup-password")?.focus()
+      } else setErrors({ form: authFailureText(error, m) })
     }
   }
 
@@ -71,7 +80,7 @@ export default function SignUp() {
     <AuthFrame title={t.title} intro={t.intro}>
       <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-8">
         <Field id="signup-name" label={m.auth.fullName} error={errors.name}>
-          {(control) => <input type="text" autoComplete="name" value={fields.name} onChange={set("name")} className={inputClass} {...control} />}
+          {(control) => <input type="text" autoComplete="name" maxLength={100} value={fields.name} onChange={set("name")} className={inputClass} {...control} />}
         </Field>
         <div className="flex flex-col gap-1">
           <Field id="signup-email" label={m.auth.email} error={errors.email} announce={emailTaken}>
@@ -115,6 +124,10 @@ export default function SignUp() {
             />
           )}
         </Field>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-small">
+          <input type="checkbox" checked={news} onChange={(e) => setNews(e.target.checked)} className="size-4.5 shrink-0 accent-primary" />
+          {t.news}
+        </label>
         {errors.form && (
           <p role="alert" className="text-sm text-destructive">
             {errors.form}

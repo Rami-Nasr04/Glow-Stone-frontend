@@ -32,7 +32,8 @@ export default function Product({ piece: built, products }: ProductProps) {
     if (live) noteStock(new Map([...live].map(([id, { remaining }]) => [id, remaining])))
   }, [live])
   if (!built) return <NotFound />
-  // Found by id only: a missing or outdated name in the address is corrected in place, never a 404.
+  // Found by id only: a missing or outdated name in the address is corrected in place, never the 404 page (the host
+  // answers such an address with status 404, as it was not built, and this shell still shows the piece).
   if (name !== readableName(built.name)) return <Navigate replace to={to(productPath(built))} />
 
   const piece = withLiveStock(built, live)

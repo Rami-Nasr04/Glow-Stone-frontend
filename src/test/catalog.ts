@@ -18,12 +18,12 @@ export function productOf(id: number): Product {
   return piece
 }
 
-/** Stubs fetch with the fixture answers; any other path is a 404. */
-export function stubApi() {
+/** Stubs fetch with the fixture answers (any other path is a 404); `listed` changes what GET /products answers. */
+export function stubApi(listed: (products: ProductSummary[]) => ProductSummary[] = (products) => products) {
   const fetch = vi.fn(async (input: string | URL | Request) => {
     const path = new URL(String(input)).pathname
     const id = /^\/products\/(\d+)$/.exec(path)?.[1]
-    const data = path === "/products" ? PRODUCTS : id ? (details as Product[]).find((p) => p.id === Number(id)) : undefined
+    const data = path === "/products" ? listed(PRODUCTS) : id ? (details as Product[]).find((p) => p.id === Number(id)) : undefined
     if (!data) return new Response(JSON.stringify({ success: false, error: { code: "NOT_FOUND", message: "Product not found" } }), { status: 404 })
     return new Response(JSON.stringify({ success: true, data }))
   })

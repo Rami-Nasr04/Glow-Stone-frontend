@@ -7,6 +7,7 @@ import AuthFrame from "@/features/auth/AuthFrame"
 import { emptyCode } from "@/features/auth/code"
 import CodeInput from "@/features/auth/CodeInput"
 import { AFTER_SIGN_IN, safeNext } from "@/features/auth/next-path"
+import { authFailureText } from "@/features/auth/messages"
 import { takePendingPassword } from "@/features/auth/pending-password"
 import { AuthError } from "@/features/auth/types"
 import { interpolate } from "@/i18n/format"
@@ -64,10 +65,8 @@ export default function Verify() {
     } catch (failure) {
       setBusy(false)
       const reason = failure instanceof AuthError ? failure.code : "unavailable"
-      if (reason === "wrong_code") {
-        setError(t.wrongCode)
-        document.getElementById("verify-code-0")?.focus()
-      } else setError(reason === "too_many_attempts" ? m.auth.tooManyAttempts : m.auth.unavailable)
+      setError(authFailureText(failure, m))
+      if (reason === "wrong_code" || reason === "expired_code") document.getElementById("verify-code-0")?.focus()
     }
   }
 
@@ -76,8 +75,8 @@ export default function Verify() {
       await client.resendCode(email)
       toast.success(t.resent)
       setWait(RESEND_WAIT_SECONDS)
-    } catch {
-      toast.error(m.auth.unavailable)
+    } catch (failure) {
+      toast.error(authFailureText(failure, m))
     }
   }
 

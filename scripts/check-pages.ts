@@ -3,15 +3,16 @@
 // Opens every built page in a real browser by its address without the trailing slash, then checks
 // that the page shown is that page (its h1 and title, read from its own built HTML), after a direct
 // load and after a refresh, at 1440 and 390. Also checks that an unknown address answers 404 and shows the 404 page,
-// that a page that isn't prerendered (sign-in, a piece published since the build) still answers 200, that the app
+// that a page that isn't prerendered (sign-in) still answers 200, that the app
 // moves on to another page after landing, and that the header logo link can be clicked. Every built page's canonical
 // and og:url must be the address checked (so after VITE_SITE_URL changes, one run against the new address proves it),
 // and its robots tag and X-Robots-Tag header must agree.
 // The studio: its addresses load and refresh to its sign-in page (or its not-found), never indexed, and no shop
-// page loads the studio's sign-in code. On the shop's address, the studio's old addresses answer 308 to its own host.
+// page loads the Cognito library for a signed-out visitor. On the shop's address, the studio's old addresses answer
+// 308 to its own host.
 // A build of one part (VITE_SITE_PARTS, set the same way for the build and this check): "shop" has no studio route
 // and no studio code; "studio" (VITE_STUDIO_BASE=/) has the studio at the root, the shop's addresses on the studio's
-// not-found, nothing prerendered, and noindex in the shell's own HTML.
+// not-found, nothing prerendered, noindex in the shell's own HTML, and no shop sign-in or cart code.
 // Usage: npm run build, npm start, then npm run check:pages (local), or against a deployment of the same build:
 //        npm run check:pages -- https://glowstonelb.com
 // A studio-only build locally: npm start -- 4173 studio.glowstonelb.com (the server then applies that host's rules).
@@ -122,23 +123,28 @@ async function logoOnFocus(page: Page): Promise<boolean> {
   return false
 }
 
-// The chunk that carries the Cognito library: only studio pages may load it.
+// The chunk that carries the Cognito library: studio pages load it, shop pages only once a customer has signed in
+// on this browser (never for the signed-out visitor this check is).
 const withShop = SITE_PARTS.includes("shop")
 const withStudio = SITE_PARTS.includes("studio")
-const studioOnly = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes("USER_SRP_AUTH"))
-if (withStudio && studioOnly.length === 0) throw new Error("No chunk carries the studio's sign-in code; the check would prove nothing.")
-// A shop-only build carries no studio code at all: not its sign-in, not its words, not its admin variables.
+const assets = readdirSync(join(BUILD, "assets")).map((file) => ({ file, text: readFileSync(join(BUILD, "assets", file), "utf8") }))
+const cognitoChunks = assets.filter(({ text }) => text.includes("USER_SRP_AUTH")).map(({ file }) => file)
+if (cognitoChunks.length === 0) throw new Error("No chunk carries the Cognito library; the check would prove nothing.")
+const carrying = (words: string[]) => assets.filter(({ text }) => words.some((word) => text.includes(word))).map(({ file }) => file)
+// A shop-only build carries no studio code: not its sign-in, not its words, not its admin variables.
 if (!withStudio) {
-  const studioWords = readdirSync(join(BUILD, "assets")).filter((file) => {
-    const text = readFileSync(join(BUILD, "assets", file), "utf8")
-    return ["USER_SRP_AUTH", STUDIO_COPY.signIn.intro, STUDIO_COPY.photos.hint, "VITE_ADMIN_"].some((word) => text.includes(word))
-  })
-  if (studioWords.length > 0) fail(`the shop-only build carries studio code: ${studioWords.join(", ")}`)
+  const studioCode = carrying([STUDIO_COPY.signIn.intro, STUDIO_COPY.photos.hint, "VITE_ADMIN_", "challenge_expired"])
+  if (studioCode.length > 0) fail(`the shop-only build carries studio code: ${studioCode.join(", ")}`)
+}
+// A studio-only build carries no shop code: not the customer sign-in (real or demo), not the cart.
+if (!withShop) {
+  const shopCode = carrying(["PreSignUp failed with error", "glowstone.demo-auth", "glowstone.cart", "VITE_CUSTOMER_"])
+  if (shopCode.length > 0) fail(`the studio-only build carries shop code: ${shopCode.join(", ")}`)
 }
 
-async function loadedStudioCode(page: Page): Promise<string[]> {
+async function loadedCognito(page: Page): Promise<string[]> {
   const loaded = await page.evaluate(() => performance.getEntriesByType("resource").map((entry) => entry.name))
-  return loaded.filter((url) => studioOnly.some((file) => url.endsWith(`/${file}`)))
+  return loaded.filter((url) => cognitoChunks.some((file) => url.endsWith(`/${file}`)))
 }
 
 // Signed out, every studio address ends on the sign-in page, which asks to come back afterwards.
@@ -174,14 +180,15 @@ if (!withShop) {
 }
 // Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
 // page's title (accepted).
-const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
-// Pages that aren't prerendered still answer 200 (a rewrite to the shell). A piece the API doesn't know shows the 404
-// page in the browser: the address has the shape of a piece published since the build.
+const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/collection/99999/no-such-piece", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
+// Pages that aren't prerendered still answer 200 (a rewrite to the shell).
 const notBuilt: Expected[] = [
-  // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until the customer pool is live: the 404 page, in the
+  // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until VITE_ACCOUNTS_OPEN=true: the 404 page, in the
   // site frame. When they open, it is full screen: h1 en.auth.signIn.title and no header logo to follow.
   { path: "/sign-in", h1: en.notFound.title },
-  { path: "/collection/99999/no-such-piece", h1: en.notFound.title },
+  // Checkout and the account wait for the same flag.
+  { path: "/checkout", h1: en.notFound.title },
+  { path: "/account", h1: en.notFound.title },
 ]
 const canonicalOf = (path: string) => `${base}${path}`
 
@@ -234,8 +241,8 @@ for (const viewport of viewports) {
       await checkLogo(page, homePage, `${label} scrolled`)
     }
 
-    const studioCode = await loadedStudioCode(page)
-    if (studioCode.length > 0) fail(`${label}: loaded the studio's code (${studioCode.join(", ")})`)
+    const cognito = await loadedCognito(page)
+    if (cognito.length > 0) fail(`${label}: loaded the Cognito library for a signed-out visitor (${cognito.join(", ")})`)
     for (const error of errors) fail(`${label}: script error "${error}"`)
     console.log(`  ok ${label}`)
     await page.close()

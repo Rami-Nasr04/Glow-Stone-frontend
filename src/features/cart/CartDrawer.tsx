@@ -5,6 +5,7 @@ import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
 import QuantityStepper from "@/components/product/QuantityStepper"
 import { actionVariants } from "@/components/ui/action-link"
+import { ACCOUNTS_OPEN } from "@/features/auth/client"
 import { listProducts } from "@/features/catalog/catalog"
 import { noBreak, stoneLabel } from "@/features/catalog/format"
 import NoPhoto from "@/features/catalog/NoPhoto"
@@ -13,11 +14,11 @@ import type { ProductSummary } from "@/features/catalog/types"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
-import { type CartLine, closeCart, noteStock, openCart, pieceCount, removeFromCart, setQuantity, useCart } from "./cart"
+import { type CartLine, type CartNotice, closeCart, openCart, pieceCount, refreshCart, removeFromCart, setQuantity, useCart } from "./cart"
 
 type Live =
   | { status: "loading" }
-  | { status: "ready"; pieces: ReadonlyMap<number, ProductSummary>; lowered: readonly number[] }
+  | { status: "ready"; pieces: ReadonlyMap<number, ProductSummary>; lowered: readonly number[]; repriced: readonly number[] }
   | { status: "failed" }
 
 // The last list read in this visit, in memory only: if a later read fails, lines keep their names and photos (never
@@ -25,7 +26,7 @@ type Live =
 let lastKnown: ReadonlyMap<number, ProductSummary> = new Map()
 
 // GET /products each time the drawer opens with something in it (the panel mounts on every open), so names, prices,
-// photos and stock are current.
+// photos and stock are current, and the cart takes the newest prices.
 function useLivePieces(hasLines: boolean): [Live, () => void] {
   const [live, setLive] = useState<Live>({ status: "loading" })
   const [attempt, setAttempt] = useState(0)
@@ -36,8 +37,8 @@ function useLivePieces(hasLines: boolean): [Live, () => void] {
       (list) => {
         const pieces = new Map(list.map((piece) => [piece.id, piece]))
         lastKnown = pieces
-        const lowered = noteStock(new Map(list.map((piece) => [piece.id, piece.remaining])))
-        setLive({ status: "ready", pieces, lowered })
+        const { lowered, repriced } = refreshCart(list)
+        setLive({ status: "ready", pieces, lowered, repriced })
       },
       () => {
         if (!abort.signal.aborted) setLive({ status: "failed" })
@@ -163,7 +164,7 @@ function CartPanel() {
   )
 }
 
-function CartNoticeLine({ notice }: { notice: NonNullable<ReturnType<typeof useCart>["notice"]> }) {
+function CartNoticeLine({ notice }: { notice: CartNotice }) {
   const { m, to } = useLocale()
   if (notice.kind === "stock") {
     return (
@@ -233,6 +234,7 @@ function CartLineItem({ line, live }: CartLineItemProps) {
           {live.status === "ready" && piece && !soldOut && <span className="text-sm tracking-price">{formatPrice(piece.price * line.quantity)}</span>}
         </div>
         {piece && <span className="text-label uppercase tracking-caps text-muted-foreground">{stoneLabel(piece)}</span>}
+        {live.status === "ready" && piece && !soldOut && live.repriced.includes(line.productId) && <PriceUpdated />}
 
         {live.status === "failed" ? (
           <div className="mt-2 flex items-center justify-between gap-3">
@@ -274,11 +276,38 @@ function CartLineItem({ line, live }: CartLineItemProps) {
   )
 }
 
-// Checkout isn't built yet (no customer accounts, no orders route), so the button says ordering opens soon. This is
-// the one place to point it at the real checkout.
-function CheckoutButton({ disabled }: { disabled: boolean }) {
+/** A quiet note on a line whose price changed since the customer last saw it (cart and checkout). */
+export function PriceUpdated() {
   const { m } = useLocale()
+  return (
+    <span className="flex items-center gap-2 text-xs text-accent">
+      <span aria-hidden="true" className="size-1.5 rotate-45 bg-accent" />
+      {m.cart.priceUpdated}
+    </span>
+  )
+}
+
+// Checkout needs customer accounts: while they are closed (built sites without VITE_ACCOUNTS_OPEN=true) the button
+// says ordering opens soon. This is the one place that decides.
+function CheckoutButton({ disabled }: { disabled: boolean }) {
+  const { m, to } = useLocale()
   const [said, setSaid] = useState(false)
+  const look = cn(actionVariants({ variant: "solid", size: "lg" }), "mt-1.5 w-full")
+  if (ACCOUNTS_OPEN) {
+    if (disabled) {
+      return (
+        <button type="button" disabled className={cn(look, "disabled:opacity-40")}>
+          {m.cart.checkout}
+        </button>
+      )
+    }
+    return (
+      <Link to={to("/checkout")} onClick={closeCart} className={look}>
+        {m.cart.checkout}
+        <MoveRight aria-hidden="true" strokeWidth={1.1} className="size-4.5 shrink-0 rtl:-scale-x-100" />
+      </Link>
+    )
+  }
   return (
     <>
       <button

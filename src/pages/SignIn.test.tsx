@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
 import { takePendingPassword } from "@/features/auth/pending-password"
+import { AuthError } from "@/features/auth/types"
 import { renderAt } from "@/test/render"
 import SignIn from "./SignIn"
 
@@ -60,6 +61,21 @@ describe("SignIn", () => {
     expect(await screen.findByText("landed: /checkout")).toBeInTheDocument()
   })
 
+  it("sends a visitor who is already signed in on to ?next= instead of showing the form", async () => {
+    const auth = createMockAuth(null)
+    await auth.signIn(DEMO_USER.email, DEMO_USER.password)
+    renderAt(<SignIn />, "/sign-in?next=%2Fcheckout", { auth, routes: probes })
+    expect(await screen.findByText("landed: /checkout")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Sign in" })).not.toBeInTheDocument()
+  })
+
+  it("sends a visitor who is already signed in home when nothing asked for a page, never off the site", async () => {
+    const auth = createMockAuth(null)
+    await auth.signIn(DEMO_USER.email, DEMO_USER.password)
+    renderAt(<SignIn />, "/sign-in?next=%2F%2Fevil.com", { auth, routes: probes })
+    expect(await screen.findByText("landed: /")).toBeInTheDocument()
+  })
+
   it("ignores a ?next= that leaves the site and goes home (the account page comes later)", async () => {
     renderAt(<SignIn />, "/sign-in?next=%2F%2Fevil.com", { auth: createMockAuth(null), routes: probes })
     await signIn(DEMO_USER.email, DEMO_USER.password)
@@ -76,6 +92,14 @@ describe("SignIn", () => {
     expect(resend).toHaveBeenCalledWith("rana@example.com")
     // Verifying then signs them straight in: the password waits in memory.
     expect(takePendingPassword("rana@example.com")).toBe("Cedar2026")
+  })
+
+  it("says when the connection failed", async () => {
+    const auth = createMockAuth(null)
+    vi.spyOn(auth, "signIn").mockRejectedValueOnce(new AuthError("network"))
+    renderAt(<SignIn />, "/sign-in", { auth })
+    await signIn(DEMO_USER.email, DEMO_USER.password)
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't reach Glowstone. Check your connection and try again.")
   })
 
   it("pre-fills the email from the link and shows the demo note", () => {

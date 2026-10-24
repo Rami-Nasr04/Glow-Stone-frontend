@@ -43,7 +43,7 @@ describe("BuyBox", () => {
     renderAt(<BuyBox piece={piece(QADISHA)} />)
     await user.click(screen.getByRole("button", { name: "One more" }))
     await user.click(screen.getByRole("button", { name: "Add to cart" }))
-    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: QADISHA, quantity: 2 }])
+    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: QADISHA, quantity: 2, price: 890 }])
     expect(renderHook(() => useCart()).result.current.open).toBe(true)
     // Back to one, ready for the next add.
     expect(screen.getAllByRole("status")[0]).toHaveTextContent("1")

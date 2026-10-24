@@ -16,6 +16,10 @@ function shopRoutes(): RouteConfigEntry[] {
       route("sign-up", "routes/sign-up.tsx"),
       route("verify", "routes/verify.tsx"),
       route("forgot-password", "routes/forgot-password.tsx"),
+      route("checkout", "routes/checkout.tsx"),
+      route("checkout/thanks/:id", "routes/order-placed.tsx"),
+      route("account", "routes/account.tsx"),
+      route("account/orders/:id", "routes/account-order.tsx"),
       route("*", "routes/not-found.tsx"),
     ]),
   ]

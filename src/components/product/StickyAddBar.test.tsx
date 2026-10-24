@@ -40,7 +40,7 @@ describe("StickyAddBar", () => {
     const { button } = setup()
     scrollButtonTo(button, -1100)
     fireEvent.click(screen.getByRole("button", { name: "Add to cart" }))
-    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: 3, quantity: 1 }])
+    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([{ productId: 3, quantity: 1, price: 180 }])
     const { result } = renderHook(() => useCart())
     expect(result.current.open).toBe(true)
   })

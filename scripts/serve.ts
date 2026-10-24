@@ -46,7 +46,7 @@ const TYPES: Record<string, string> = {
 // What Vercel sends when no rule in vercel.json sets Cache-Control.
 const DEFAULT_CACHE = "public, max-age=0, must-revalidate"
 
-// vercel.json sources here are plain paths with unnamed groups, such as "/(.*)" and "/collection/([0-9]+)", which
+// vercel.json sources here are plain paths with unnamed groups, such as "/(.*)" and "/checkout/thanks/([0-9]+)", which
 // read the same as a regular expression and through Vercel's path-to-regexp (tests/hosting.test.ts keeps them so).
 const matches = (rule: { source: string; has?: Condition[] }, pathname: string, host: string) =>
   new RegExp(`^${rule.source}$`).test(pathname) && (rule.has ?? []).every((condition) => condition.value === host)
