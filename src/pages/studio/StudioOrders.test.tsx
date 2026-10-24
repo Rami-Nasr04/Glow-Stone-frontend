@@ -135,4 +135,20 @@ describe("the studio's orders list", () => {
     expect(await screen.findAllByRole("link", { name: `${STUDIO_COPY.shell.orders}, 2 pending` })).toHaveLength(3)
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+
+  it("opens an order remembering the filter, so Orders leads back to it", async () => {
+    answer()
+    function Opened() {
+      const { state } = useLocation()
+      return <p>opened with: {JSON.stringify(state)}</p>
+    }
+    renderStudioAt(<StudioOrders />, "/studio/orders?status=pending", {
+      auth: auth(),
+      pattern: "/studio/orders",
+      routes: [{ path: "/studio/orders/:id", Component: Opened }],
+    })
+    const [first] = await listRows()
+    await setupUser().click(within(first).getByRole("link"))
+    expect(await screen.findByText('opened with: {"back":"?status=pending"}')).toBeInTheDocument()
+  })
 })

@@ -105,7 +105,7 @@ export default function StudioOrders() {
           ) : (
             <ul aria-label={t.title}>
               {shown.map((order) => (
-                <OrderRow key={order.id} order={order} />
+                <OrderRow key={order.id} order={order} back={filter ? `?status=${filter}` : ""} />
               ))}
             </ul>
           )}

@@ -10,14 +10,16 @@ interface StudioRenderOptions {
   pattern?: string
   /** Extra routes, e.g. { path: "/studio/products", Component: Landed }. */
   routes?: { path: string; Component: React.ComponentType }[]
+  /** The history state the page was opened with (a link's state). */
+  state?: unknown
 }
 
 // Renders a studio page inside the router and the studio's own session, as if the browser were at `path`.
-export function renderStudioAt(element: React.ReactElement, path: string, { auth = fakeAdminAuth(), pattern, routes = [] }: StudioRenderOptions = {}) {
+export function renderStudioAt(element: React.ReactElement, path: string, { auth = fakeAdminAuth(), pattern, routes = [], state }: StudioRenderOptions = {}) {
   const Stub = createRoutesStub([...routes, { path: pattern ?? path.split("?")[0], Component: () => element }])
   const result = render(
     <AdminAuthProvider client={auth} apiBase="https://api.test">
-      <Stub initialEntries={[path]} />
+      <Stub initialEntries={[state === undefined ? path : { pathname: path.split("?")[0], search: path.includes("?") ? `?${path.split("?")[1]}` : "", state }]} />
     </AdminAuthProvider>,
   )
   return { ...result, auth }

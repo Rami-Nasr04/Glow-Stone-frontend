@@ -43,16 +43,18 @@ export function OrderListHeader() {
 
 interface OrderRowProps {
   order: AdminOrderSummary
+  /** The list's filter ("?status=pending"), so the order's back link returns to it. */
+  back?: string
 }
 
 // New orders are the pending ones (Omar calls to confirm them): a wine rule at the start, a faint wash and medium
 // weight, as the prototype's new rows; the badge says Pending too.
-export default function OrderRow({ order }: OrderRowProps) {
+export default function OrderRow({ order, back = "" }: OrderRowProps) {
   const pending = order.status === "pending"
   const when = formatOrderTime(order.createdAt)
   return (
     <li data-pending={pending || undefined} className={cn("border-b border-s-2 border-b-border last:border-b-0", pending ? "border-s-accent bg-accent/5" : "border-s-transparent")}>
-      <Link to={studioPath(`/orders/${order.id}`)} className={cn(columns, "px-5 py-3 transition-colors duration-500 hover:bg-studio-surface/60")}>
+      <Link to={studioPath(`/orders/${order.id}`)} state={back ? { back } : undefined} className={cn(columns, "px-5 py-3 transition-colors duration-500 hover:bg-studio-surface/60")}>
         <span className={cn("flex min-w-0 flex-col gap-0.5", pending && "font-medium")}>
           <span>{order.number}</span>
           <span className="truncate lg:hidden">{order.customer.name}</span>
