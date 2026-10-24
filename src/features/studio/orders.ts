@@ -1,6 +1,3 @@
-import { interpolate } from "@/i18n/format"
-import { STUDIO_COPY } from "./copy"
-
 // The studio's orders and customers, as the admin routes answer them (GET /admin/orders, /admin/orders/{id},
 // /admin/customers, /admin/customers/{id}), read field by field, and how the screens show their dates, money and
 // phones. The studio keeps its own types: nothing here comes from the shop's code, so the shop's build carries none of it.
@@ -272,12 +269,3 @@ export function formatPhone(phone: string): string {
 
 export const callHref = (phone: string) => `tel:${phone}`
 export const whatsappHref = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`
-
-/** "1 piece", "3 pieces". */
-export const piecesLabel = (count: number) => (count === 1 ? STUDIO_COPY.orders.piece : interpolate(STUDIO_COPY.orders.pieces, { count }))
-
-/** "No orders", "1 order", "3 orders". */
-export function ordersLabel(count: number): string {
-  if (count === 0) return STUDIO_COPY.customers.noOrderCount
-  return count === 1 ? STUDIO_COPY.customers.oneOrder : interpolate(STUDIO_COPY.customers.orderCount, { count })
-}

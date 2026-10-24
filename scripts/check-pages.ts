@@ -21,6 +21,7 @@ import { join, sep } from "node:path"
 import puppeteer, { type Page } from "puppeteer-core"
 import { safeStudioNext, SITE_PARTS, studioPath } from "../src/config/studio.ts"
 import { STUDIO_COPY } from "../src/features/studio/copy.ts"
+import { STUDIO_DEMO_KEY } from "../src/features/studio/demo-orders.ts"
 import { en } from "../src/i18n/messages/en.ts"
 
 const BUILD = "build/client"
@@ -127,11 +128,16 @@ const withShop = SITE_PARTS.includes("shop")
 const withStudio = SITE_PARTS.includes("studio")
 const studioOnly = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes("USER_SRP_AUTH"))
 if (withStudio && studioOnly.length === 0) throw new Error("No chunk carries the studio's sign-in code; the check would prove nothing.")
+// The demo orders answer only on npm run dev:demo: no build carries them.
+const demoChunks = readdirSync(join(BUILD, "assets")).filter((file) => readFileSync(join(BUILD, "assets", file), "utf8").includes(STUDIO_DEMO_KEY))
+if (demoChunks.length > 0) fail(`the build carries the studio's demo orders: ${demoChunks.join(", ")}`)
 // A shop-only build carries no studio code at all: not its sign-in, not its words, not its admin variables.
 if (!withStudio) {
   const studioWords = readdirSync(join(BUILD, "assets")).filter((file) => {
     const text = readFileSync(join(BUILD, "assets", file), "utf8")
-    return ["USER_SRP_AUTH", STUDIO_COPY.signIn.intro, STUDIO_COPY.photos.hint, "VITE_ADMIN_"].some((word) => text.includes(word))
+    return ["USER_SRP_AUTH", STUDIO_COPY.signIn.intro, STUDIO_COPY.photos.hint, STUDIO_COPY.order.payment, STUDIO_COPY.order.cancelQuestion, "VITE_ADMIN_"].some(
+      (word) => text.includes(word),
+    )
   })
   if (studioWords.length > 0) fail(`the shop-only build carries studio code: ${studioWords.join(", ")}`)
 }
@@ -147,6 +153,11 @@ const studioPages = [
   { open: studioPath("/"), path: signIn, next: safeStudioNext(studioPath("/orders")), h1: STUDIO_COPY.signIn.title },
   { open: signIn, path: signIn, next: null, h1: STUDIO_COPY.signIn.title },
   { open: studioPath("/products/5"), path: signIn, next: studioPath("/products/5"), h1: STUDIO_COPY.signIn.title },
+  // The new-order email links straight to the order (studio.glowstonelb.com/orders/{id}): after sign-in, it opens.
+  { open: studioPath("/orders/7"), path: signIn, next: studioPath("/orders/7"), h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/orders/7/slip"), path: signIn, next: studioPath("/orders/7/slip"), h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/orders"), path: signIn, next: studioPath("/orders"), h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/customers"), path: signIn, next: studioPath("/customers"), h1: STUDIO_COPY.signIn.title },
   { open: studioPath("/nothing-here"), path: studioPath("/nothing-here"), next: null, h1: STUDIO_COPY.notFound.title },
   // Without the shop, its addresses are the studio's not-found.
   ...["/collection", "/collection/5/qadisha", "/about"].map((path) => ({ open: path, path, next: null, h1: STUDIO_COPY.notFound.title })),

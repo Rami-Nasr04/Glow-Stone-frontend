@@ -3,7 +3,8 @@ import { Link } from "react-router"
 import { studioPath } from "@/config/studio"
 import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { STUDIO_COPY } from "@/features/studio/copy"
-import { type AdminCustomer, formatDay, formatPhone, ordersLabel } from "@/features/studio/orders"
+import { ordersLabel } from "@/features/studio/order-labels"
+import { type AdminCustomer, formatDay, formatPhone } from "@/features/studio/orders"
 import { cn } from "@/lib/utils"
 
 const t = STUDIO_COPY.customers

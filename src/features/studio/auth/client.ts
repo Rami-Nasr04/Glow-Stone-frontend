@@ -20,9 +20,9 @@ function browserStorage(): Storage | null {
 }
 
 /** True on `npm run dev:demo`: the orders and customers are made up and answered in this browser. */
-export const studioDemo = studioDemoOn({ dev: import.meta.env.DEV, mode: import.meta.env.MODE })
+// import.meta.env.DEV is false in a build, so the bundler drops the demo entirely (check:pages proves it).
+export const studioDemo = import.meta.env.DEV && studioDemoOn({ dev: true, mode: import.meta.env.MODE })
 
 // The network, or on `npm run dev:demo` the demo for the orders and customers routes (the rest still goes out).
-export const adminFetch: typeof fetch | undefined = studioDemo
-  ? createStudioDemoFetch({ storage: browserStorage(), real: (input, init) => fetch(input, init) })
-  : undefined
+export const adminFetch: typeof fetch | undefined =
+  import.meta.env.DEV && studioDemo ? createStudioDemoFetch({ storage: browserStorage(), real: (input, init) => fetch(input, init) }) : undefined

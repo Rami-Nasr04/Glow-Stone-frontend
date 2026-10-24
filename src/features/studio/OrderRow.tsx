@@ -2,7 +2,8 @@ import { Link } from "react-router"
 import { studioPath } from "@/config/studio"
 import { cn } from "@/lib/utils"
 import { STUDIO_COPY } from "./copy"
-import { type AdminOrderSummary, formatMoney, formatOrderTime, formatPhone, piecesLabel } from "./orders"
+import { piecesLabel } from "./order-labels"
+import { type AdminOrderSummary, formatMoney, formatOrderTime, formatPhone } from "./orders"
 import StatusBadge from "./StatusBadge"
 
 const t = STUDIO_COPY.orders

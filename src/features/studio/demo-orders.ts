@@ -1,4 +1,4 @@
-import type { AdminCustomer, AdminOrder, AdminOrderLine, AdminOrderSummary, ForwardStatus, OrderStatus } from "./orders"
+import type { AdminCustomer, AdminOrder, AdminOrderLine, AdminOrderSummary, ForwardStatus, OrderStatus } from "./orders.ts"
 
 // Stand-in for the admin orders and customers routes on `npm run dev:demo`: the backend's shapes, order of checks and
 // words, answered in this browser from made-up orders (every person here is invented). The admin still signs in with
