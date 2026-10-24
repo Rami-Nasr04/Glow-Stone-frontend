@@ -12,6 +12,7 @@ export function studioRoutes(base: string = STUDIO_BASE): RouteConfigEntry[] {
       route("forgot-password", "routes/studio/forgot-password.tsx"),
       route("sign-out", "routes/studio/sign-out.tsx"),
       layout("routes/studio/shell.tsx", [
+        route("orders", "routes/studio/orders.tsx"),
         route("products", "routes/studio/products.tsx"),
         route("products/new", "routes/studio/product-new.tsx"),
         route("products/:id", "routes/studio/product-edit.tsx"),
