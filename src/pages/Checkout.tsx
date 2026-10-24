@@ -330,8 +330,8 @@ export default function Checkout() {
               <label className={cn(card, "cursor-default border-primary bg-card")}>
                 <input type="radio" name="payment" checked readOnly className={radioDot} />
                 <span className="flex flex-col gap-1.5">
-                  <span>{t.cod}</span>
-                  <span className="text-small text-muted-foreground">{t.codNote}</span>
+                  <span>{gift ? t.codGift : t.cod}</span>
+                  <span className="text-small text-muted-foreground">{gift ? t.codGiftNote : t.codNote}</span>
                 </span>
               </label>
             </div>

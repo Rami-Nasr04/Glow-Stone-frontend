@@ -134,6 +134,16 @@ describe("Checkout", () => {
     expect(screen.getByText("Omar will contact you to arrange the payment.")).toBeInTheDocument()
   })
 
+  // Backend QA, 2026-10-25: the payment box contradicted the gift note by asking for cash on arrival.
+  it("words the payment box for a gift as the buyer paying, arranged on Omar's call", async () => {
+    const user = await open()
+    expect(screen.getByRole("radio", { name: /Cash on delivery/ })).toHaveAccessibleName(/Pay in cash when your piece arrives/)
+    await user.click(screen.getByRole("switch", { name: "This is a gift" }))
+    const payment = screen.getByRole("radio", { name: /Cash, arranged with Omar/ })
+    expect(payment).toHaveAccessibleName(/You pay, not the recipient\. Omar will call you to arrange the payment before delivery\./)
+    expect(screen.queryByText(/Pay in cash when your piece arrives/)).not.toBeInTheDocument()
+  })
+
   it("offers a card message only for a gift, up to 200 characters, with a counter", async () => {
     const user = await open()
     expect(screen.queryByLabelText("Gift card message (optional)")).not.toBeInTheDocument()

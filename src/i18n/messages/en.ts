@@ -233,6 +233,9 @@ export const en = {
     payment: "Payment",
     cod: "Cash on delivery",
     codNote: "Pay in cash when your piece arrives. Omar will call you to confirm your order before delivery.",
+    // A gift's buyer pays, never the recipient: Omar arranges it on his call (Rami, 2026-10-24).
+    codGift: "Cash, arranged with Omar",
+    codGiftNote: "You pay, not the recipient. Omar will call you to arrange the payment before delivery.",
     summary: "Order summary",
     qty: "Qty {count}",
     removeToOrder: "Remove the pieces that can't be ordered to place your order.",
@@ -256,6 +259,7 @@ export const en = {
     thanks: "Thank you.",
     orderNumber: "Order {number}",
     willCall: "Omar will call you to confirm your order. Nothing is due until your piece arrives.",
+    willCallGift: "Omar will call you to confirm your order and arrange the payment. The recipient pays nothing.",
     nextSteps: "Next steps",
     steps: [
       { when: "Now", title: "Confirmation call", body: "Omar calls to confirm the piece, the address and a delivery window." },
@@ -263,6 +267,8 @@ export const en = {
       { when: "Later", title: "Delivery", body: "Free delivery within Lebanon. [Placeholder: delivery times.]" },
       { when: "Later", title: "Pay on arrival", body: "Pay in cash when your piece arrives." },
     ],
+    // For a gift, the last step instead.
+    giftPaymentStep: { when: "Later", title: "Payment", body: "You pay, not the recipient, as arranged on Omar's call." },
     summary: "Summary",
     deliverTo: "Deliver to",
     giftLabel: "Gift",
@@ -270,6 +276,7 @@ export const en = {
     pricesHidden: "Prices are hidden on the delivery slip.",
     giftPayment: "Omar will contact you to arrange the payment.",
     totalCod: "Total · Cash on delivery",
+    totalGift: "Total · Cash, arranged with Omar",
     viewOrders: "View my orders",
     continueBrowsing: "Continue browsing",
     notFound: "This order couldn't be found.",

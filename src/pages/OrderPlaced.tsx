@@ -21,6 +21,7 @@ export default function OrderPlaced() {
 
   if (state.status !== "ready") return <OrderMissing state={state} retry={retry} />
   const order = state.value
+  const steps = order.isGift ? [...t.steps.slice(0, -1), t.giftPaymentStep] : t.steps
 
   return (
     <section className="px-gutter pt-[clamp(3.5rem,8vw,7rem)] pb-section">
@@ -30,11 +31,11 @@ export default function OrderPlaced() {
           <h1 className="font-display text-display-xl leading-none font-light">{t.thanks}</h1>
           <Rule />
           <p className={caps}>{interpolate(t.orderNumber, { number: order.number })}</p>
-          <p className="max-w-120 text-pretty">{t.willCall}</p>
+          <p className="max-w-120 text-pretty">{order.isGift ? t.willCallGift : t.willCall}</p>
         </div>
 
         <ol aria-label={t.nextSteps} className="grid gap-10 border-t border-border sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          {t.steps.map((step, i) => (
+          {steps.map((step, i) => (
             <li key={step.title} className={cn("flex flex-col gap-3 pt-8", i === 0 && "border-t border-accent -mt-px")}>
               <span className={cn(caps, "text-muted-foreground")}>
                 {String(i + 1).padStart(2, "0")} · {step.when}
@@ -51,7 +52,7 @@ export default function OrderPlaced() {
               {t.summary}
             </h2>
             <OrderItems order={order} />
-            <OrderTotals order={order} totalLabel={t.totalCod} />
+            <OrderTotals order={order} totalLabel={order.isGift ? t.totalGift : t.totalCod} />
           </section>
           <div className="flex flex-col gap-10">
             <DeliverTo order={order} />
