@@ -3,7 +3,7 @@
 // Opens every built page in a real browser by its address without the trailing slash, then checks
 // that the page shown is that page (its h1 and title, read from its own built HTML), after a direct
 // load and after a refresh, at 1440 and 390. Also checks that an unknown address answers 404 and shows the 404 page,
-// that a page that isn't prerendered (sign-in, a piece published since the build) still answers 200, that the app
+// that a page that isn't prerendered (sign-in) still answers 200, that the app
 // moves on to another page after landing, and that the header logo link can be clicked. Every built page's canonical
 // and og:url must be the address checked (so after VITE_SITE_URL changes, one run against the new address proves it),
 // and its robots tag and X-Robots-Tag header must agree.
@@ -180,9 +180,8 @@ if (!withShop) {
 }
 // Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
 // page's title (accepted).
-const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
-// Pages that aren't prerendered still answer 200 (a rewrite to the shell). A piece the API doesn't know shows the 404
-// page in the browser: the address has the shape of a piece published since the build.
+const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/collection/99999/no-such-piece", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
+// Pages that aren't prerendered still answer 200 (a rewrite to the shell).
 const notBuilt: Expected[] = [
   // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until VITE_ACCOUNTS_OPEN=true: the 404 page, in the
   // site frame. When they open, it is full screen: h1 en.auth.signIn.title and no header logo to follow.
@@ -190,7 +189,6 @@ const notBuilt: Expected[] = [
   // Checkout and the account wait for the same flag.
   { path: "/checkout", h1: en.notFound.title },
   { path: "/account", h1: en.notFound.title },
-  { path: "/collection/99999/no-such-piece", h1: en.notFound.title },
 ]
 const canonicalOf = (path: string) => `${base}${path}`
 

@@ -10,9 +10,7 @@
     { "source": "/(.*)", "has": [{ "type": "host", "value": "studio.glowstonelb.com" }], "destination": "/__spa-fallback.html" },
     { "source": "/(sign-in|sign-up|verify|forgot-password|checkout|account)", "destination": "/__spa-fallback.html" },
     { "source": "/checkout/thanks/([0-9]+)", "destination": "/__spa-fallback.html" },
-    { "source": "/account/orders/([0-9]+)", "destination": "/__spa-fallback.html" },
-    { "source": "/collection/([0-9]+)", "destination": "/__spa-fallback.html" },
-    { "source": "/collection/([0-9]+)/([^/]+)", "destination": "/__spa-fallback.html" }
+    { "source": "/account/orders/([0-9]+)", "destination": "/__spa-fallback.html" }
   ],
   "headers": [
     {
