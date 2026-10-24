@@ -50,6 +50,13 @@ describe("theme", () => {
   it("keeps the studio's header and save bar clear of what the page scrolls to", () => {
     expect(block(":root")).toContain("--studio-header: 3.75rem;")
     expect(block(":root")).toContain("--studio-save-bar: 4.25rem;")
+    expect(block(":root")).toContain("--studio-tab-bar: 4rem;")
+    expect(block("@page slip")).toContain("size: A5 portrait;")
+    expect(css).toMatch(/@media print \{\s*\[data-slip\] \{\s*page: slip;/)
+    expect(css).toMatch(/@media \(width < 40rem\) \{\s*html:has\(\[data-studio-tab-bar\]\) \{\s*scroll-padding-bottom: calc\(var\(--studio-tab-bar\) \+ 1rem\);/)
+    expect(block("html:has([data-studio-tab-bar]):has([data-studio-save-bar])")).toContain(
+      "scroll-padding-bottom: calc(var(--studio-tab-bar) + var(--studio-save-bar) + 1rem);",
+    )
     expect(block("html:has([data-studio-save-bar])")).toContain("scroll-padding-bottom: calc(var(--studio-save-bar) + 1rem);")
     expect(css).toMatch(/@media \(width < 64rem\) \{\s*html:has\(\[data-studio-header\]\) \{\s*scroll-padding-top: calc\(var\(--studio-header\) \+ 1rem\);/)
   })

@@ -1,5 +1,6 @@
 import type { ProductInput } from "@/features/catalog/types"
 import { adminProductOf, failure, ok, unauthorized } from "@/test/studio"
+import { adminCustomerDetailOf, adminCustomerOf, adminOrderOf, orderSummaryOf } from "@/test/studio-orders"
 import { createAdminApi, StudioError } from "./admin-api"
 
 const BASE = "https://api.test"
@@ -288,5 +289,89 @@ describe("deleting a piece and publishing the website", () => {
     expect((await caught(api.deleteProduct(4))).status).toBe(401)
     expect((await caught(api.publish())).status).toBe(401)
     expect(onUnauthorized).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("orders and customers", () => {
+  it("lists every order, unfiltered, newest first as the API sends them", async () => {
+    const rows = [orderSummaryOf(9), orderSummaryOf(8, { status: "delivered", isGift: true })]
+    const { api, fetch } = setup(() => ok(rows))
+    expect(await api.listOrders()).toEqual(rows)
+    expect(fetch.mock.calls[0][0]).toBe(`${BASE}/admin/orders`)
+  })
+
+  it("reads one order", async () => {
+    const { api, fetch } = setup(() => ok(adminOrderOf(7)))
+    expect(await api.getOrder(7)).toEqual(adminOrderOf(7))
+    expect(fetch.mock.calls[0][0]).toBe(`${BASE}/admin/orders/7`)
+  })
+
+  it("moves an order one step forward, sending only the step, and takes the order back", async () => {
+    const after = adminOrderOf(7, { status: "confirmed", nextStatus: "out_for_delivery", canEditFee: false })
+    const { api, fetch } = setup(() => ok(after))
+    expect(await api.advanceOrder(7, "confirmed")).toEqual(after)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/orders/7/status`)
+    expect(init?.method).toBe("POST")
+    expect(JSON.parse(String(init?.body))).toEqual({ status: "confirmed" })
+  })
+
+  it("cancels an order with no body", async () => {
+    const after = adminOrderOf(7, { status: "cancelled", nextStatus: null, canCancel: false, canEditFee: false })
+    const { api, fetch } = setup(() => ok(after))
+    expect(await api.cancelOrder(7)).toEqual(after)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/orders/7/cancel`)
+    expect(init?.method).toBe("POST")
+    expect(init?.body).toBeUndefined()
+  })
+
+  it("changes the delivery fee, sending only the fee", async () => {
+    const after = adminOrderOf(7, { deliveryFee: 15.5, total: 2085.5 })
+    const { api, fetch } = setup(() => ok(after))
+    expect(await api.setDeliveryFee(7, 15.5)).toEqual(after)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/orders/7`)
+    expect(init?.method).toBe("PATCH")
+    expect(JSON.parse(String(init?.body))).toEqual({ deliveryFee: 15.5 })
+  })
+
+  it("lists the customers and reads one with their orders, putting the id in the path safely", async () => {
+    const detail = adminCustomerDetailOf("c/1", [orderSummaryOf(7)])
+    const { api, fetch } = setup((url) => ok(url.endsWith("/admin/customers") ? [adminCustomerOf("c1")] : detail))
+    expect(await api.listCustomers()).toEqual([adminCustomerOf("c1")])
+    expect(await api.getCustomer("c/1")).toEqual(detail)
+    expect(fetch.mock.calls[1][0]).toBe(`${BASE}/admin/customers/c%2F1`)
+  })
+
+  it.each([
+    [409, "CONFLICT", "This order is already confirmed."],
+    [409, "CONFLICT", "The delivery fee can only change before the order is confirmed."],
+    [404, "NOT_FOUND", "Order not found"],
+    [400, "VALIDATION", "deliveryFee must be at most 10000"],
+  ])("keeps the API's words for a %i %s, word for word", async (status, code, message) => {
+    const { api } = setup(() => failure(status, code, message))
+    const error = await caught(api.advanceOrder(7, "confirmed"))
+    expect(error).toMatchObject({ status, code, message })
+  })
+
+  it("names a bad order answer instead of showing half of it", async () => {
+    const { api } = setup(() => ok({ ...adminOrderOf(7), total: "2070" }))
+    expect(await caught(api.getOrder(7))).toMatchObject({ code: "UNEXPECTED", message: expect.stringContaining("order 7: total") })
+  })
+
+  it("ends the session on a 401 from any of them", async () => {
+    const { api, onUnauthorized } = setup(() => unauthorized())
+    for (const call of [api.listOrders(), api.getOrder(7), api.cancelOrder(7), api.listCustomers(), api.getCustomer("c1")]) {
+      expect((await caught(call)).status).toBe(401)
+    }
+    expect(onUnauthorized).toHaveBeenCalledTimes(5)
+  })
+
+  it("sends every call through the fetch it was given (the demo answers orders in this browser)", async () => {
+    const given = vi.fn(async () => ok([]))
+    const api = createAdminApi({ baseUrl: BASE, accessToken: async () => "access-1", onUnauthorized: vi.fn(), fetch: given })
+    await api.listOrders()
+    expect(given).toHaveBeenCalledWith(`${BASE}/admin/orders`, expect.objectContaining({ method: "GET" }))
   })
 })

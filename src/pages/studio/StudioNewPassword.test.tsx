@@ -8,6 +8,7 @@ import StudioNewPassword from "./StudioNewPassword"
 
 const t = STUDIO_COPY.newPassword
 const probes = [
+  { path: "/studio/orders", Component: Landed },
   { path: "/studio/products", Component: Landed },
   { path: "/studio/products/:id", Component: Landed },
 ]

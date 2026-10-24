@@ -8,6 +8,7 @@ import StudioSignIn from "./StudioSignIn"
 
 const t = STUDIO_COPY.signIn
 const probes = [
+  { path: "/studio/orders", Component: Landed },
   { path: "/studio/products", Component: Landed },
   { path: "/studio/products/:id", Component: Landed },
   { path: "/studio/sign-in/new-password", Component: Landed },
@@ -22,10 +23,10 @@ async function signIn(email: string, password: string) {
 }
 
 describe("the studio's sign-in page", () => {
-  it("signs in and goes to the products list", async () => {
+  it("signs in and goes to the orders list", async () => {
     renderStudioAt(<StudioSignIn />, "/studio/sign-in", { routes: probes })
     await signIn("omar@example.com", "Correct-Horse-9")
-    expect(await landedOn("/studio/products")).toBeInTheDocument()
+    expect(await landedOn("/studio/orders")).toBeInTheDocument()
   })
 
   it("goes back to the studio page that asked for it", async () => {
@@ -37,7 +38,7 @@ describe("the studio's sign-in page", () => {
   it("never follows next outside the studio", async () => {
     renderStudioAt(<StudioSignIn />, `/studio/sign-in?next=${encodeURIComponent("//evil.com/x")}`, { routes: probes })
     await signIn("omar@example.com", "Correct-Horse-9")
-    expect(await landedOn("/studio/products")).toBeInTheDocument()
+    expect(await landedOn("/studio/orders")).toBeInTheDocument()
   })
 
   it("says the same thing for a wrong password and an unknown email", async () => {
@@ -93,7 +94,7 @@ describe("the studio's sign-in page", () => {
 
   it("skips the form when the admin is already signed in", async () => {
     renderStudioAt(<StudioSignIn />, "/studio/sign-in", { auth: fakeAdminAuth({ signedInAs: "omar@example.com" }), routes: probes })
-    expect(await landedOn("/studio/products")).toBeInTheDocument()
+    expect(await landedOn("/studio/orders")).toBeInTheDocument()
   })
 
   it("never shows the shop's demo note or links to the shop's account pages", async () => {

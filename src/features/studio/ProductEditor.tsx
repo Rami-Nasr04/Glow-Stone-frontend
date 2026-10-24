@@ -5,7 +5,7 @@ import { Field, inputClass } from "@/components/ui/field"
 import { studioPath } from "@/config/studio"
 import type { AdminProduct } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
-import { MESSAGES } from "@/i18n/useLocale"
+import { EDITION_EN } from "@/i18n/messages/edition"
 import { cn } from "@/lib/utils"
 import StudioNotFound from "@/pages/studio/StudioNotFound"
 import { type ProductField, StudioError } from "./admin-api"
@@ -64,8 +64,7 @@ function previewLine(values: ProductFormValues): string | null {
   const remaining = Number(values.remaining)
   if (!values.editionSize.trim() || !values.remaining.trim() || !Number.isInteger(edition) || !Number.isInteger(remaining)) return null
   if (edition <= 0 || remaining < 0 || remaining > edition) return null
-  const m = MESSAGES.en.edition
-  return remaining === 0 ? m.soldOut : interpolate(m.remaining, { edition, remaining })
+  return remaining === 0 ? EDITION_EN.soldOut : interpolate(EDITION_EN.remaining, { edition, remaining })
 }
 
 // Create and edit one piece: exactly the API's fields, checked like the database, sending only what changed.
@@ -355,7 +354,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         </div>
       </div>
 
-      <div data-studio-save-bar className="fixed inset-x-0 bottom-0 z-40 flex h-(--studio-save-bar) items-center justify-between gap-3 bg-dark-section px-4 lg:start-62 lg:px-10">
+      <div data-studio-save-bar className="fixed inset-x-0 bottom-(--studio-tab-bar) z-40 flex h-(--studio-save-bar) items-center justify-between gap-3 bg-dark-section px-4 sm:bottom-0 lg:start-62 lg:px-10">
         <span aria-live="polite" className="flex items-center gap-2 text-sm text-dark-muted-foreground">
           <span aria-hidden="true" className={cn("size-1.5 rotate-45 bg-wine-on-dark", !dirty && "opacity-0")} />
           {statusLine}

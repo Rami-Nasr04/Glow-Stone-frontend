@@ -2,17 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { createAdminApi } from "../admin-api"
 import { clearAllDrafts, stashOpenDrafts } from "../drafts"
 import { AdminAuthContext, type AdminStatus } from "./admin-auth-context"
-import { adminAuthClient, adminApiBase } from "./client"
+import { adminAuthClient, adminApiBase, adminFetch } from "./client"
 import type { AdminAuthClient } from "./types"
 
 interface AdminAuthProviderProps {
   client?: AdminAuthClient
   /** The API's base address (VITE_API_URL). */
   apiBase?: string
+  /** The network (or, on npm run dev:demo, the demo orders). */
+  fetch?: typeof fetch
   children: React.ReactNode
 }
 
-export default function AdminAuthProvider({ client = adminAuthClient, apiBase = adminApiBase, children }: AdminAuthProviderProps) {
+export default function AdminAuthProvider({ client = adminAuthClient, apiBase = adminApiBase, fetch: send = adminFetch, children }: AdminAuthProviderProps) {
   const [status, setStatus] = useState<AdminStatus>("loading")
   const [email, setEmail] = useState<string | null>(null)
   const [sessionEnded, setSessionEnded] = useState(false)
@@ -52,8 +54,8 @@ export default function AdminAuthProvider({ client = adminAuthClient, apiBase = 
   }, [client])
 
   const api = useMemo(
-    () => createAdminApi({ baseUrl: apiBase, accessToken: () => client.accessToken(), onUnauthorized: endSession }),
-    [apiBase, client, endSession],
+    () => createAdminApi({ baseUrl: apiBase, accessToken: () => client.accessToken(), onUnauthorized: endSession, fetch: send }),
+    [apiBase, client, endSession, send],
   )
 
   const signIn = useCallback(

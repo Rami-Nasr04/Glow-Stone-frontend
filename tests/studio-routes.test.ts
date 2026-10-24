@@ -13,7 +13,20 @@ function addresses(entries: RouteConfigEntry[], parent = ""): string[] {
   })
 }
 
-const STUDIO_PAGES = ["/sign-in", "/sign-in/new-password", "/forgot-password", "/sign-out", "/products", "/products/new", "/products/:id"]
+const STUDIO_PAGES = [
+  "/sign-in",
+  "/sign-in/new-password",
+  "/forgot-password",
+  "/sign-out",
+  "/orders",
+  "/orders/:id",
+  "/orders/:id/slip",
+  "/products",
+  "/products/new",
+  "/products/:id",
+  "/customers",
+  "/customers/:id",
+]
 
 describe("the studio's routes", () => {
   it("sit under /studio today", () => {
