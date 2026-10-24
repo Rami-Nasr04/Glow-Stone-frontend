@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router"
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { actionVariants } from "@/components/ui/action-link"
 import { Field, inputClass, PasswordInput } from "@/components/ui/field"
@@ -18,7 +18,7 @@ type Errors = Partial<Record<"email" | "password" | "form", string>>
 
 export default function SignIn() {
   const { m, to } = useLocale()
-  const { signIn, client } = useAuth()
+  const { signIn, client, status } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get("next")
@@ -29,6 +29,10 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const t = m.auth.signIn
+
+  // Already signed in (in another tab, or coming back to this address): nothing to do here. While this page is signing
+  // in, its own navigate leads on, after the welcome toast.
+  if (status === "signedIn" && !busy) return <Navigate replace to={safeNext(next, to(AFTER_SIGN_IN))} />
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
