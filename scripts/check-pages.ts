@@ -200,15 +200,20 @@ if (!withShop) {
 // Unknown addresses: a real 404 with the 404 page. Only the h1: under an unknown first segment the 404 keeps the home
 // page's title (accepted).
 const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/collection/99999/no-such-piece", "/legal/unknown", "/ar/collection"].map((path) => ({ path, h1: en.notFound.title, status: 404 }))
-// Pages that aren't prerendered still answer 200 (a rewrite to the shell).
-const notBuilt: Expected[] = [
-  // Customer accounts are closed on built sites (ACCOUNTS_OPEN) until VITE_ACCOUNTS_OPEN=true: the 404 page, in the
-  // site frame. When they open, it is full screen: h1 en.auth.signIn.title and no header logo to follow.
-  { path: "/sign-in", h1: en.notFound.title },
-  // Checkout and the account wait for the same flag.
-  { path: "/checkout", h1: en.notFound.title },
-  { path: "/account", h1: en.notFound.title },
-]
+// Pages that aren't prerendered still answer 200 (a rewrite to the shell). Customer accounts are closed on built sites
+// until VITE_ACCOUNTS_OPEN=true (set the same way for the build and this check): sign-in, checkout and the account
+// then show the 404 page, in the site frame.
+const accountsOpen = process.env.VITE_ACCOUNTS_OPEN?.trim() === "true"
+const notBuilt: Expected[] = accountsOpen ? [] : ["/sign-in", "/checkout", "/account"].map((path) => ({ path, h1: en.notFound.title }))
+// Open, the sign-in page is full screen (no header logo to follow), and a signed-out visitor who opens checkout or
+// the account is sent to it, to come back afterwards.
+const accountPages = accountsOpen
+  ? [
+      { open: "/sign-in", next: null },
+      { open: "/checkout", next: "/checkout" },
+      { open: "/account", next: "/account" },
+    ]
+  : []
 const canonicalOf = (path: string) => `${base}${path}`
 
 const browser = await puppeteer.launch({ executablePath: edge, headless: true })
@@ -262,6 +267,29 @@ for (const viewport of viewports) {
 
     const cognito = await loadedCognito(page)
     if (cognito.length > 0) fail(`${label}: loaded the Cognito library for a signed-out visitor (${cognito.join(", ")})`)
+    for (const error of errors) fail(`${label}: script error "${error}"`)
+    console.log(`  ok ${label}`)
+    await page.close()
+  }
+
+  for (const want of withShop ? accountPages : []) {
+    const label = `${viewport.name} ${want.open}`
+    const page = await browser.newPage()
+    await page.setViewport(viewport)
+    await page.setCacheEnabled(false)
+    const errors: string[] = []
+    page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
+    const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
+    if (response?.status() !== 200) fail(`${label}: status ${response?.status()}, expected 200`)
+    if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
+    for (const step of ["direct", "refresh"]) {
+      if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })
+      const got = await shown(page, "/sign-in")
+      const next = await page.evaluate(() => new URLSearchParams(location.search).get("next"))
+      if (got.path !== "/sign-in") fail(`${label} ${step}: ended on ${got.path}`)
+      if (got.h1 !== en.auth.signIn.title) fail(`${label} ${step}: h1 "${got.h1}", expected "${en.auth.signIn.title}"`)
+      if (next !== want.next) fail(`${label} ${step}: next ${next}, expected ${want.next}`)
+    }
     for (const error of errors) fail(`${label}: script error "${error}"`)
     console.log(`  ok ${label}`)
     await page.close()
