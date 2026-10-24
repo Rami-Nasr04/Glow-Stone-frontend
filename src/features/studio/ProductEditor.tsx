@@ -354,7 +354,7 @@ export default function ProductEditor({ piece }: ProductEditorProps) {
         </div>
       </div>
 
-      <div data-studio-save-bar className="fixed inset-x-0 bottom-0 z-40 flex h-(--studio-save-bar) items-center justify-between gap-3 bg-dark-section px-4 lg:start-62 lg:px-10">
+      <div data-studio-save-bar className="fixed inset-x-0 bottom-(--studio-tab-bar) z-40 flex h-(--studio-save-bar) items-center justify-between gap-3 bg-dark-section px-4 sm:bottom-0 lg:start-62 lg:px-10">
         <span aria-live="polite" className="flex items-center gap-2 text-sm text-dark-muted-foreground">
           <span aria-hidden="true" className={cn("size-1.5 rotate-45 bg-wine-on-dark", !dirty && "opacity-0")} />
           {statusLine}

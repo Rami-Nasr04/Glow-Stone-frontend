@@ -61,7 +61,11 @@ export const STUDIO_COPY = {
   },
   shell: {
     navLabel: "Studio",
+    orders: "Orders",
     products: "Products",
+    customers: "Customers",
+    pending: "{count} pending",
+    demoNote: "Demo: these orders and customers are made up and kept in this browser. Products are the real ones.",
     viewShop: "View shop",
     shop: "Shop",
     signOut: "Sign out",
@@ -72,7 +76,7 @@ export const STUDIO_COPY = {
   notFound: {
     title: "Not found",
     text: "There's nothing at this address in the studio.",
-    back: "Back to products",
+    back: "Back to orders",
   },
   website:
     "The website is published ahead of time. Changes here appear there after the next publish; stock (remaining) is live on the shop right away.",

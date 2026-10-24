@@ -48,9 +48,9 @@ export function studioPath(path: string, base: string = STUDIO_BASE): string {
 // The sign-in pages never count as a destination after signing in.
 const SIGN_IN_PAGES = ["/sign-in", "/forgot-password"]
 
-/** Where to go after signing in: a studio page asked for in ?next=, or the products list. */
+/** Where to go after signing in: a studio page asked for in ?next=, or the orders list. */
 export function safeStudioNext(raw: string | null | undefined, base: string = STUDIO_BASE): string {
-  const fallback = studioPath("/products", base)
+  const fallback = studioPath("/orders", base)
   const next = safeNext(raw, fallback)
   if (next === fallback) return fallback
   const pathname = next.split(/[?#]/)[0]

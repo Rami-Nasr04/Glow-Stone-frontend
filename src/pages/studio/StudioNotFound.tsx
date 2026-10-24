@@ -11,7 +11,7 @@ export default function StudioNotFound() {
     <div className="flex flex-col items-start gap-5 py-10">
       <h1 className="font-display text-4xl font-light lg:text-[2.75rem]">{t.title}</h1>
       <p className="text-small text-muted-foreground">{t.text}</p>
-      <Link to={studioPath("/products")} className={actionVariants({ variant: "solid" })}>
+      <Link to={studioPath("/orders")} className={actionVariants({ variant: "solid" })}>
         {t.back}
       </Link>
     </div>

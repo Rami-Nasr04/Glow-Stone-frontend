@@ -25,15 +25,15 @@ describe("the studio's route modules", () => {
     expect(meta.find((tag) => "title" in tag)).toEqual({ title: expect.stringContaining(STUDIO_COPY.metaTitle) })
   })
 
-  it("opens the products list at the studio's own address", async () => {
-    renderStudioAt(<StudioIndex />, "/studio", { routes: [{ path: "/studio/products", Component: Landed }] })
-    expect(await landedOn("/studio/products")).toBeInTheDocument()
+  it("opens the orders list at the studio's own address", async () => {
+    renderStudioAt(<StudioIndex />, "/studio", { routes: [{ path: "/studio/orders", Component: Landed }] })
+    expect(await landedOn("/studio/orders")).toBeInTheDocument()
   })
 
   it("answers an unknown studio address with the studio's not-found", () => {
     const NotFound = notFound.default
     renderStudioAt(<NotFound />, "/studio/nothing-here", { pattern: "/studio/*" })
     expect(screen.getByRole("heading", { level: 1, name: STUDIO_COPY.notFound.title })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: STUDIO_COPY.notFound.back })).toHaveAttribute("href", "/studio/products")
+    expect(screen.getByRole("link", { name: STUDIO_COPY.notFound.back })).toHaveAttribute("href", "/studio/orders")
   })
 })

@@ -144,7 +144,7 @@ async function loadedStudioCode(page: Page): Promise<string[]> {
 // Signed out, every studio address ends on the sign-in page, which asks to come back afterwards.
 const signIn = studioPath("/sign-in")
 const studioPages = [
-  { open: studioPath("/"), path: signIn, next: safeStudioNext(studioPath("/products")), h1: STUDIO_COPY.signIn.title },
+  { open: studioPath("/"), path: signIn, next: safeStudioNext(studioPath("/orders")), h1: STUDIO_COPY.signIn.title },
   { open: signIn, path: signIn, next: null, h1: STUDIO_COPY.signIn.title },
   { open: studioPath("/products/5"), path: signIn, next: studioPath("/products/5"), h1: STUDIO_COPY.signIn.title },
   { open: studioPath("/nothing-here"), path: studioPath("/nothing-here"), next: null, h1: STUDIO_COPY.notFound.title },

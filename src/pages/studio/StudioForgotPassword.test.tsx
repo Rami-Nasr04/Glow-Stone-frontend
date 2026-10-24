@@ -8,6 +8,7 @@ import StudioForgotPassword from "./StudioForgotPassword"
 
 const t = STUDIO_COPY.forgot
 const probes = [
+  { path: "/studio/orders", Component: Landed },
   { path: "/studio/products", Component: Landed },
   { path: "/studio/products/:id", Component: Landed },
 ]
@@ -65,7 +66,7 @@ describe("the studio's reset-password page", () => {
     renderStudioAt(<StudioForgotPassword />, "/studio/forgot-password", { auth, routes: probes })
     await askForCode()
     await finish()
-    expect(await landedOn("/studio/products")).toBeInTheDocument()
+    expect(await landedOn("/studio/orders")).toBeInTheDocument()
     expect(auth.finishPasswordReset).toHaveBeenCalledWith("omar@example.com", "123456", "Limestone-2026")
   })
 

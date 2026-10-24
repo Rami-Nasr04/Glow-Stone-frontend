@@ -14,14 +14,14 @@ describe("studio addresses", () => {
   })
 
   it("send the admin back only to a studio page after signing in", () => {
-    const fallback = "/studio/products"
+    const fallback = "/studio/orders"
     expect(safeStudioNext("/studio/products/5?tab=1", "/studio")).toBe("/studio/products/5?tab=1")
     expect(safeStudioNext("/studio", "/studio")).toBe("/studio")
     for (const raw of [null, "", "/collection", "/studio-evil", "//evil.com/studio", "https://evil.com/studio/products", "/studio/sign-in?next=/x", "/studio/forgot-password"]) {
       expect(safeStudioNext(raw, "/studio")).toBe(fallback)
     }
     expect(safeStudioNext("/products/5", "/")).toBe("/products/5")
-    expect(safeStudioNext("/sign-in", "/")).toBe("/products")
+    expect(safeStudioNext("/sign-in", "/")).toBe("/orders")
   })
 })
 
