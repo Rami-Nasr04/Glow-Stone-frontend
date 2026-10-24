@@ -6,7 +6,10 @@ import { OrderError, type PlaceOrderInput } from "./types"
 const SARA = { id: "u-sara", email: "sara@example.com", name: "Sara Khoury", phone: "+96171234567" }
 const token = (who = SARA) => "demo." + encodeURIComponent(JSON.stringify(who))
 // Qadisha (5): $890, 4 left · Sannine (6): $560, 2 left · Nahr (2): sold out · Batroun (3): $180, 9 left
+let keys = 0
 const order = (change: Partial<PlaceOrderInput> = {}): PlaceOrderInput => ({
+  // A new attempt each time unless a test keeps the key.
+  requestId: `00000000-0000-4000-8000-${String(++keys).padStart(12, "0")}`,
   items: [{ productId: 5, quantity: 2, unitPrice: 890 }],
   recipient: null,
   city: "Jounieh",
@@ -175,6 +178,75 @@ describe("demo orders API (the contract, in this browser)", () => {
       message: "This order can no longer be cancelled. Please contact Omar.",
     })
     expect(await refusal(demo({ ...SARA, id: "u-other" }).cancel(placed.id))).toMatchObject({ status: 404 })
+  })
+
+  // The order key (contract: requestId).
+  describe("the order key", () => {
+    it("answers the same key with the order already made: 201, no second order", async () => {
+      const first = order()
+      const placed = await demo().place(first)
+      await expect(demo().place(first)).resolves.toEqual(placed)
+      expect(await demo().list()).toHaveLength(1)
+    })
+
+    it("answers a repeat as the order is now, even cancelled since, and never counts its pieces again", async () => {
+      const first = order({ items: [{ productId: 3, quantity: 5, unitPrice: 180 }] })
+      const placed = await demo().place(first)
+      await expect(demo().place(first)).resolves.toMatchObject({ id: placed.id })
+      await demo().cancel(placed.id)
+      await expect(demo().place(first)).resolves.toMatchObject({ id: placed.id, status: "cancelled" })
+    })
+
+    it("refuses the same key with a different order: 422 REQUEST_REUSED, nothing saved", async () => {
+      const first = order()
+      await demo().place(first)
+      expect(await refusal(demo().place({ ...first, city: "Byblos" }))).toMatchObject({
+        status: 422,
+        code: "REQUEST_REUSED",
+        message: "Please check your cart and try again.",
+      })
+      expect(await demo().list()).toHaveLength(1)
+    })
+
+    it("keeps each customer's keys apart", async () => {
+      const first = order()
+      await demo().place(first)
+      await expect(demo({ ...SARA, id: "u-other" }).place(first)).resolves.toMatchObject({ number: "GS-0002" })
+    })
+
+    it("keeps no key for a refused order: the same key works once the cart is fixed", async () => {
+      const first = order({ items: [{ productId: 5, quantity: 1, unitPrice: 850 }] })
+      expect(await refusal(demo().place(first))).toMatchObject({ code: "PRICE_CHANGED" })
+      await expect(demo().place({ ...first, items: [{ productId: 5, quantity: 1, unitPrice: 890 }] })).resolves.toBeTruthy()
+    })
+
+    it.each([undefined, "not-a-uuid"])("refuses a missing or broken key (%j) with 400", async (requestId) => {
+      expect(await refusal(demo().place({ ...order(), requestId: requestId as string }))).toMatchObject({
+        status: 400,
+        code: "VALIDATION",
+        message: "Please check your cart and try again.",
+      })
+    })
+
+    // To show the background re-send in the browser: the order is saved, then the answer is lost once.
+    it("can be told to lose the answer to the next order, which a re-send then gets", async () => {
+      localStorage.setItem(DEMO_REFUSE_KEY, "LOST")
+      const fetch = createDemoFetch({ storage: localStorage, products: async () => PRODUCTS, now: () => new Date("2026-11-06T14:03:00Z") })
+      const orders = createHttpOrders("https://demo.invalid", async () => token(), fetch, { sleep: async () => undefined })
+      const placed = await orders.place(order())
+      expect(placed).toMatchObject({ number: "GS-0001" })
+      expect(await demo().list()).toHaveLength(1)
+    })
+
+    it("can be told to lose every answer, without saving, until the key is removed", async () => {
+      localStorage.setItem(DEMO_REFUSE_KEY, "OFFLINE")
+      const fetch = createDemoFetch({ storage: localStorage, products: async () => PRODUCTS })
+      const orders = createHttpOrders("https://demo.invalid", async () => token(), fetch, { sleep: async () => undefined })
+      expect(await refusal(orders.place(order()))).toMatchObject({ code: "NETWORK" })
+      expect(localStorage.getItem(DEMO_REFUSE_KEY)).toBe("OFFLINE")
+      localStorage.removeItem(DEMO_REFUSE_KEY)
+      expect(await demo().list()).toEqual([])
+    })
   })
 
   it("can be told to refuse the next order with a given code, to show each refusal in the browser", async () => {

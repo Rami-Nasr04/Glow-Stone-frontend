@@ -107,8 +107,9 @@ const optional = (value: string | null) => value?.trim() || null
 
 // The body exactly as the API takes it: only its keys (any other is a 400), required texts trimmed, and an empty
 // optional text as null. A card message goes only with a gift.
-function orderBody(input: PlaceOrderInput): PlaceOrderInput {
+export function orderBody(input: PlaceOrderInput): PlaceOrderInput {
   return {
+    requestId: input.requestId,
     items: input.items.map(({ productId, quantity, unitPrice }) => ({ productId, quantity, unitPrice })),
     recipient: input.recipient ? { name: input.recipient.name.trim(), phone: input.recipient.phone } : null,
     city: input.city.trim(),
@@ -119,10 +120,33 @@ function orderBody(input: PlaceOrderInput): PlaceOrderInput {
   }
 }
 
-/** The routes over `fetchImpl` (the browser's fetch, or the demo API while the customer pool isn't live). */
-export function createHttpOrders(base: string, token: () => Promise<string>, fetchImpl: typeof fetch = (...args) => fetch(...args)): OrdersClient {
+/** When POST /orders gets no answer, it is sent again after these waits (Rami, 2026-10-24: about 3 more tries). */
+export const PLACE_RETRY_WAITS_MS = [1000, 3000, 8000]
+/** How long one try at POST /orders waits for its answer before it counts as no answer. */
+export const PLACE_TIMEOUT_MS = 20_000
+
+interface HttpOrdersOptions {
+  /** Waits between re-sends (tests skip them). */
+  sleep?: (ms: number) => Promise<void>
+  timeoutMs?: number
+}
+
+const wait = (ms: number) => new Promise<void>((done) => setTimeout(done, ms))
+
+// No answer, a server error, or an answer to a placed order that couldn't be read: the order may or may not exist, and
+// the same key makes sending it again safe. Every other answer (4xx) is final.
+export const mayHaveFailedInTransit = (error: OrderError) =>
+  error.code === "NETWORK" || error.status >= 500 || (error.code === "INVALID_ANSWER" && error.status >= 200 && error.status < 300)
+
+/** The routes over `fetchImpl` (the browser's fetch, or the demo API for the demo accounts). */
+export function createHttpOrders(
+  base: string,
+  token: () => Promise<string>,
+  fetchImpl: typeof fetch = (...args) => fetch(...args),
+  { sleep = wait, timeoutMs = PLACE_TIMEOUT_MS }: HttpOrdersOptions = {},
+): OrdersClient {
   // The envelope's data; a refusal becomes an OrderError with the API's code and message.
-  async function call(method: "GET" | "POST", path: string, body?: unknown): Promise<{ status: number; data: unknown }> {
+  async function call(method: "GET" | "POST", path: string, body?: unknown, limitMs?: number): Promise<{ status: number; data: unknown }> {
     let bearer: string
     try {
       bearer = await token()
@@ -132,10 +156,14 @@ export function createHttpOrders(base: string, token: () => Promise<string>, fet
     const headers: Record<string, string> = { Accept: "application/json", Authorization: `Bearer ${bearer}` }
     if (body !== undefined) headers["Content-Type"] = "application/json"
     let response: Response
+    const abort = limitMs === undefined ? null : new AbortController()
+    const timer = abort ? setTimeout(() => abort.abort(), limitMs) : undefined
     try {
-      response = await fetchImpl(`${base}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+      response = await fetchImpl(`${base}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: abort?.signal })
     } catch {
       throw new OrderError(0, "NETWORK", "No answer from the server.")
+    } finally {
+      clearTimeout(timer)
     }
     // API Gateway answers a missing, expired or foreign token itself, with its own body: the status says it all.
     if (response.status === 401) throw new OrderError(401, "UNAUTHORIZED", "Please sign in again.")
@@ -148,8 +176,8 @@ export function createHttpOrders(base: string, token: () => Promise<string>, fet
     throw new OrderError(response.status, error.code, error.message, productId)
   }
 
-  async function read<T>(method: "GET" | "POST", path: string, reader: (data: unknown) => T, body?: unknown): Promise<T> {
-    const { status, data } = await call(method, path, body)
+  async function read<T>(method: "GET" | "POST", path: string, reader: (data: unknown) => T, body?: unknown, limitMs?: number): Promise<T> {
+    const { status, data } = await call(method, path, body, limitMs)
     try {
       return reader(data)
     } catch (error) {
@@ -160,8 +188,18 @@ export function createHttpOrders(base: string, token: () => Promise<string>, fet
 
   return {
     me: () => read("GET", "/me", readMe),
-    // Sent once: a POST is never retried by itself (it could place the order twice).
-    place: (input) => read("POST", "/orders", readOrder, orderBody(input)),
+    // The same body each time, its requestId included, so the server answers a repeat with the order already made.
+    async place(input) {
+      const body = orderBody(input)
+      for (let tries = 0; ; tries++) {
+        try {
+          return await read("POST", "/orders", readOrder, body, timeoutMs)
+        } catch (error) {
+          if (!(error instanceof OrderError) || !mayHaveFailedInTransit(error) || tries >= PLACE_RETRY_WAITS_MS.length) throw error
+          await sleep(PLACE_RETRY_WAITS_MS[tries])
+        }
+      }
+    },
     list: () => read("GET", "/me/orders", (data) => (Array.isArray(data) ? data.map(readSummary) : fail("list"))),
     async get(id) {
       try {

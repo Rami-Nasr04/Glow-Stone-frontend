@@ -14,11 +14,11 @@ import type { ProductSummary } from "@/features/catalog/types"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
-import { type CartLine, type CartNotice, closeCart, noteStock, openCart, pieceCount, removeFromCart, setQuantity, useCart } from "./cart"
+import { type CartLine, type CartNotice, closeCart, openCart, pieceCount, refreshCart, removeFromCart, setQuantity, useCart } from "./cart"
 
 type Live =
   | { status: "loading" }
-  | { status: "ready"; pieces: ReadonlyMap<number, ProductSummary>; lowered: readonly number[] }
+  | { status: "ready"; pieces: ReadonlyMap<number, ProductSummary>; lowered: readonly number[]; repriced: readonly number[] }
   | { status: "failed" }
 
 // The last list read in this visit, in memory only: if a later read fails, lines keep their names and photos (never
@@ -26,7 +26,7 @@ type Live =
 let lastKnown: ReadonlyMap<number, ProductSummary> = new Map()
 
 // GET /products each time the drawer opens with something in it (the panel mounts on every open), so names, prices,
-// photos and stock are current.
+// photos and stock are current, and the cart takes the newest prices.
 function useLivePieces(hasLines: boolean): [Live, () => void] {
   const [live, setLive] = useState<Live>({ status: "loading" })
   const [attempt, setAttempt] = useState(0)
@@ -37,8 +37,8 @@ function useLivePieces(hasLines: boolean): [Live, () => void] {
       (list) => {
         const pieces = new Map(list.map((piece) => [piece.id, piece]))
         lastKnown = pieces
-        const lowered = noteStock(new Map(list.map((piece) => [piece.id, piece.remaining])))
-        setLive({ status: "ready", pieces, lowered })
+        const { lowered, repriced } = refreshCart(list)
+        setLive({ status: "ready", pieces, lowered, repriced })
       },
       () => {
         if (!abort.signal.aborted) setLive({ status: "failed" })
@@ -131,12 +131,7 @@ function CartPanel() {
             )}
             <ul>
               {lines.map((line) => (
-                <CartLineItem
-                  key={line.productId}
-                  line={line}
-                  live={live}
-                  flag={notice?.kind === "server" && notice.productId === line.productId ? notice.message : null}
-                />
+                <CartLineItem key={line.productId} line={line} live={live} />
               ))}
             </ul>
           </>
@@ -171,13 +166,6 @@ function CartPanel() {
 
 function CartNoticeLine({ notice }: { notice: CartNotice }) {
   const { m, to } = useLocale()
-  if (notice.kind === "server") {
-    return (
-      <p role="status" className="border-b border-border py-5 text-small">
-        {notice.message}
-      </p>
-    )
-  }
   if (notice.kind === "stock") {
     return (
       <p role="status" className="border-b border-border py-5 text-small">
@@ -198,11 +186,9 @@ function CartNoticeLine({ notice }: { notice: CartNotice }) {
 interface CartLineItemProps {
   line: CartLine
   live: Exclude<Live, { status: "loading" }>
-  /** What the server said about this piece when it refused the order. */
-  flag: string | null
 }
 
-function CartLineItem({ line, live, flag }: CartLineItemProps) {
+function CartLineItem({ line, live }: CartLineItemProps) {
   const { m, to } = useLocale()
   const piece = live.status === "ready" ? live.pieces.get(line.productId) : lastKnown.get(line.productId)
   const name = piece ? noBreak(piece.name) : m.cart.unnamed
@@ -248,12 +234,7 @@ function CartLineItem({ line, live, flag }: CartLineItemProps) {
           {live.status === "ready" && piece && !soldOut && <span className="text-sm tracking-price">{formatPrice(piece.price * line.quantity)}</span>}
         </div>
         {piece && <span className="text-label uppercase tracking-caps text-muted-foreground">{stoneLabel(piece)}</span>}
-        {flag && (
-          <p className="mt-1 flex items-start gap-2.5 text-sm text-accent">
-            <span aria-hidden="true" className="mt-1.5 size-1.75 shrink-0 rotate-45 bg-accent" />
-            {flag}
-          </p>
-        )}
+        {live.status === "ready" && piece && !soldOut && live.repriced.includes(line.productId) && <PriceUpdated />}
 
         {live.status === "failed" ? (
           <div className="mt-2 flex items-center justify-between gap-3">
@@ -292,6 +273,17 @@ function CartLineItem({ line, live, flag }: CartLineItemProps) {
         )}
       </div>
     </li>
+  )
+}
+
+/** A quiet note on a line whose price changed since the customer last saw it (cart and checkout). */
+export function PriceUpdated() {
+  const { m } = useLocale()
+  return (
+    <span className="flex items-center gap-2 text-xs text-accent">
+      <span aria-hidden="true" className="size-1.5 rotate-45 bg-accent" />
+      {m.cart.priceUpdated}
+    </span>
   )
 }
 

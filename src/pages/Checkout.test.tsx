@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useLocation } from "react-router"
 import { createMockAuth, DEMO_USER } from "@/features/auth/mock-auth"
 import RequireAuth from "@/features/auth/RequireAuth"
-import { CART_KEY, resetCart, useCart } from "@/features/cart/cart"
+import { CART_KEY, ORDER_KEY, resetCart, useCart } from "@/features/cart/cart"
 import { DEMO_ORDERS_KEY, DEMO_REFUSE_KEY } from "@/features/orders/demo-api"
 import { stubApi } from "@/test/catalog"
 import { renderAt } from "@/test/render"
@@ -12,6 +12,7 @@ import Checkout from "./Checkout"
 const QADISHA = 5 // $890, 4 left
 const BATROUN = 3 // $180, 9 left
 const NAHR = 2 // sold out
+const SANNINE = 6 // $560, 2 left
 
 function Probe() {
   const { pathname, search } = useLocation()
@@ -22,8 +23,8 @@ const probes = [
   { path: "/checkout/thanks/:id", Component: Probe },
 ]
 
-function fillCart(lines: [number, number][]) {
-  localStorage.setItem(CART_KEY, JSON.stringify(lines.map(([productId, quantity]) => ({ productId, quantity }))))
+function fillCart(lines: [number, number, number?][]) {
+  localStorage.setItem(CART_KEY, JSON.stringify(lines.map(([productId, quantity, price]) => ({ productId, quantity, price }))))
   resetCart()
 }
 
@@ -33,7 +34,7 @@ async function signedIn() {
   return auth
 }
 
-async function open(lines: [number, number][] = [[QADISHA, 1], [BATROUN, 2]]) {
+async function open(lines: [number, number, number?][] = [[QADISHA, 1], [BATROUN, 2]]) {
   fillCart(lines)
   stubApi()
   const user = userEvent.setup({ delay: null })
@@ -54,6 +55,9 @@ async function fillAddress(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Floor / apartment (optional)"), "3rd floor")
 }
 
+const summary = () => screen.getByRole("complementary", { name: "Order summary" })
+const lineOf = (name: string) => within(summary()).getByText(name).closest("li")!
+const placeButton = () => screen.getByRole("button", { name: /^Place order$|^Placing your order…$/ })
 const placed = () => JSON.parse(localStorage.getItem(DEMO_ORDERS_KEY) ?? '{"orders":[]}').orders.map((o: { order: object }) => o.order)
 const cart = () => renderHook(() => useCart()).result.current
 
@@ -122,6 +126,14 @@ describe("Checkout", () => {
     expect(placed()[0].recipient).toEqual({ name: "Maya Saad", phone: "+9613123456", isAccountHolder: false })
   })
 
+  // Rami, 2026-10-24: payment stays cash, but Omar arranges it with the buyer of a gift.
+  it("says Omar will arrange the payment once it is a gift", async () => {
+    const user = await open()
+    expect(screen.queryByText("Omar will contact you to arrange the payment.")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("switch", { name: "This is a gift" }))
+    expect(screen.getByText("Omar will contact you to arrange the payment.")).toBeInTheDocument()
+  })
+
   it("offers a card message only for a gift, up to 200 characters, with a counter", async () => {
     const user = await open()
     expect(screen.queryByLabelText("Gift card message (optional)")).not.toBeInTheDocument()
@@ -162,33 +174,146 @@ describe("Checkout", () => {
     expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([])
   })
 
-  it("leaves out a line that can't be ordered any more, and says so", async () => {
-    const user = await open([
-      [NAHR, 1],
-      [BATROUN, 1],
-    ])
-    const summary = screen.getByRole("complementary", { name: "Order summary" })
-    expect(await within(summary).findByText("Batroun")).toBeInTheDocument()
-    expect(within(summary).queryByText("Nahr")).not.toBeInTheDocument()
-    expect(within(summary).getByText(/can no longer be ordered/)).toBeInTheDocument()
-    await fillAddress(user)
-    await user.click(screen.getByRole("button", { name: "Place order" }))
-    await screen.findByText(/landed: \/checkout\/thanks\//)
-    expect(placed()[0].items.map((i: { productId: number }) => i.productId)).toEqual([BATROUN])
-    // The cart is emptied after an order, the line that couldn't be ordered too.
-    expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toEqual([])
+  // Rami, 2026-10-24: prices always current.
+  describe("current prices and stock", () => {
+    it("shows each piece at its newest price, says which changed, and totals them", async () => {
+      await open([
+        [QADISHA, 1, 850],
+        [BATROUN, 2, 180],
+      ])
+      await within(summary()).findByText("Qadisha")
+      expect(lineOf("Qadisha")).toHaveTextContent("$890")
+      expect(within(lineOf("Qadisha")).getByText("Price updated")).toBeInTheDocument()
+      expect(within(lineOf("Batroun")).queryByText("Price updated")).not.toBeInTheDocument()
+      expect(within(summary()).getByText("Total").nextSibling).toHaveTextContent("$1,250")
+    })
+
+    it("shows a sold-out or gone piece as such and keeps Place order disabled until it is removed", async () => {
+      const user = await open([
+        [NAHR, 1],
+        [99, 1],
+        [BATROUN, 1],
+      ])
+      await within(summary()).findByText("Batroun")
+      expect(within(lineOf("Nahr")).getByText("Sold out")).toBeInTheDocument()
+      expect(within(summary()).getByText("No longer available")).toBeInTheDocument()
+      expect(placeButton()).toBeDisabled()
+      expect(within(summary()).getByText("Remove the pieces that can't be ordered to place your order.")).toBeInTheDocument()
+      expect(within(summary()).getByText("Total").nextSibling).toHaveTextContent("$180")
+      await user.click(within(summary()).getByRole("button", { name: "Remove Nahr" }))
+      expect(placeButton()).toBeDisabled()
+      await user.click(within(summary()).getByRole("button", { name: "Remove A Glowstone piece" }))
+      expect(placeButton()).toBeEnabled()
+      await fillAddress(user)
+      await user.click(placeButton())
+      await screen.findByText(/landed: \/checkout\/thanks\//)
+      expect(placed()[0].items.map((i: { productId: number }) => i.productId)).toEqual([BATROUN])
+    })
+
+    it("lowers a line to what is left, with a note", async () => {
+      await open([[SANNINE, 3]])
+      await within(summary()).findByText("Sannine")
+      expect(lineOf("Sannine")).toHaveTextContent("Qty 2")
+      expect(within(lineOf("Sannine")).getByText("Only 2 left in this edition, so your cart now holds 2.")).toBeInTheDocument()
+      expect(cart().lines).toEqual([{ productId: SANNINE, quantity: 2, price: 560 }])
+    })
+
+    // Omar changed a price between checkout loading and the press: the server refuses it.
+    it("on PRICE_CHANGED, refreshes the prices here, keeps the cart, and shows the API's words", async () => {
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      stubApi((list) => list.map((piece) => (piece.id === QADISHA ? { ...piece, price: 950 } : piece)))
+      await user.click(placeButton())
+      expect(await within(summary()).findByRole("alert")).toHaveTextContent("The price of Qadisha has changed. Please check your cart.")
+      await waitFor(() => expect(lineOf("Qadisha")).toHaveTextContent("$950"))
+      expect(within(lineOf("Qadisha")).getByText("Price updated")).toBeInTheDocument()
+      expect(within(summary()).getByText("Total").nextSibling).toHaveTextContent("$1,310")
+      expect(cart().open).toBe(false)
+      expect(cart().lines).toHaveLength(2)
+      expect(placed()).toEqual([])
+      // The customer sees the new total and presses again.
+      await user.click(placeButton())
+      await screen.findByText(/landed: \/checkout\/thanks\//)
+      expect(placed()[0].items).toContainEqual(expect.objectContaining({ productId: QADISHA, quantity: 1, unitPrice: 950 }))
+    })
+
+    it("on UNAVAILABLE, refreshes here too and shows the API's words", async () => {
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      stubApi((list) => list.map((piece) => (piece.id === QADISHA ? { ...piece, remaining: 0, soldOut: true } : piece)))
+      await user.click(placeButton())
+      expect(await within(summary()).findByRole("alert")).toHaveTextContent("Qadisha is sold out.")
+      await waitFor(() => expect(within(lineOf("Qadisha")).getByText("Sold out")).toBeInTheDocument())
+      expect(placeButton()).toBeDisabled()
+      expect(cart().open).toBe(false)
+    })
   })
 
-  it.each(["PRICE_CHANGED", "UNAVAILABLE"])("on %s, sends the customer back to the cart with the server's words on that piece", async (code) => {
-    const user = await open()
-    await within(screen.getByRole("complementary", { name: "Order summary" })).findByText("Qadisha")
-    await fillAddress(user)
-    localStorage.setItem(DEMO_REFUSE_KEY, code)
-    await user.click(screen.getByRole("button", { name: "Place order" }))
-    await waitFor(() => expect(cart().open).toBe(true))
-    expect(cart().notice).toMatchObject({ kind: "server", productId: QADISHA, message: expect.stringContaining("Qadisha") })
-    expect(placed()).toEqual([])
-    expect(screen.getByRole("heading", { level: 1, name: "Checkout" })).toBeInTheDocument()
+  // Rami, 2026-10-24: no double orders, and the customer never has to press twice.
+  describe("the order key and re-sends", () => {
+    afterEach(() => vi.useRealTimers())
+
+    it("sends a key with the order and drops it once the order is placed", async () => {
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      await user.click(placeButton())
+      await screen.findByText(/landed: \/checkout\/thanks\//)
+      expect(placed()[0]).toBeTruthy()
+      expect(JSON.parse(localStorage.getItem("glowstone.demo-orders")!).orders[0].requestId).toMatch(/^[0-9a-f-]{36}$/)
+      expect(localStorage.getItem(ORDER_KEY)).toBeNull()
+    })
+
+    it("re-sends a lost order in the background with the same key: one order, the confirmation", async () => {
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      localStorage.setItem(DEMO_REFUSE_KEY, "LOST")
+      await user.click(placeButton())
+      expect(await screen.findByText("landed: /checkout/thanks/1", {}, { timeout: 3000 })).toBeInTheDocument()
+      expect(placed()).toHaveLength(1)
+    })
+
+    it("keeps saying it is placing while it re-sends, and when every try fails keeps the cart and the key", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      localStorage.setItem(DEMO_REFUSE_KEY, "OFFLINE")
+      await user.click(placeButton())
+      expect(placeButton()).toHaveTextContent("Placing your order…")
+      expect(placeButton()).toBeDisabled()
+      await vi.advanceTimersByTimeAsync(13_000)
+      const alert = await within(summary()).findByRole("alert")
+      expect(alert).toHaveTextContent("We couldn't reach Glowstone. Your order may still go through; please check My orders or try again.")
+      expect(within(alert).getByRole("link", { name: "My orders" })).toHaveAttribute("href", "/account")
+      expect(cart().lines).toHaveLength(2)
+      const key = JSON.parse(localStorage.getItem(ORDER_KEY)!).requestId
+      // Pressing again is safe: the same key.
+      localStorage.removeItem(DEMO_REFUSE_KEY)
+      await user.click(placeButton())
+      await screen.findByText(/landed: \/checkout\/thanks\//)
+      expect(JSON.parse(localStorage.getItem("glowstone.demo-orders")!).orders[0].requestId).toBe(key)
+    })
+
+    it("makes a new key when the delivery details change", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      const user = await open()
+      await within(summary()).findByText("Qadisha")
+      await fillAddress(user)
+      localStorage.setItem(DEMO_REFUSE_KEY, "OFFLINE")
+      await user.click(placeButton())
+      await vi.advanceTimersByTimeAsync(13_000)
+      await within(summary()).findByRole("alert")
+      const first = JSON.parse(localStorage.getItem(ORDER_KEY)!).requestId
+      localStorage.removeItem(DEMO_REFUSE_KEY)
+      await user.type(screen.getByLabelText("City or town"), " North")
+      await user.click(placeButton())
+      await screen.findByText(/landed: \/checkout\/thanks\//)
+      expect(JSON.parse(localStorage.getItem("glowstone.demo-orders")!).orders[0].requestId).not.toBe(first)
+    })
   })
 
   it("on ORDER_LIMIT, shows the message with a way to contact Omar", async () => {
@@ -251,15 +376,16 @@ describe("Checkout", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument()
   })
 
-  it("names a piece that no longer exists on its cart line", async () => {
+  it("shows a piece deleted since checkout loaded as no longer available, with the API's words", async () => {
     const user = await open()
-    await within(screen.getByRole("complementary", { name: "Order summary" })).findByText("Qadisha")
+    await within(summary()).findByText("Qadisha")
     await fillAddress(user)
     // Qadisha is deleted between the page loading and the order.
     stubApi((list) => list.filter((piece) => piece.id !== QADISHA))
-    await user.click(screen.getByRole("button", { name: "Place order" }))
-    await waitFor(() => expect(cart().open).toBe(true))
-    expect(cart().notice).toEqual({ kind: "server", productId: QADISHA, message: "One piece in your cart is no longer available." })
+    await user.click(placeButton())
+    expect(await within(summary()).findByRole("alert")).toHaveTextContent("One piece in your cart is no longer available.")
+    expect(await within(summary()).findByText("No longer available")).toBeInTheDocument()
+    expect(placeButton()).toBeDisabled()
   })
 
   it("shows the empty state when nothing can be ordered", async () => {

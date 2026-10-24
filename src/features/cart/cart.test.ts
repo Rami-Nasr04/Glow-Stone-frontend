@@ -6,12 +6,14 @@ import {
   closeCart,
   MAX_PIECES,
   noteStock,
+  ORDER_KEY,
   openCart,
+  refreshCart,
+  requestIdFor,
   pieceCount,
   removeFromCart,
   resetCart,
   setQuantity,
-  showCartNotice,
   useCart,
 } from "./cart"
 
@@ -23,14 +25,86 @@ beforeEach(() => {
 })
 
 describe("cart", () => {
-  it("keeps only the piece ids and quantities in the browser: never a price, name or photo", () => {
-    expect(addToCart(3, 1, 4)).toBe("added")
-    expect(addToCart(5, 2, 4)).toBe("added")
-    expect(addToCart(3, 1, 4)).toBe("added")
+  it("keeps each piece's id, quantity and the price the customer saw, never a name or photo", () => {
+    expect(addToCart(3, 1, 4, 180)).toBe("added")
+    expect(addToCart(5, 2, 4, 890)).toBe("added")
+    expect(addToCart(3, 1, 4, 180)).toBe("added")
     expect(stored()).toEqual([
-      { productId: 3, quantity: 2 },
-      { productId: 5, quantity: 2 },
+      { productId: 3, quantity: 2, price: 180 },
+      { productId: 5, quantity: 2, price: 890 },
     ])
+  })
+
+  // Rami, 2026-10-24: the cart and checkout never show an old price.
+  describe("refreshing from GET /products", () => {
+    const piece = (id: number, price: number, remaining: number) => ({ id, price, remaining })
+
+    it("takes each piece's newest price and says which lines changed", () => {
+      addToCart(3, 1, 9, 180)
+      addToCart(5, 1, 9, 890)
+      expect(refreshCart([piece(3, 200, 9), piece(5, 890, 4)])).toEqual({ lowered: [], repriced: [3] })
+      expect(stored()).toEqual([
+        { productId: 3, quantity: 1, price: 200 },
+        { productId: 5, quantity: 1, price: 890 },
+      ])
+      // Seen once, the new price is the one the customer knows: no note the next time.
+      expect(refreshCart([piece(3, 200, 9), piece(5, 890, 4)])).toEqual({ lowered: [], repriced: [] })
+    })
+
+    it("lowers a line to what is left, and keeps sold-out and missing pieces as lines", () => {
+      addToCart(3, 3, 9, 180)
+      addToCart(2, 1, 9, 290)
+      addToCart(9, 1, 9, 100)
+      expect(refreshCart([piece(3, 180, 2), piece(2, 290, 0)])).toEqual({ lowered: [3], repriced: [] })
+      expect(stored()).toEqual([
+        { productId: 3, quantity: 2, price: 180 },
+        { productId: 2, quantity: 1, price: 290 },
+        { productId: 9, quantity: 1, price: 100 },
+      ])
+    })
+
+    // A cart stored before prices were kept, or a line added without one.
+    it("takes the price of a line that had none without calling it a change", () => {
+      localStorage.setItem(CART_KEY, JSON.stringify([{ productId: 3, quantity: 1 }]))
+      resetCart()
+      expect(refreshCart([piece(3, 180, 9)])).toEqual({ lowered: [], repriced: [] })
+      expect(stored()).toEqual([{ productId: 3, quantity: 1, price: 180 }])
+    })
+  })
+
+  // Each order attempt carries a key, so a re-sent order is never placed twice (Rami, 2026-10-24).
+  describe("the order key", () => {
+    const order = (city: string) => ({ items: [{ productId: 3, quantity: 1, unitPrice: 180 }], city })
+
+    it("keeps the same key for the same order, also after a reload", () => {
+      const first = requestIdFor(order("Jounieh"))
+      expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+      expect(requestIdFor(order("Jounieh"))).toBe(first)
+      resetCart()
+      expect(requestIdFor(order("Jounieh"))).toBe(first)
+    })
+
+    it("makes a new key whenever anything in the order changes", () => {
+      const first = requestIdFor(order("Jounieh"))
+      const second = requestIdFor(order("Byblos"))
+      expect(second).not.toBe(first)
+      expect(requestIdFor(order("Jounieh"))).not.toBe(first)
+    })
+
+    it("drops the key with the cart (an order placed, or signing out)", () => {
+      const first = requestIdFor(order("Jounieh"))
+      clearCart()
+      expect(localStorage.getItem(ORDER_KEY)).toBeNull()
+      expect(requestIdFor(order("Jounieh"))).not.toBe(first)
+    })
+
+    it("still makes a key when the browser refuses storage", () => {
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new Error("blocked")
+      })
+      expect(requestIdFor(order("Jounieh"))).toMatch(/^[0-9a-f-]{36}$/)
+      vi.restoreAllMocks()
+    })
   })
 
   it("holds at most 5 pieces in all: an add that would pass it adds nothing and says so", () => {
@@ -127,12 +201,6 @@ describe("cart", () => {
     expect(addToCart(5, 3, 4)).toBe("total")
   })
 
-  it("opens the drawer with the server's words about a piece (a refused order)", () => {
-    const { result } = renderHook(() => useCart())
-    act(() => showCartNotice({ kind: "server", message: "Nahr is sold out.", productId: 2 }))
-    expect(result.current).toMatchObject({ open: true, notice: { kind: "server", message: "Nahr is sold out.", productId: 2 } })
-  })
-
   it("clearCart empties the cart and the stored copy", () => {
     const { result } = renderHook(() => useCart())
     act(() => void addToCart(3, 1, 4))
@@ -144,11 +212,22 @@ describe("cart", () => {
   it("reads back what was stored, ignoring anything that isn't a valid line", () => {
     localStorage.setItem(
       CART_KEY,
-      JSON.stringify([{ productId: 3, quantity: 2 }, { productId: "5", quantity: 1 }, { productId: 6, quantity: 0 }, { productId: 3, quantity: 1 }, null, { productId: 7, quantity: 1.5 }]),
+      JSON.stringify([
+        { productId: 3, quantity: 2, price: 180 },
+        { productId: "5", quantity: 1 },
+        { productId: 6, quantity: 0 },
+        { productId: 3, quantity: 1 },
+        null,
+        { productId: 7, quantity: 1.5 },
+        { productId: 8, quantity: 1, price: "free" },
+      ]),
     )
     resetCart()
     const { result } = renderHook(() => useCart())
-    expect(result.current.lines).toEqual([{ productId: 3, quantity: 3 }])
+    expect(result.current.lines).toEqual([
+      { productId: 3, quantity: 3, price: 180 },
+      { productId: 8, quantity: 1 },
+    ])
   })
 
   it("starts empty on a broken stored copy", () => {

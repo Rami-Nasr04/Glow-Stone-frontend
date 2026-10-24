@@ -9,13 +9,20 @@ import type { Order, OrderSummary, PlaceOrderInput } from "./types"
 
 export const DEMO_ORDERS_KEY = "glowstone.demo-orders"
 /** Set to a refusal code to have the next order refused with it (UNAVAILABLE, PRICE_CHANGED, ORDER_LIMIT, VALIDATION),
- * or the next call of any route (UNAUTHORIZED, FORBIDDEN). */
+ * or the next call of any route (UNAUTHORIZED, FORBIDDEN). LOST saves the next order and loses its answer once (the
+ * shop's re-send then gets it); OFFLINE loses every POST /orders, saving nothing, until the key is removed. */
 export const DEMO_REFUSE_KEY = "glowstone.demo-orders.refuse"
 
 interface StoredOrder {
   customerId: string
   order: Order
+  /** The order's key and the order it was sent as (contract: requestId). */
+  requestId?: string
+  sent?: string
 }
+
+// A lost answer: the order may be saved, but the shop hears nothing (like a dropped connection).
+class Lost extends Error {}
 
 interface Stored {
   orders: StoredOrder[]
@@ -47,6 +54,7 @@ const unauthorized = () => new Response(JSON.stringify({ message: "Unauthorized"
 // The API's words (POST /orders refusals and the 403).
 const MESSAGES = {
   emptyCart: "Your cart is empty.",
+  checkCart: "Please check your cart and try again.",
   pieceTwice: "Each piece can only be in the order once.",
   recipientName: "Please enter the recipient's name (up to 100 characters).",
   phone: "Please enter a Lebanese number, like 71 234 567.",
@@ -60,6 +68,7 @@ const MESSAGES = {
   forbidden: "Your account isn't ready yet. Please sign out and sign in again.",
 } as const
 const LEBANESE_PHONE = /^\+961\d{7,8}$/
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // The order as the API reads it: trimmed, "" (or only spaces) as null for the optional texts; the first broken rule,
 // in the API's order of fields, refuses it.
@@ -76,13 +85,16 @@ function validate(input: PlaceOrderInput): PlaceOrderInput {
     const text = typeof value === "string" ? value.trim() : bad(message)
     return text.length <= max ? text || null : bad(message)
   }
+  if (typeof input.requestId !== "string" || !UUID.test(input.requestId)) bad(MESSAGES.checkCart)
   if (!Array.isArray(input.items) || input.items.length === 0) bad(MESSAGES.emptyCart)
+  if (input.items.length > 20) bad(MESSAGES.checkCart)
   if (new Set(input.items.map((item) => item.productId)).size !== input.items.length) bad(MESSAGES.pieceTwice)
-  for (const item of input.items) if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 100) bad("Invalid quantity.")
+  for (const item of input.items) if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 100) bad(MESSAGES.checkCart)
   const recipient = input.recipient
     ? { name: required(input.recipient.name, 100, MESSAGES.recipientName), phone: LEBANESE_PHONE.test(input.recipient.phone) ? input.recipient.phone : bad(MESSAGES.phone) }
     : null
   const order: PlaceOrderInput = {
+    requestId: input.requestId,
     items: input.items,
     recipient,
     city: required(input.city, 100, MESSAGES.city),
@@ -126,6 +138,14 @@ export function createDemoFetch({ storage, products, now = () => new Date() }: D
     const forced = storage?.getItem(DEMO_REFUSE_KEY)
     if (forced) storage?.removeItem(DEMO_REFUSE_KEY)
     const input = validate(body)
+    // The same key again: the order already made, as it is now, before any other check; with another order, refused.
+    const { requestId, ...rest } = input
+    const sent = JSON.stringify(rest)
+    const repeat = load().orders.find((o) => o.customerId === customer.id && o.requestId === requestId)
+    if (repeat) {
+      if (repeat.sent !== sent) throw new Refusal(422, "REQUEST_REUSED", MESSAGES.checkCart)
+      return repeat.order
+    }
     const listed = new Map((await products()).map((piece) => [piece.id, piece]))
     const first = input.items[0]
     const named = listed.get(first.productId)?.name ?? "This piece"
@@ -182,7 +202,8 @@ export function createDemoFetch({ storage, products, now = () => new Date() }: D
       giftMessage: input.giftMessage,
       canCancel: true,
     }
-    save({ orders: [...stored.orders, { customerId: customer.id, order }] })
+    save({ orders: [...stored.orders, { customerId: customer.id, order, requestId, sent }] })
+    if (forced === "LOST") throw new Lost()
     return order
   }
 
@@ -213,6 +234,8 @@ export function createDemoFetch({ storage, products, now = () => new Date() }: D
       if (forced === "UNAUTHORIZED") return unauthorized()
       return json(403, { success: false, error: { code: "FORBIDDEN", message: MESSAGES.forbidden } })
     }
+    // No answer at all, as a dropped connection gives.
+    if (method === "POST" && url.pathname === "/orders" && forced === "OFFLINE") throw new TypeError("Failed to fetch")
     try {
       const path = url.pathname
       const orderId = /^\/me\/orders\/(\d+)(\/cancel)?$/.exec(path)
@@ -233,6 +256,7 @@ export function createDemoFetch({ storage, products, now = () => new Date() }: D
       else throw new Refusal(404, "NOT_FOUND", "Not found.")
       return json(status, { success: true, data })
     } catch (error) {
+      if (error instanceof Lost) throw new TypeError("Failed to fetch")
       if (!(error instanceof Refusal)) throw error
       return json(error.status, { success: false, error: { code: error.code, message: error.message, ...(error.productId === undefined ? {} : { productId: error.productId }) } })
     }

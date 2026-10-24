@@ -105,6 +105,8 @@ export function GiftInfo({ order }: { order: Order }) {
       ) : (
         <p className="text-small text-muted-foreground">{m.orders.noCard}</p>
       )}
+      {/* The buyer pays, not the recipient: Omar arranges it with them (Rami, 2026-10-24). */}
+      <p className="text-small">{m.orders.giftPayment}</p>
       <p className="text-xs text-muted-foreground">{m.orders.pricesHidden}</p>
     </section>
   )

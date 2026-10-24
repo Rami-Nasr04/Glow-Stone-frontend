@@ -20,6 +20,8 @@ export interface OrderItemInput {
 
 /** POST /orders */
 export interface PlaceOrderInput {
+  /** This order attempt's key: the same order re-sent with it is answered with the order already made. */
+  requestId: string
   items: OrderItemInput[]
   /** null: the account holder receives it. */
   recipient: { name: string; phone: string } | null
@@ -91,6 +93,7 @@ export type OrderErrorCode =
   | "PRICE_CHANGED"
   | "ORDER_LIMIT"
   | "CONFLICT"
+  | "REQUEST_REUSED"
   | "NETWORK"
   | "INVALID_ANSWER"
   | (string & {})

@@ -1,18 +1,18 @@
 import { useSyncExternalStore } from "react"
 
-// The cart lives in this browser only. It keeps which pieces and how many, never a price, name or photo: those are
-// read fresh from GET /products whenever the drawer opens, and the server prices and checks the order at checkout.
+// The cart lives in this browser only. It keeps which pieces, how many, and the price the customer last saw, never a
+// name or photo. Whenever the drawer opens or checkout loads, everything is read fresh from GET /products: the newest
+// price replaces the one kept (and the screen says so), and the server checks the prices again when the order is placed.
 
 export interface CartLine {
   productId: number
   quantity: number
+  /** The price last shown to the customer for this piece; unknown for a cart stored before prices were kept. */
+  price?: number
 }
 
-/** Why an add or a "+" was stopped, or what the server said when it refused an order; shown at the top of the drawer. */
-export type CartNotice =
-  | { kind: "total" }
-  | { kind: "stock"; remaining: number }
-  | { kind: "server"; message: string; productId: number | null }
+/** Why an add or a "+" was stopped; shown at the top of the drawer. */
+export type CartNotice = { kind: "total" } | { kind: "stock"; remaining: number }
 
 export interface CartState {
   lines: readonly CartLine[]
@@ -25,6 +25,8 @@ export type CartChange = "added" | "total" | "stock"
 /** The most pieces one cart holds; the server checks it again with the customer's other pending orders. */
 export const MAX_PIECES = 5
 export const CART_KEY = "glowstone.cart"
+/** This cart's order attempt: its key (`requestId`) and the order it was made for. */
+export const ORDER_KEY = "glowstone.cart.order"
 
 const EMPTY: CartState = { lines: [], open: false, notice: null }
 
@@ -34,6 +36,7 @@ const listeners = new Set<() => void>()
 let stock: ReadonlyMap<number, number> | null = null
 
 const isCount = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 1
+const isPrice = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0
 
 // Anything that isn't a whole positive id and quantity is dropped; repeated ids are added together.
 function readLines(): CartLine[] {
@@ -47,11 +50,11 @@ function readLines(): CartLine[] {
   const lines: CartLine[] = []
   for (const entry of raw) {
     if (typeof entry !== "object" || entry === null) continue
-    const { productId, quantity } = entry as Record<string, unknown>
+    const { productId, quantity, price } = entry as Record<string, unknown>
     if (!isCount(productId) || !isCount(quantity)) continue
     const line = lines.find((l) => l.productId === productId)
     if (line) line.quantity += quantity
-    else lines.push({ productId, quantity })
+    else lines.push(isPrice(price) ? { productId, quantity, price } : { productId, quantity })
   }
   return lines
 }
@@ -108,7 +111,7 @@ const orderable = (line: CartLine) => stock === null || (stock.get(line.productI
 const quantityOf = (lines: readonly CartLine[], productId: number) => lines.find((l) => l.productId === productId)?.quantity ?? 0
 
 // The one rule for every change: never more of a piece than remain, never more than MAX_PIECES in all.
-function change(productId: number, quantity: number, remaining: number): CartChange {
+function change(productId: number, quantity: number, remaining: number, price?: number): CartChange {
   const lines = current().lines
   if (quantity > remaining) {
     update({ notice: { kind: "stock", remaining } })
@@ -119,17 +122,21 @@ function change(productId: number, quantity: number, remaining: number): CartCha
     update({ notice: { kind: "total" } })
     return "total"
   }
+  const priced = (line: CartLine): CartLine => (price === undefined ? line : { ...line, price })
   const next = lines.some((l) => l.productId === productId)
-    ? lines.map((l) => (l.productId === productId ? { productId, quantity } : l))
-    : [...lines, { productId, quantity }]
+    ? lines.map((l) => (l.productId === productId ? priced({ ...l, quantity }) : l))
+    : [...lines, priced({ productId, quantity })]
   update({ lines: next, notice: null })
   return "added"
 }
 
-/** Adds `quantity` of a piece and opens the drawer; adds nothing when it would pass a limit (the drawer says why). */
-export function addToCart(productId: number, quantity: number, remaining: number): CartChange {
+/**
+ * Adds `quantity` of a piece at the `price` its page showed, and opens the drawer; adds nothing when it would pass a
+ * limit (the drawer says why).
+ */
+export function addToCart(productId: number, quantity: number, remaining: number, price?: number): CartChange {
   update({ open: true })
-  return change(productId, quantityOf(current().lines, productId) + quantity, remaining)
+  return change(productId, quantityOf(current().lines, productId) + quantity, remaining, price)
 }
 
 /** Sets a line's quantity (at least 1), within the same limits. */
@@ -159,14 +166,80 @@ export function noteStock(remaining: ReadonlyMap<number, number>): number[] {
   return lowered
 }
 
-/** Empties the cart here and in storage. Signing out must call it (a shared computer). */
-export function clearCart() {
-  update({ lines: [], notice: null })
+export interface CartRefresh {
+  /** Lines lowered to what is left. */
+  lowered: number[]
+  /** Lines whose price changed since the customer last saw it. */
+  repriced: number[]
 }
 
-/** Opens the drawer with a notice: checkout sends the customer back here when the server refused the order. */
-export function showCartNotice(notice: CartNotice) {
-  update({ open: true, notice })
+/**
+ * Takes a fresh GET /products: the stock (see noteStock) and each piece's newest price, which becomes the one the
+ * customer has now seen. Says which lines were lowered and which changed price, for the screen showing them.
+ */
+export function refreshCart(pieces: readonly { id: number; price: number; remaining: number }[]): CartRefresh {
+  const lowered = noteStock(new Map(pieces.map((piece) => [piece.id, piece.remaining])))
+  const prices = new Map(pieces.map((piece) => [piece.id, piece.price]))
+  const repriced: number[] = []
+  let changed = false
+  const next = current().lines.map((line) => {
+    const price = prices.get(line.productId)
+    if (price === undefined || price === line.price) return line
+    if (line.price !== undefined) repriced.push(line.productId)
+    changed = true
+    return { ...line, price }
+  })
+  if (changed) update({ lines: next })
+  return { lowered, repriced }
+}
+
+interface OrderAttempt {
+  requestId: string
+  order: string
+}
+
+function readAttempt(): OrderAttempt | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(ORDER_KEY) ?? "null") as Partial<OrderAttempt> | null
+    return typeof value?.requestId === "string" && typeof value.order === "string" ? { requestId: value.requestId, order: value.order } : null
+  } catch {
+    return null
+  }
+}
+
+// In memory too, so a browser that refuses storage still re-sends with the same key.
+let attempt: OrderAttempt | null = null
+
+/**
+ * The key (`requestId`) for this exact order: the same while nothing changes, so a re-sent order is the same order to
+ * the server; a new one as soon as the pieces, prices or delivery details change. Kept with the cart until the order
+ * is placed (clearCart drops it).
+ */
+export function requestIdFor(order: unknown): string {
+  const text = JSON.stringify(order)
+  const known = attempt ?? readAttempt()
+  if (known?.order === text) {
+    attempt = known
+    return known.requestId
+  }
+  attempt = { requestId: crypto.randomUUID(), order: text }
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(attempt))
+  } catch {
+    // Kept in memory for this page.
+  }
+  return attempt.requestId
+}
+
+/** Empties the cart here and in storage, with its order key. Signing out must call it (a shared computer). */
+export function clearCart() {
+  attempt = null
+  try {
+    localStorage.removeItem(ORDER_KEY)
+  } catch {
+    // Nothing kept to drop.
+  }
+  update({ lines: [], notice: null })
 }
 
 export function openCart() {
@@ -181,4 +254,5 @@ export function closeCart() {
 export function resetCart() {
   state = null
   stock = null
+  attempt = null
 }

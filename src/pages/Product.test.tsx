@@ -74,7 +74,7 @@ describe("Product", () => {
     await user.click(screen.getByRole("button", { name: "One more" }))
     await waitFor(async () => {
       await user.click(screen.getAllByRole("button", { name: "Add to cart" })[0])
-      expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toContainEqual({ productId: 5, quantity: 2 })
+      expect(JSON.parse(localStorage.getItem(CART_KEY)!)).toContainEqual({ productId: 5, quantity: 2, price: 890 })
     })
   })
 

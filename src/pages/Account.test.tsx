@@ -137,6 +137,7 @@ describe("AccountOrder", () => {
     expect(screen.getByText("Limestone · Taupe · Qty 2")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Deliver to" })).toHaveTextContent("Maya Saad · +961 3 123 456")
     expect(screen.getByRole("region", { name: "Gift" })).toHaveTextContent("“For the new house.”")
+    expect(screen.getByRole("region", { name: "Gift" })).toHaveTextContent("Omar will contact you to arrange the payment.")
     expect(screen.getByRole("link", { name: /All orders/ })).toHaveAttribute("href", "/account")
   })
 

@@ -27,6 +27,18 @@ describe("OrderPlaced (the confirmation)", () => {
     expect(screen.getByRole("link", { name: /Continue browsing/ })).toHaveAttribute("href", "/collection")
   })
 
+  it("says Omar will arrange the payment for a gift order, and nothing of the kind otherwise", async () => {
+    const { auth, orders } = await demoCustomer()
+    const gift = await placeOrder(orders, { isGift: true, giftMessage: "For the new house." })
+    const plain = await placeOrder(orders, { items: [{ productId: 1, quantity: 1, unitPrice: 420 }] })
+    const view = renderAt(<p />, `/checkout/thanks/${gift.id}`, { auth, routes: [{ path: "/checkout/thanks/:id", Component: OrderPlaced }] })
+    expect(await screen.findByRole("region", { name: "Gift" })).toHaveTextContent("Omar will contact you to arrange the payment.")
+    view.unmount()
+    renderAt(<p />, `/checkout/thanks/${plain.id}`, { auth, routes: [{ path: "/checkout/thanks/:id", Component: OrderPlaced }] })
+    await screen.findByRole("heading", { level: 1 })
+    expect(screen.queryByText("Omar will contact you to arrange the payment.")).not.toBeInTheDocument()
+  })
+
   it("says so when the order isn't the customer's", async () => {
     const { auth } = await demoCustomer()
     renderAt(<p />, "/checkout/thanks/42", { auth, routes: [{ path: "/checkout/thanks/:id", Component: OrderPlaced }] })

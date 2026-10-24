@@ -23,6 +23,7 @@ const ORDER: Order = {
   canCancel: true,
 }
 const INPUT: PlaceOrderInput = {
+  requestId: "8e03978e-40d5-43e8-bc93-6894a57f9324",
   items: [{ productId: 5, quantity: 2, unitPrice: 890 }],
   recipient: null,
   city: "Jounieh",
@@ -42,6 +43,18 @@ function client(answer: (url: string, init: RequestInit) => Response | Promise<R
 }
 
 const error = (promise: Promise<unknown>) => promise.then(() => null, (e: unknown) => e as OrderError)
+
+// POST /orders re-sent in the background: the waits are recorded instead of slept.
+function placing(answers: (() => Response | Promise<Response>)[]) {
+  const fetch = vi.fn(async () => (answers.shift() ?? (() => ok(ORDER, 201)))())
+  const waits: number[] = []
+  const orders = createHttpOrders(BASE, async () => "token-1", fetch as unknown as typeof globalThis.fetch, {
+    sleep: async (ms) => void waits.push(ms),
+  })
+  return { orders, fetch, waits }
+}
+const lost = () => Promise.reject(new TypeError("Failed to fetch"))
+const bodies = (fetch: ReturnType<typeof vi.fn>) => fetch.mock.calls.map((call) => JSON.parse(String((call as unknown as [string, RequestInit])[1].body)))
 
 describe("orders API client", () => {
   it("sends the customer's access token on every route", async () => {
@@ -87,6 +100,57 @@ describe("orders API client", () => {
       deliveryNotes: null,
       isGift: true,
       giftMessage: null,
+    })
+  })
+
+  // Rami, 2026-10-24: the customer never has to press twice. The key makes a re-sent order the same order.
+  describe("placing an order without an answer", () => {
+    it("sends the same order again after no answer, waiting 1 s, then 3 s, then 8 s", async () => {
+      const { orders, fetch, waits } = placing([lost, () => new Response("<html>", { status: 502 }), lost])
+      await expect(orders.place(INPUT)).resolves.toEqual(ORDER)
+      expect(fetch).toHaveBeenCalledTimes(4)
+      expect(waits).toEqual([1000, 3000, 8000])
+      const sent = bodies(fetch)
+      expect(new Set(sent.map((body) => JSON.stringify(body))).size).toBe(1)
+      expect(sent[0].requestId).toBe(INPUT.requestId)
+    })
+
+    it("sends again after a server error (5xx) in the envelope", async () => {
+      const { orders, fetch } = placing([() => refusal(503, "UNAVAILABLE_SERVICE", "Try later")])
+      await expect(orders.place(INPUT)).resolves.toEqual(ORDER)
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it.each([
+      [400, "VALIDATION", "Please check your cart and try again."],
+      [401, "UNAUTHORIZED", "Unauthorized"],
+      [403, "FORBIDDEN", "Your account isn't ready yet. Please sign out and sign in again."],
+      [409, "PRICE_CHANGED", "The price of Qadisha has changed. Please check your cart."],
+      [422, "REQUEST_REUSED", "Please check your cart and try again."],
+    ])("never sends again after a %i: that is a real answer", async (status, code, message) => {
+      const { orders, fetch, waits } = placing([() => refusal(status, code, message)])
+      expect(await error(orders.place(INPUT))).toMatchObject({ status, code })
+      expect(fetch).toHaveBeenCalledTimes(1)
+      expect(waits).toEqual([])
+    })
+
+    it("gives up after 4 tries and says no answer came", async () => {
+      const { orders, fetch } = placing([lost, lost, lost, lost])
+      expect(await error(orders.place(INPUT))).toMatchObject({ code: "NETWORK" })
+      expect(fetch).toHaveBeenCalledTimes(4)
+    })
+
+    it("counts an answer that never comes as no answer", async () => {
+      const fetch = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))))
+      const orders = createHttpOrders(BASE, async () => "token-1", fetch as unknown as typeof globalThis.fetch, { sleep: async () => undefined, timeoutMs: 5 })
+      expect(await error(orders.place(INPUT))).toMatchObject({ code: "NETWORK" })
+      expect(fetch).toHaveBeenCalledTimes(4)
+    })
+
+    it("only re-sends POST /orders, never the other routes", async () => {
+      const { orders, fetch } = placing([lost])
+      expect(await error(orders.cancel(7))).toMatchObject({ code: "NETWORK" })
+      expect(fetch).toHaveBeenCalledTimes(1)
     })
   })
 

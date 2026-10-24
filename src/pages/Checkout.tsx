@@ -5,13 +5,15 @@ import Picture from "@/components/media/Picture"
 import { actionVariants } from "@/components/ui/action-link"
 import { Field, inputClass } from "@/components/ui/field"
 import { internationalPhone, lebanesePhone } from "@/features/auth/rules"
-import { clearCart, noteStock, showCartNotice, useCart } from "@/features/cart/cart"
+import { type CartRefresh, clearCart, refreshCart, removeFromCart, requestIdFor, useCart } from "@/features/cart/cart"
+import { PriceUpdated } from "@/features/cart/CartDrawer"
 import { listProducts } from "@/features/catalog/catalog"
 import { noBreak, stoneLabel } from "@/features/catalog/format"
 import NoPhoto from "@/features/catalog/NoPhoto"
 import type { ProductSummary } from "@/features/catalog/types"
+import { mayHaveFailedInTransit, orderBody } from "@/features/orders/api"
 import { useOrders } from "@/features/orders/client"
-import { type Me, OrderError } from "@/features/orders/types"
+import { type Me, OrderError, type PlaceOrderInput } from "@/features/orders/types"
 import { type Failure, failureOf } from "@/features/orders/use-order"
 import { formatPrice, interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
@@ -30,6 +32,7 @@ const card = "flex cursor-pointer items-start gap-4 border border-primary/40 p-5
 const radioDot = "mt-0.5 size-4 shrink-0 accent-accent"
 
 type Remote<T> = { status: "loading" } | { status: "ready"; value: T } | { status: "failed" }
+type Pieces = { pieces: ReadonlyMap<number, ProductSummary>; changes: CartRefresh }
 
 function SectionTitle({ n, children }: { n: string; children: React.ReactNode }) {
   return (
@@ -40,9 +43,11 @@ function SectionTitle({ n, children }: { n: string; children: React.ReactNode })
   )
 }
 
-// Checkout (prototype: Checkout), signed in only (RequireAuth). The cart's lines with the latest prices; the address
-// is typed for each order (no saved addresses). The server prices and checks the order again; when it refuses
-// because of a piece, the customer goes back to the cart with its words.
+// Checkout (prototype: Checkout), signed in only (RequireAuth). Every cart line at its newest price, read again on
+// each load (Rami, 2026-10-24: never an old price); the address is typed for each order (no saved addresses). The
+// server checks the order again; when it refuses because of a piece, the prices are read again here, the API's words
+// shown, and the customer presses again. An order carries its key (requestId) and is re-sent in the background when
+// no answer comes, so it is never placed twice and never needs a second press.
 export default function Checkout() {
   const { m, to } = useLocale()
   const t = m.checkout
@@ -52,13 +57,15 @@ export default function Checkout() {
   const formRef = useRef<HTMLFormElement>(null)
 
   const [me, setMe] = useState<Remote<Me> | Failure>({ status: "loading" })
-  const [pieces, setPieces] = useState<Remote<ReadonlyMap<number, ProductSummary>>>({ status: "loading" })
+  const [pieces, setPieces] = useState<Remote<Pieces>>({ status: "loading" })
   const [attempt, setAttempt] = useState(0)
+  // Bumped to read the prices and stock again without the loading screen (after a refusal about a piece).
+  const [reread, setReread] = useState(0)
   const [receiver, setReceiver] = useState<"me" | "someoneElse">("me")
   const [fields, setFields] = useState<Record<Key, string>>({ theirName: "", theirPhone: "", city: "", street: "", floor: "", notes: "", giftMessage: "" })
   const [gift, setGift] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
-  const [refusal, setRefusal] = useState<{ message: string; contact: boolean } | null>(null)
+  const [refusal, setRefusal] = useState<{ message: string; contact?: boolean; myOrders?: boolean } | null>(null)
   const [placing, setPlacing] = useState(false)
 
   useEffect(() => {
@@ -72,21 +79,22 @@ export default function Checkout() {
     }
   }, [orders, attempt])
 
-  // The latest prices and stock, read again whenever the cart drawer closes (it may have changed the cart).
+  // The latest prices and stock, read again whenever the cart drawer closes (it may have changed the cart). The cart
+  // takes the newest prices; the lines say which changed and which were lowered.
   useEffect(() => {
     if (cartOpen) return
     const abort = new AbortController()
     listProducts(abort.signal).then(
       (list) => {
-        noteStock(new Map(list.map((piece) => [piece.id, piece.remaining])))
-        setPieces({ status: "ready", value: new Map(list.map((piece) => [piece.id, piece])) })
+        const changes = refreshCart(list)
+        setPieces({ status: "ready", value: { pieces: new Map(list.map((piece) => [piece.id, piece])), changes } })
       },
       () => {
         if (!abort.signal.aborted) setPieces({ status: "failed" })
       },
     )
     return () => abort.abort()
-  }, [cartOpen, attempt])
+  }, [cartOpen, attempt, reread])
 
   const set = (key: Key) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFields({ ...fields, [key]: e.target.value })
@@ -119,18 +127,22 @@ export default function Checkout() {
     )
   }
 
-  const known = pieces.status === "ready" ? pieces.value : null
-  // Display only: unitPrice is sent as shown, and the server refuses the order if a price has changed since.
-  const orderable = known
-    ? lines.flatMap((line) => {
-        const piece = known.get(line.productId)
-        return piece && piece.remaining > 0 ? [{ piece, quantity: Math.min(line.quantity, piece.remaining) }] : []
+  const known = pieces.status === "ready" ? pieces.value.pieces : null
+  const changes = pieces.status === "ready" ? pieces.value.changes : { lowered: [], repriced: [] }
+  // Every line, with what can be ordered of it. Display only: unitPrice is sent as shown, and the server refuses the
+  // order if a price has changed since.
+  const shown = known
+    ? lines.map((line) => {
+        const piece = known.get(line.productId) ?? null
+        return { line, piece, orderable: piece !== null && piece.remaining > 0, quantity: piece ? Math.min(line.quantity, piece.remaining) : line.quantity }
       })
     : []
-  const leftOut = known !== null && orderable.length < lines.length
+  const orderable = shown.flatMap(({ piece, orderable: ok, quantity }) => (piece && ok ? [{ piece, quantity }] : []))
+  // A sold-out or gone piece stays on screen until it is removed, and Place order waits for that.
+  const blocked = shown.some((entry) => !entry.orderable)
   const subtotal = orderable.reduce((sum, { piece, quantity }) => sum + piece.price * quantity, 0)
 
-  if (known && orderable.length === 0) {
+  if (known && lines.length === 0) {
     return (
       <section className="mx-auto flex max-w-110 flex-col items-center gap-6 px-gutter py-24 text-center">
         <h1 className="font-display text-display-l font-light">{t.title}</h1>
@@ -171,26 +183,34 @@ export default function Checkout() {
       return
     }
     setPlacing(true)
+    const input: Omit<PlaceOrderInput, "requestId"> = {
+      items: orderable.map(({ piece, quantity }) => ({ productId: piece.id, quantity, unitPrice: piece.price })),
+      recipient: receiver === "someoneElse" ? { name: fields.theirName.trim(), phone: lebanesePhone(fields.theirPhone)! } : null,
+      city: fields.city.trim(),
+      address,
+      deliveryNotes: fields.notes.trim() || null,
+      isGift: gift,
+      giftMessage: gift ? fields.giftMessage.trim() || null : null,
+    }
+    // The same key for the same order (as the API reads it), a new one when anything in it changes.
+    const requestId = requestIdFor(orderBody({ ...input, requestId: "" }))
     try {
-      const order = await orders.place({
-        items: orderable.map(({ piece, quantity }) => ({ productId: piece.id, quantity, unitPrice: piece.price })),
-        recipient: receiver === "someoneElse" ? { name: fields.theirName.trim(), phone: lebanesePhone(fields.theirPhone)! } : null,
-        city: fields.city.trim(),
-        address,
-        deliveryNotes: fields.notes.trim() || null,
-        isGift: gift,
-        giftMessage: gift ? fields.giftMessage.trim() || null : null,
-      })
+      // Waits through the client's background re-sends; the cart is emptied only once the API confirms the order.
+      const order = await orders.place({ ...input, requestId })
       clearCart()
       navigate(to(`/checkout/thanks/${order.id}`), { state: { order } })
     } catch (error) {
       setPlacing(false)
       if (!(error instanceof OrderError)) throw error
-      if (error.code === "PRICE_CHANGED" || error.code === "UNAVAILABLE") showCartNotice({ kind: "server", message: error.message, productId: error.productId })
-      else if (error.code === "UNAUTHORIZED") navigate(`${to("/sign-in")}?next=${encodeURIComponent(to("/checkout"))}`)
+      if (error.code === "PRICE_CHANGED" || error.code === "UNAVAILABLE") {
+        // Read the prices and stock again here: the lines show what changed, the customer sees the new total.
+        setRefusal({ message: error.message })
+        setReread((n) => n + 1)
+      } else if (error.code === "UNAUTHORIZED") navigate(`${to("/sign-in")}?next=${encodeURIComponent(to("/checkout"))}`)
       else if (error.code === "ORDER_LIMIT") setRefusal({ message: error.message, contact: true })
-      else if (error.code === "VALIDATION" || error.code === "FORBIDDEN") setRefusal({ message: error.message, contact: false })
-      else setRefusal({ message: t.failed, contact: false })
+      else if (mayHaveFailedInTransit(error)) setRefusal({ message: t.noAnswer, myOrders: true })
+      else if (error.code === "VALIDATION" || error.code === "FORBIDDEN" || error.code === "REQUEST_REUSED") setRefusal({ message: error.message })
+      else setRefusal({ message: t.failed })
     }
   }
 
@@ -280,6 +300,7 @@ export default function Checkout() {
                 className="relative h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-primary/25 transition-colors duration-500 before:absolute before:start-1 before:top-1 before:size-4 before:rounded-full before:bg-background before:transition-transform before:duration-500 checked:bg-primary checked:before:translate-x-5 rtl:checked:before:-translate-x-5"
               />
             </label>
+            {gift && <p className="-mt-4 text-small text-muted-foreground">{t.giftPayment}</p>}
             {gift && (
               <div className="flex flex-col gap-3">
                 <Field id="checkout-giftMessage" label={t.giftMessage}>
@@ -329,21 +350,49 @@ export default function Checkout() {
           ) : (
             <>
               <ul className="flex flex-col">
-                {orderable.map(({ piece, quantity }) => (
-                  <li key={piece.id} className="grid grid-cols-[3.75rem_1fr_auto] gap-4 border-b border-border py-5 first:pt-0">
-                    <div className="relative aspect-2/3 overflow-hidden bg-background">
-                      {piece.images[0] ? <Picture image={piece.images[0]} alt="" sizes="60px" /> : <NoPhoto />}
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="font-display text-xl leading-tight">{noBreak(piece.name)}</span>
-                      <span className="text-label uppercase tracking-caps text-muted-foreground">{stoneLabel(piece)}</span>
-                      <span className="text-label uppercase tracking-caps text-muted-foreground">{interpolate(t.qty, { count: quantity })}</span>
-                    </div>
-                    <span className="text-sm tracking-price">{formatPrice(piece.price * quantity)}</span>
-                  </li>
-                ))}
+                {shown.map(({ line, piece, orderable: ok, quantity }) => {
+                  const name = piece ? noBreak(piece.name) : m.cart.unnamed
+                  return (
+                    <li key={line.productId} className="grid grid-cols-[3.75rem_1fr_auto] gap-4 border-b border-border py-5 first:pt-0">
+                      <div className={cn("relative aspect-2/3 overflow-hidden bg-background", !ok && "opacity-55 grayscale-70")}>
+                        {piece?.images[0] ? <Picture image={piece.images[0]} alt="" sizes="60px" /> : <NoPhoto />}
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="font-display text-xl leading-tight">{name}</span>
+                        {piece && <span className="text-label uppercase tracking-caps text-muted-foreground">{stoneLabel(piece)}</span>}
+                        {ok ? (
+                          <>
+                            <span className="text-label uppercase tracking-caps text-muted-foreground">{interpolate(t.qty, { count: quantity })}</span>
+                            {changes.repriced.includes(line.productId) && <PriceUpdated />}
+                            {changes.lowered.includes(line.productId) && (
+                              <span className="text-xs text-muted-foreground">
+                                {quantity === 1 ? m.cart.loweredOne : interpolate(m.cart.loweredMany, { count: quantity })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="flex items-center gap-2.5 text-sm text-accent">
+                              <span aria-hidden="true" className="size-1.75 rotate-45 bg-accent" />
+                              {piece ? m.cart.soldOut : m.cart.unavailable}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={interpolate(m.cart.removeNamed, { name })}
+                              onClick={() => removeFromCart(line.productId)}
+                              className={cn(caps, "flex min-h-11 items-center underline underline-offset-4")}
+                            >
+                              {m.cart.remove}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {ok && piece && <span className="text-sm tracking-price">{formatPrice(piece.price * quantity)}</span>}
+                    </li>
+                  )
+                })}
               </ul>
-              {leftOut && <p className="text-xs text-muted-foreground">{t.leftOut}</p>}
+              {blocked && <p className="text-xs text-accent">{t.removeToOrder}</p>}
               <div className="flex flex-col gap-3 text-sm">
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">{t.subtotal}</span>
@@ -363,7 +412,7 @@ export default function Checkout() {
           )}
           {refusal && (
             <div role="alert" className="flex flex-col items-start gap-2 border-y border-border py-4 text-small">
-              {refusal.message}
+              {refusal.myOrders ? <NoAnswer text={refusal.message} /> : refusal.message}
               {refusal.contact && (
                 <Link to={to("/contact")} className={cn(caps, "flex min-h-11 items-center text-accent")}>
                   {t.contactOmar}
@@ -371,12 +420,27 @@ export default function Checkout() {
               )}
             </div>
           )}
-          <button type="submit" disabled={placing || known === null} className={cn(actionVariants({ variant: "solid", size: "lg" }), "w-full disabled:opacity-60")}>
+          <button type="submit" disabled={placing || known === null || blocked} className={cn(actionVariants({ variant: "solid", size: "lg" }), "w-full disabled:opacity-60")}>
             {placing ? t.placing : t.place}
           </button>
           <p className="text-center text-xs text-muted-foreground">{t.fine}</p>
         </aside>
       </div>
     </form>
+  )
+}
+
+// "… please check My orders or try again.", with My orders as a link.
+function NoAnswer({ text }: { text: string }) {
+  const { m, to } = useLocale()
+  const [before, after = ""] = text.split("{myOrders}")
+  return (
+    <p>
+      {before}
+      <Link to={to("/account")} className="text-accent underline underline-offset-4">
+        {m.checkout.myOrders}
+      </Link>
+      {after}
+    </p>
   )
 }

@@ -16,6 +16,8 @@ export const ADDRESS = { city: "Jounieh", address: "Main road, Haddad bldg, 3rd 
 /** Places an order through the demo orders API (the contract's rules), as checkout would. */
 export function placeOrder(orders: ReturnType<typeof ordersFor>, change: Partial<PlaceOrderInput> = {}): Promise<Order> {
   return orders.place({
+    // A new attempt each time, as the shop makes one per order.
+    requestId: crypto.randomUUID(),
     items: [
       { productId: 5, quantity: 1, unitPrice: 890 },
       { productId: 3, quantity: 2, unitPrice: 180 },
