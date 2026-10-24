@@ -1,8 +1,20 @@
 // The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH/DELETE /admin/products/{id}, the
-// photo calls under /admin/products/{id}/photos, and POST /admin/publish), with the admin's access token. Answers are read through the
+// photo calls under /admin/products/{id}/photos, and POST /admin/publish) and to the orders and customers routes
+// (/admin/orders…, /admin/customers…), with the admin's access token. Answers are read through the
 // envelope; a 401 is judged by its status alone, because API Gateway answers it with its own {"message":"Unauthorized"}.
 import { readAdminPhoto, readAdminPhotos, readAdminProduct } from "@/features/catalog/api"
 import type { AdminProduct, AdminProductImage, ProductInput } from "@/features/catalog/types"
+import {
+  type AdminCustomer,
+  type AdminCustomerDetail,
+  type AdminOrder,
+  type AdminOrderSummary,
+  type ForwardStatus,
+  readAdminCustomer,
+  readAdminCustomerDetail,
+  readAdminOrder,
+  readOrderSummary,
+} from "./orders"
 
 /** Every key the API takes; anything else is refused by the API, so it is never sent. */
 export const PRODUCT_INPUT_KEYS = [
@@ -65,6 +77,17 @@ export interface AdminApi {
   deleteProduct(id: number): Promise<void>
   /** Asks for the shop to be rebuilt; it updates about 2 minutes later, with nothing to follow. */
   publish(): Promise<void>
+  /** Every order, newest first (the screens filter by status themselves). */
+  listOrders(): Promise<AdminOrderSummary[]>
+  getOrder(id: number): Promise<AdminOrder>
+  /** status must be the order's nextStatus; the customer is emailed. */
+  advanceOrder(id: number, status: ForwardStatus): Promise<AdminOrder>
+  /** Puts the pieces back in stock; the customer is emailed. */
+  cancelOrder(id: number): Promise<AdminOrder>
+  /** Only while the order is pending. */
+  setDeliveryFee(id: number, deliveryFee: number): Promise<AdminOrder>
+  listCustomers(): Promise<AdminCustomer[]>
+  getCustomer(id: string): Promise<AdminCustomerDetail>
 }
 
 interface AdminApiOptions {
@@ -73,6 +96,8 @@ interface AdminApiOptions {
   accessToken: () => Promise<string | null>
   /** Called on any 401, before the error is thrown: the session is over. */
   onUnauthorized: () => void
+  /** The network; the demo (npm run dev:demo) answers the orders and customers routes in this browser instead. */
+  fetch?: typeof fetch
 }
 
 const KNOWN_CODES: readonly StudioErrorCode[] = ["VALIDATION", "CONFLICT", "NOT_FOUND", "PUBLISH_FAILED"]
@@ -96,7 +121,10 @@ function unexpected(message: string): StudioError {
   return new StudioError(0, "UNEXPECTED", message)
 }
 
-export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminApiOptions): AdminApi {
+// The global fetch is looked up at each call (tests replace it).
+const networkFetch: typeof fetch = (input, init) => fetch(input, init)
+
+export function createAdminApi({ baseUrl, accessToken, onUnauthorized, fetch: send = networkFetch }: AdminApiOptions): AdminApi {
   const ended = () => {
     onUnauthorized()
     return new StudioError(401, "UNAUTHORIZED", "Unauthorized")
@@ -109,7 +137,7 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     if (body !== undefined) headers["Content-Type"] = "application/json"
     let response: Response
     try {
-      response = await fetch(`${baseUrl}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+      response = await send(`${baseUrl}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
     } catch (error) {
       throw new StudioError(0, "NETWORK", error instanceof Error ? error.message : String(error))
     }
@@ -142,6 +170,11 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     }
   }
   const piece = (data: unknown) => read(readAdminProduct, data)
+  const anOrder = (data: unknown) => read(readAdminOrder, data)
+  function list<T>(path: string, reader: (value: unknown) => T, data: unknown): T[] {
+    if (!Array.isArray(data)) throw unexpected(`GET ${path}: data must be a list`)
+    return data.map((row) => read(reader, row))
+  }
 
   function slotOf(data: unknown): UploadSlot {
     const path = "POST …/photos/upload"
@@ -195,6 +228,27 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized }: AdminAp
     async publish() {
       const { status, data } = await call("POST", "/admin/publish")
       if (status !== 202 || !isObject(data) || data.started !== true) throw unexpected(`POST /admin/publish answered ${status} without started: true`)
+    },
+    async listOrders() {
+      return list("/admin/orders", readOrderSummary, (await call("GET", "/admin/orders")).data)
+    },
+    async getOrder(id) {
+      return anOrder((await call("GET", `/admin/orders/${id}`)).data)
+    },
+    async advanceOrder(id, status) {
+      return anOrder((await call("POST", `/admin/orders/${id}/status`, { status })).data)
+    },
+    async cancelOrder(id) {
+      return anOrder((await call("POST", `/admin/orders/${id}/cancel`)).data)
+    },
+    async setDeliveryFee(id, deliveryFee) {
+      return anOrder((await call("PATCH", `/admin/orders/${id}`, { deliveryFee })).data)
+    },
+    async listCustomers() {
+      return list("/admin/customers", readAdminCustomer, (await call("GET", "/admin/customers")).data)
+    },
+    async getCustomer(id) {
+      return read(readAdminCustomerDetail, (await call("GET", `/admin/customers/${encodeURIComponent(id)}`)).data)
     },
   }
 }
