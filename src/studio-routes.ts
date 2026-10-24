@@ -18,6 +18,8 @@ export function studioRoutes(base: string = STUDIO_BASE): RouteConfigEntry[] {
         route("products", "routes/studio/products.tsx"),
         route("products/new", "routes/studio/product-new.tsx"),
         route("products/:id", "routes/studio/product-edit.tsx"),
+        route("customers", "routes/studio/customers.tsx"),
+        route("customers/:id", "routes/studio/customer.tsx"),
       ]),
       route("*", "routes/studio/not-found.tsx"),
     ]),
