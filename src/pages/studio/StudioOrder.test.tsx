@@ -94,6 +94,16 @@ describe("one order in the studio", () => {
     expect(screen.getAllByText(payment)).toHaveLength(2)
   })
 
+  // Studio QA, 2026-10-25: a gift's header and total said cash on delivery, beside the line that the buyer pays.
+  it("says a gift is paid in cash as arranged with the buyer, never on delivery", async () => {
+    serve({ "GET /admin/orders/7": () => ok(giftOrderOf(7)) })
+    renderOrder()
+    await heading()
+    expect(screen.getByText("Placed 6 Nov 2026, 16:03 · Cash, arranged with the buyer")).toBeInTheDocument()
+    expect(screen.getByText("Total · cash, arranged with the buyer")).toBeInTheDocument()
+    expect(screen.queryByText(/on delivery/i)).not.toBeInTheDocument()
+  })
+
   it("says when a gift has no card message, and when an order isn't a gift", async () => {
     serve({ "GET /admin/orders/7": () => ok(giftOrderOf(7, { giftMessage: null })) })
     const { unmount } = renderOrder()
