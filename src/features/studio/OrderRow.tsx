@@ -9,9 +9,10 @@ import StatusBadge from "./StatusBadge"
 const t = STUDIO_COPY.orders
 
 // Desktop columns as in the prototype, with the city and the piece count the brief asks for (the list has no item
-// names): number, placed, customer + phone, city, pieces, total, status. Phones: number + name and the total, then a
-// line with date · city · pieces · gift, then the status.
-const columns = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 lg:grid-cols-[6.5rem_10rem_minmax(0,1.4fr)_minmax(0,1fr)_5.5rem_6.5rem_11rem]"
+// names): number, placed, customer + phone, city, pieces, total, status. From xl only: below it, beside the sidebar,
+// they don't fit. Smaller screens: number + name and the total, then a line with date · city · pieces · gift, then the
+// status.
+const columns = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 xl:grid-cols-[6.5rem_10rem_minmax(0,1.4fr)_minmax(0,1fr)_5.5rem_6.5rem_9rem]"
 
 interface GiftMarkProps {
   className?: string
@@ -30,7 +31,7 @@ export function GiftMark({ className }: GiftMarkProps) {
 /** The column names above the rows, on desktop only (each row says it all on phones). */
 export function OrderListHeader() {
   return (
-    <div aria-hidden="true" className={cn(columns, "hidden border-b border-border px-5 py-3 text-label uppercase tracking-caps text-muted-foreground lg:grid")}>
+    <div aria-hidden="true" className={cn(columns, "hidden border-b border-border px-5 py-3 text-label uppercase tracking-caps text-muted-foreground xl:grid")}>
       <span>{t.columns.number}</span>
       <span>{t.columns.placed}</span>
       <span>{t.columns.customer}</span>
@@ -58,20 +59,20 @@ export default function OrderRow({ order, back = "" }: OrderRowProps) {
       <Link to={studioPath(`/orders/${order.id}`)} state={back ? { back } : undefined} className={cn(columns, "px-5 py-3 transition-colors duration-500 hover:bg-studio-surface/60")}>
         <span className={cn("flex min-w-0 flex-col gap-0.5", pending && "font-medium")}>
           <span>{order.number}</span>
-          <span className="truncate lg:hidden">{order.customer.name}</span>
+          <span className="truncate xl:hidden">{order.customer.name}</span>
         </span>
-        <span className="hidden text-sm text-muted-foreground lg:block">{when}</span>
-        <span className="hidden min-w-0 flex-col lg:flex">
+        <span className="hidden text-sm text-muted-foreground xl:block">{when}</span>
+        <span className="hidden min-w-0 flex-col xl:flex">
           <span className={cn("truncate", pending && "font-medium")}>{order.customer.name}</span>
           <span className="text-sm text-muted-foreground">{formatPhone(order.customer.phone)}</span>
         </span>
-        <span className="hidden truncate lg:block">{order.city}</span>
-        <span className="hidden lg:flex lg:flex-col">
+        <span className="hidden truncate xl:block">{order.city}</span>
+        <span className="hidden xl:flex xl:flex-col">
           <span>{piecesLabel(order.itemCount)}</span>
           {order.isGift && <GiftMark className="text-xs" />}
         </span>
         <span className={cn("text-end", pending && "font-medium")}>{formatMoney(order.total)}</span>
-        <span className="col-span-2 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground lg:hidden">
+        <span className="col-span-2 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground xl:hidden">
           <span>{when}</span>
           <span aria-hidden="true">·</span>
           <span>{order.city}</span>
@@ -84,7 +85,7 @@ export default function OrderRow({ order, back = "" }: OrderRowProps) {
             </>
           )}
         </span>
-        <span className="col-span-2 lg:col-span-1">
+        <span className="col-span-2 xl:col-span-1">
           <StatusBadge status={order.status} />
         </span>
       </Link>
