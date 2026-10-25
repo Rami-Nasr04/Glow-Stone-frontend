@@ -94,10 +94,10 @@ function Slip({ order }: SlipProps) {
       className="flex min-h-[210mm] flex-col gap-7 bg-studio-panel p-[12mm] text-foreground print:min-h-0 print:bg-transparent print:p-0"
     >
       <header className="flex items-start justify-between gap-4 border-b border-primary pb-5">
-        <img src="/brand/glowstone-wordmark.svg" alt="Glowstone" width={1004} height={137} className="h-auto w-44" />
-        <div className="flex flex-col items-end gap-1 text-end">
-          <h1 className={label}>{t.title}</h1>
-          <span className="font-display text-2xl">{order.number}</span>
+        <img src="/brand/glowstone-wordmark.svg" alt="Glowstone" width={1004} height={137} className="h-auto w-44 min-w-0 shrink" />
+        <div className="flex shrink-0 flex-col items-end gap-1 text-end">
+          <h1 className={cn(label, "whitespace-nowrap")}>{t.title}</h1>
+          <span className="font-display text-2xl whitespace-nowrap">{order.number}</span>
           <span className="text-xs text-muted-foreground">{formatDay(order.createdAt)}</span>
         </div>
       </header>

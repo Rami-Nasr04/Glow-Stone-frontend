@@ -9,6 +9,7 @@ import { ordersLabel } from "@/features/studio/order-labels"
 import { type AdminCustomerDetail, callHref, formatDay, formatPhone, whatsappHref } from "@/features/studio/orders"
 import { panel, panelTitle } from "@/features/studio/panel"
 import { interpolate } from "@/i18n/format"
+import { cn } from "@/lib/utils"
 
 const t = STUDIO_COPY.customers
 
@@ -84,8 +85,8 @@ export default function StudioCustomer() {
   return (
     <div className="flex flex-col gap-6">
       {back}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)] lg:items-start">
-        <section aria-labelledby="customer-name" className={panel}>
+      <div className="flex flex-col gap-6">
+        <section aria-labelledby="customer-name" className={cn(panel, "lg:max-w-xl")}>
           <div className="flex flex-col gap-1">
             <h1 id="customer-name" className="font-display text-4xl font-light">
               {customer.name}

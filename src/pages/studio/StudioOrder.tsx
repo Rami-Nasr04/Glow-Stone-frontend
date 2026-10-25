@@ -134,7 +134,7 @@ export default function StudioOrder() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-4xl font-light lg:text-[2.75rem]">{order.number}</h1>
-          <p className="text-sm text-muted-foreground">{interpolate(t.placed, { time: formatOrderTime(order.createdAt) })}</p>
+          <p className="text-sm text-muted-foreground">{interpolate(order.isGift ? t.placedGift : t.placed, { time: formatOrderTime(order.createdAt) })}</p>
         </div>
         <StatusBadge status={order.status} />
       </div>
@@ -231,7 +231,7 @@ export default function StudioOrder() {
               <span>{order.deliveryFee === 0 ? t.free : formatMoney(order.deliveryFee)}</span>
             </li>
             <li className="flex justify-between gap-4 border-t border-border pt-3 text-base font-medium">
-              <span>{t.total}</span>
+              <span>{order.isGift ? t.totalGift : t.total}</span>
               <span>{formatMoney(order.total)}</span>
             </li>
           </ul>

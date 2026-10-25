@@ -222,6 +222,8 @@ export const STUDIO_COPY = {
     loadFailed: "The order couldn't be loaded.",
     retry: "Try again",
     placed: "Placed {time} · Cash on delivery",
+    // A gift's buyer pays, as Omar arranges with them; the recipient pays nothing.
+    placedGift: "Placed {time} · Cash, arranged with the buyer",
     timeline: "Order steps",
     placedStep: "Placed",
     wasCancelled: "This order was cancelled. Its pieces are back in stock.",
@@ -252,6 +254,7 @@ export const STUDIO_COPY = {
     delivery: "Delivery",
     free: "Free",
     total: "Total · cash on delivery",
+    totalGift: "Total · cash, arranged with the buyer",
     feeLabel: "Delivery fee (USD)",
     feeHint: "Agreed on the confirmation call; it can change until the order is confirmed.",
     feeSave: "Save fee",
