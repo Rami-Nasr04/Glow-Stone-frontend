@@ -24,7 +24,7 @@ export default function Gallery({ piece }: GalleryProps) {
   const images = piece.images
   const current = images[selected] ?? images[0]
   // The API has no alt text: every photo is named from the piece.
-  const altOf = (i: number) => interpolate(m.catalog.photoAlt, { name: piece.name, n: i + 1, total: images.length })
+  const altOf = (i: number) => interpolate(m.catalog.photoAlt, { name: piece.name, stone: piece.stoneType.toLowerCase(), n: i + 1, total: images.length })
 
   const many = images.length > 1
   const grey = piece.soldOut && "grayscale-60"

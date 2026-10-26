@@ -17,13 +17,15 @@ describe("PieceCard", () => {
     expect(link).toHaveTextContent("Cream limestone")
   })
 
-  it("shows the cover from the API and cross-fades to the second photo, both decorative", () => {
+  // Both photos say what they show, for image search (Rami, 2026-10-26); the hover one stays hidden from screen readers.
+  it("shows the cover from the API and cross-fades to the second photo, each with its own alt text", () => {
     const piece = summaryOf(6)
     const { container } = renderAt(<PieceCard product={piece} sizes="33vw" />)
     const imgs = container.querySelectorAll("img")
     expect(imgs).toHaveLength(2)
     expect(imgs[0]).toHaveAttribute("src", `${piece.images[0].url}/960.webp`)
-    expect(imgs[0]).toHaveAttribute("alt", "")
+    expect(imgs[0]).toHaveAttribute("alt", `${piece.name} limestone wine rack`)
+    expect(imgs[1]).toHaveAttribute("alt", `${piece.name} limestone wine rack, another view`)
     expect(imgs[0]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 22vw, 33vw")
     expect(imgs[1]).toHaveAttribute("aria-hidden", "true")
     expect(imgs[1].className).toContain("group-hover:opacity-100")

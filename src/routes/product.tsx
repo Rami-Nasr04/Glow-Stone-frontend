@@ -8,6 +8,8 @@ import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES, useLocale } from "@/i18n/useLocale"
 import { photoUrl } from "@/lib/images"
 import { pageMeta } from "@/lib/meta"
+import { pieceDescription, productJsonLd } from "@/lib/structured-data"
+import { SITE_URL } from "@/config/site"
 import Product from "@/pages/Product"
 import type { Route } from "./+types/product"
 
@@ -41,13 +43,17 @@ export function meta({ params, loaderData }: Route.MetaArgs) {
   const piece = loaderData?.piece
   if (!piece) return [{ title: m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
   const cover = piece.images[0]
-  return pageMeta({
-    title: interpolate(m.product.metaTitle, { name: piece.name }),
-    description: piece.summary ?? m.collection.metaDescription,
-    // Always the current address, so a link with an old name still previews and indexes the right page.
-    path: localizedPath(locale, productPath(piece)),
-    image: cover ? photoUrl(cover, 1440) : undefined,
-  })
+  // Always the current address, so a link with an old name still previews and indexes the right page.
+  const path = localizedPath(locale, productPath(piece))
+  return [
+    ...pageMeta({
+      title: interpolate(m.product.metaTitle, { name: piece.name }),
+      description: pieceDescription(piece, m),
+      path,
+      image: cover ? photoUrl(cover, 1440) : undefined,
+    }),
+    { "script:ld+json": productJsonLd(piece, `${SITE_URL}${path}`, m) },
+  ]
 }
 
 // Only a page that wasn't built can fail here: the API couldn't be reached from the browser.

@@ -2,7 +2,9 @@ import { listProducts } from "@/features/catalog/catalog"
 import { toLocale } from "@/i18n/locales"
 import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES } from "@/i18n/useLocale"
+import { SITE_URL } from "@/config/site"
 import { pageMeta } from "@/lib/meta"
+import { storeJsonLd } from "@/lib/structured-data"
 import Home from "@/pages/Home"
 import type { Route } from "./+types/home"
 
@@ -31,7 +33,10 @@ export async function clientLoader({ params, serverLoader }: Route.ClientLoaderA
 export function meta({ params }: Route.MetaArgs) {
   const locale = toLocale(params.lang)
   const m = MESSAGES[locale]
-  return pageMeta({ title: m.home.metaTitle, description: m.home.metaDescription, path: localizedPath(locale, "/") })
+  return [
+    ...pageMeta({ title: m.home.metaTitle, description: m.home.metaDescription, path: localizedPath(locale, "/") }),
+    { "script:ld+json": storeJsonLd(SITE_URL) },
+  ]
 }
 
 export default function HomeRoute({ loaderData }: Route.ComponentProps) {

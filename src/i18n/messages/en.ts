@@ -45,14 +45,17 @@ export const en = {
   },
   edition: EDITION_EN,
   catalog: {
-    photoAlt: "{name}, photo {n} of {total}",
+    // Every product photo says what it shows, for screen readers and image search ({stone} in lower case).
+    pieceAlt: "{name} {stone} wine rack",
+    pieceAltOther: "{name} {stone} wine rack, another view",
+    photoAlt: "{name} {stone} wine rack, photo {n} of {total}",
     unnamedPiece: "a Glowstone piece",
     dimensions: "{height} × {width} × {depth} cm",
   },
   // Home lines become editable `site_content` in B6.
   home: {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
-    metaDescription: "Wine racks hand-carved from Lebanese limestone, in small numbered editions. Made in Lebanon.",
+    metaDescription: "Hand-carved limestone wine racks, made in Lebanon in small numbered editions.",
     // The hero and the spotlight show Qadisha with fixed text (Rami, 2026-10-15), so a draft, a sale or a price change
     // in the studio never touches the home page. Price and stock are left out: they change.
     heroAlt: "Qadisha rack in cream limestone with a glass of red wine on a stone wall above the misty Qadisha Valley",
@@ -76,11 +79,13 @@ export const en = {
     spotlightPlacard: ["Cream limestone", "118 × 36 × 20 cm"],
     spotlightEdition: "Edition of 8",
     spotlightText: "Tall slab with edge notches and central holes. Holds 14 bottles.",
+    spotlightAlt: "Qadisha limestone wine rack",
+    spotlightDetailAlt: "Qadisha limestone wine rack, in detail",
     viewTheCollection: "View the collection",
   },
   collection: {
     metaTitle: "The Collection — Glowstone",
-    metaDescription: "Wine racks and bottle holders hand-carved from Lebanese limestone, each in a small numbered edition.",
+    metaDescription: "Limestone wine racks and bottle holders, hand-carved in Lebanon, each in a small numbered edition.",
     title: "The Collection",
     intro: "{count} pieces in Lebanese limestone, each carved by hand in a small numbered edition.",
     introOne: "One piece in Lebanese limestone, carved by hand in a small numbered edition.",
@@ -110,6 +115,8 @@ export const en = {
   },
   product: {
     metaTitle: "{name} — Glowstone",
+    // Only facts the piece's data holds; then its summary, when it has one.
+    metaDescription: "{name}: a hand-carved {stone} wine rack for {bottles}, made in Lebanon.",
     breadcrumb: "Breadcrumb",
     collection: "Collection",
     photos: "Photos of {name}",

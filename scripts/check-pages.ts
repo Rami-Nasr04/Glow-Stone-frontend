@@ -6,7 +6,8 @@
 // that a page that isn't prerendered (sign-in) still answers 200, that the app
 // moves on to another page after landing, and that the header logo link can be clicked. Every built page's canonical
 // and og:url must be the address checked (so after VITE_SITE_URL changes, one run against the new address proves it),
-// and its robots tag and X-Robots-Tag header must agree.
+// and its robots tag must follow VITE_ALLOW_INDEXING (no X-Robots-Tag header on the shop); robots.txt and sitemap.xml
+// answer as files.
 // The studio: its addresses load and refresh to its sign-in page (or its not-found), never indexed, and no shop
 // page loads the Cognito library for a signed-out visitor. On the shop's address, the studio's old addresses answer
 // 308 to its own host.
@@ -204,6 +205,8 @@ const notFound: Expected[] = ["/nothing-here", "/collection/abc", "/collection/9
 // until VITE_ACCOUNTS_OPEN=true (set the same way for the build and this check): sign-in, checkout and the account
 // then show the 404 page, in the site frame.
 const accountsOpen = process.env.VITE_ACCOUNTS_OPEN?.trim() === "true"
+// Indexing too: set the same way for the build and this check (the shop's pages, robots.txt and sitemap follow it).
+const indexing = withShop && process.env.VITE_ALLOW_INDEXING?.trim() === "true"
 const notBuilt: Expected[] = accountsOpen ? [] : ["/sign-in", "/checkout", "/account"].map((path) => ({ path, h1: en.notFound.title }))
 // Open, the sign-in page is full screen (no header logo to follow), and a signed-out visitor who opens checkout or
 // the account is sent to it, to come back afterwards.
@@ -246,10 +249,13 @@ for (const viewport of viewports) {
       if (head.canonical !== canonicalOf(want.path)) fail(`${label}: canonical ${head.canonical}, expected ${canonicalOf(want.path)}`)
       if (head.ogUrl !== canonicalOf(want.path)) fail(`${label}: og:url ${head.ogUrl}, expected ${canonicalOf(want.path)}`)
     }
+    // The shop sends no robots header: VITE_ALLOW_INDEXING alone decides, through this tag (and robots.txt below).
     const header = response?.headers()["x-robots-tag"]
-    if (head.robots.includes("noindex, nofollow") !== (header === "noindex, nofollow")) {
-      fail(`${label}: robots tag ${JSON.stringify(head.robots)} and X-Robots-Tag "${header}" disagree`)
-    }
+    if (header !== undefined) fail(`${label}: X-Robots-Tag "${header}" on the shop`)
+    const noindex = head.robots.some((content) => content.startsWith("noindex"))
+    if (want.built && noindex === indexing) fail(`${label}: robots tag ${JSON.stringify(head.robots)} with VITE_ALLOW_INDEXING=${indexing}`)
+    // A page that isn't built is never indexed: a 404 status, or (sign-in, checkout, the account) a noindex tag.
+    if (!want.built && !noindex && status !== 404) fail(`${label}: no robots noindex tag on a page that isn't built`)
     await page.reload({ waitUntil: "networkidle0" })
     await expectPage(page, want, `${label} refresh`)
 
@@ -281,11 +287,13 @@ for (const viewport of viewports) {
     page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
     const response = await page.goto(base + want.open, { waitUntil: "networkidle0" })
     if (response?.status() !== 200) fail(`${label}: status ${response?.status()}, expected 200`)
-    if (response?.headers()["x-robots-tag"] !== "noindex, nofollow") fail(`${label}: no X-Robots-Tag noindex header`)
     for (const step of ["direct", "refresh"]) {
       if (step === "refresh") await page.reload({ waitUntil: "networkidle0" })
       const got = await shown(page, "/sign-in")
       const next = await page.evaluate(() => new URLSearchParams(location.search).get("next"))
+      const robots = await page.$$eval('meta[name="robots"]', (tags) => tags.map((tag) => tag.getAttribute("content") ?? ""))
+      // Never indexed, whatever VITE_ALLOW_INDEXING says.
+      if (!robots.some((content) => content.startsWith("noindex"))) fail(`${label} ${step}: no robots noindex tag`)
       if (got.path !== "/sign-in") fail(`${label} ${step}: ended on ${got.path}`)
       if (got.h1 !== en.auth.signIn.title) fail(`${label} ${step}: h1 "${got.h1}", expected "${en.auth.signIn.title}"`)
       if (next !== want.next) fail(`${label} ${step}: next ${next}, expected ${want.next}`)
@@ -330,6 +338,24 @@ for (const [path, location] of withShop ? studioRedirects : []) {
   const got = `${response.status} ${response.headers.get("location")}`
   if (got !== `308 ${location}`) fail(`${path}: answered ${got}, expected 308 ${location}`)
   else console.log(`  ok ${path} -> 308 ${location}`)
+}
+
+// robots.txt and sitemap.xml answer as files, not as the app: the shop's follow VITE_ALLOW_INDEXING, the studio's
+// robots.txt always shuts crawlers out. The sitemap lists exactly the built pages.
+const robots = await fetch(`${base}/robots.txt`)
+const robotsText = await robots.text()
+const wantRobots = indexing ? `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n` : "User-agent: *\nDisallow: /\n"
+if (robots.status !== 200 || !robots.headers.get("content-type")?.startsWith("text/plain") || robotsText !== wantRobots) {
+  fail(`robots.txt: ${robots.status} ${robots.headers.get("content-type")} ${JSON.stringify(robotsText.slice(0, 80))}, expected ${JSON.stringify(wantRobots)}`)
+} else console.log("  ok /robots.txt")
+if (withShop) {
+  const sitemap = await fetch(`${base}/sitemap.xml`)
+  const xml = await sitemap.text()
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]).sort()
+  const wantLocs = pages.map((p) => canonicalOf(p.path)).sort()
+  if (sitemap.status !== 200 || !sitemap.headers.get("content-type")?.includes("xml")) fail(`sitemap.xml: ${sitemap.status} ${sitemap.headers.get("content-type")}`)
+  else if (JSON.stringify(locs) !== JSON.stringify(wantLocs)) fail(`sitemap.xml lists ${locs.join(", ")}; expected ${wantLocs.join(", ")}`)
+  else console.log(`  ok /sitemap.xml (${locs.length} pages)`)
 }
 
 console.log(failures.length === 0 ? "All pages passed." : `${failures.length} problem(s).`)
