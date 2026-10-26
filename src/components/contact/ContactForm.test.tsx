@@ -94,10 +94,10 @@ describe("ContactForm", () => {
     await user.click(screen.getByRole("button", { name: "Send by email" }))
     expect(opener.sameTab).toHaveBeenCalledTimes(1)
     const url = new URL(opener.sameTab.mock.calls[0][0] as string)
-    expect(url.protocol + url.pathname).toBe("mailto:glowstone216@gmail.com")
+    expect(url.protocol + url.pathname).toBe("mailto:hello@glowstonelb.com")
     expect(url.searchParams.get("subject")).toBe("Question from Rami Nasr")
     expect(url.searchParams.get("body")).toBe(body)
-    expect(screen.getByRole("status")).toHaveTextContent("Your email app opens with your message. If nothing opens, write to glowstone216@gmail.com.")
+    expect(screen.getByRole("status")).toHaveTextContent("Your email app opens with your message. If nothing opens, write to hello@glowstonelb.com.")
   })
 
   it("on Instagram, copies the message first, then opens the chat, then says to paste it", async () => {

@@ -2,7 +2,7 @@ import { type SitePart, SITE_PARTS } from "@/config/studio"
 import { requireFlag, requireUrl } from "@/lib/env"
 
 // Public contact channels. They live here, in code: a change is a commit and a deploy.
-export const CONTACT_EMAIL = "glowstone216@gmail.com"
+export const CONTACT_EMAIL = "hello@glowstonelb.com"
 /** Omar's WhatsApp, in international form; every WhatsApp link is built from it by `whatsappLink`. */
 export const WHATSAPP_NUMBER = "+96171284863"
 /** The Instagram handle, without "@". While it is null every Instagram link and button stays hidden. */

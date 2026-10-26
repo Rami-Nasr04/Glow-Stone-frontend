@@ -62,7 +62,7 @@ describe("the shop's own data for search engines", () => {
       name: "Glowstone",
       url: `${SITE}/`,
       logo: `${SITE}/brand/glowstone-monogram.svg`,
-      email: "glowstone216@gmail.com",
+      email: "hello@glowstonelb.com",
       areaServed: { "@type": "Country", name: "Lebanon" },
     })
   })
