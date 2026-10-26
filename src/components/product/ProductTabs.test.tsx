@@ -69,8 +69,19 @@ describe("ProductTabs", () => {
     await user.click(screen.getByRole("tab", { name: "Delivery" }))
     expect(
       screen.getByText(
-        "Delivery is free across Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order. Payment is in cash on delivery.",
+        "Delivery is free all over Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order, within 2 business days. Payment is in cash on delivery; a gift is paid by the buyer, by Whish or OMT.",
       ),
     ).toBeInTheDocument()
+  })
+
+  // Omar's answers, 2026-10-26.
+  it("says how long delivery takes and how the courier gets in touch", async () => {
+    const user = userEvent.setup()
+    renderAt(<ProductTabs piece={piece(BATROUN)} />)
+    await user.click(screen.getByRole("tab", { name: "Delivery" }))
+    expect(
+      screen.getByText("Delivery usually takes about a week. On the delivery day, the courier calls or WhatsApps the phone number given with the order."),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("[Placeholder: delivery times.]")).not.toBeInTheDocument()
   })
 })
