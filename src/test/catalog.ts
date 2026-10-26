@@ -1,6 +1,6 @@
 import type { Product, ProductSummary } from "@/features/catalog/types"
-import details from "./fixtures/products-detail.json"
-import list from "./fixtures/products-list.json"
+import details from "@/features/catalog/demo/products-detail.json"
+import list from "@/features/catalog/demo/products-list.json"
 
 // The live API's answers on 2026-10-14: GET /products (newest first, 2 photos each) and GET /products/1…6 (all photos).
 // Ids: 1 Arz, 2 Nahr (sold out), 3 Batroun, 4 Jbeil (no sizes, 19 photos), 5 Qadisha, 6 Sannine.

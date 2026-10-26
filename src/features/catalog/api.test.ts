@@ -1,5 +1,5 @@
-import details from "@/test/fixtures/products-detail.json"
-import list from "@/test/fixtures/products-list.json"
+import details from "@/features/catalog/demo/products-detail.json"
+import list from "@/features/catalog/demo/products-list.json"
 import { fetchProduct, fetchProducts, requireApiUrl } from "./api"
 
 const BASE = "https://api.test"

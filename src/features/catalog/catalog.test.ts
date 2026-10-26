@@ -49,3 +49,21 @@ describe("catalog", () => {
     expect(sorted.map((p) => p.id)).toEqual([3, 2, 1])
   })
 })
+
+// The live API answers only glowstonelb.com and studio.glowstonelb.com (backend 9e28860): on `npm run dev:demo` the
+// catalog is the saved one, and nothing local calls the live API.
+describe("the catalog on npm run dev:demo", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_API_URL", "https://api.test")
+    vi.stubEnv("MODE", "demo")
+  })
+  afterEach(() => vi.unstubAllEnvs())
+
+  it("lists the saved pieces, newest first, and reads one with all its photos, without calling the API", async () => {
+    const fetch = stubApi()
+    expect((await listProducts()).map((p) => p.id)).toEqual([6, 5, 4, 3, 2, 1])
+    expect(await getProduct(5)).toEqual(productOf(5))
+    expect(await getProduct(99)).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})

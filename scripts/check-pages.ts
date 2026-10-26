@@ -24,6 +24,7 @@ import puppeteer, { type Page } from "puppeteer-core"
 import { safeStudioNext, SITE_PARTS, studioPath } from "../src/config/studio.ts"
 import { STUDIO_COPY } from "../src/features/studio/copy.ts"
 import { STUDIO_DEMO_KEY } from "../src/features/studio/demo-orders.ts"
+import { STUDIO_DEMO_PRODUCTS_KEY } from "../src/features/studio/demo-products.ts"
 import { en } from "../src/i18n/messages/en.ts"
 
 const BUILD = "build/client"
@@ -139,8 +140,10 @@ const leaking = readdirSync(BUILD, { recursive: true, encoding: "utf8" }).filter
 )
 if (leaking.length > 0) fail(`the build shows the private Gmail address: ${leaking.join(", ")}`)
 // The demo orders answer only on npm run dev:demo: no build carries them.
-const demoChunks = carrying([STUDIO_DEMO_KEY])
-if (demoChunks.length > 0) fail(`the build carries the studio's demo orders: ${demoChunks.join(", ")}`)
+// Nor the saved catalog the shop and the studio use there: a saved photo's address in a script means it came along
+// (a built page keeps its pieces in its HTML and .data files, never in the scripts).
+const demoChunks = carrying([STUDIO_DEMO_KEY, STUDIO_DEMO_PRODUCTS_KEY, "products/5/6m2q4gr2hfl7"])
+if (demoChunks.length > 0) fail(`the build carries the demo data of npm run dev:demo: ${demoChunks.join(", ")}`)
 // A shop-only build carries no studio code: not its sign-in, not its words, not its admin variables.
 if (!withStudio) {
   const studioCode = carrying([
@@ -225,6 +228,36 @@ const accountPages = accountsOpen
 const canonicalOf = (path: string) => `${base}${path}`
 
 const browser = await puppeteer.launch({ executablePath: edge, headless: true })
+// The live API answers only glowstonelb.com and studio.glowstonelb.com (backend 9e28860). On a local address the pages'
+// calls to it are answered here from the saved catalog, as on npm run dev:demo, so nothing local reaches it: GET
+// /products and GET /products/{id} (the API's 404 for a piece it doesn't have); any other call is stopped.
+const local = ["localhost", "127.0.0.1", "[::1]"].includes(new URL(base).hostname)
+const SAVED = {
+  list: JSON.parse(readFileSync("src/features/catalog/demo/products-list.json", "utf8")) as { id: number }[],
+  details: JSON.parse(readFileSync("src/features/catalog/demo/products-detail.json", "utf8")) as { id: number }[],
+}
+let answeredCalls = 0
+async function openPage(): Promise<Page> {
+  const page = await browser.newPage()
+  if (!local) return page
+  await page.setRequestInterception(true)
+  page.on("request", (request) => {
+    if (request.isInterceptResolutionHandled()) return
+    const url = URL.parse(request.url())
+    if (!url?.hostname.includes(".execute-api.")) return void request.continue()
+    answeredCalls++
+    const answer = (status: number, body: unknown) =>
+      void request.respond({ status, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(body) })
+    const id = /^\/products\/(\d+)$/.exec(url.pathname)?.[1]
+    if (request.method() === "GET" && url.pathname === "/products") return answer(200, { success: true, data: SAVED.list })
+    if (request.method() === "GET" && id !== undefined) {
+      const piece = SAVED.details.find((p) => p.id === Number(id))
+      return piece ? answer(200, { success: true, data: piece }) : answer(404, { success: false, error: { code: "NOT_FOUND", message: "Product not found" } })
+    }
+    void request.abort("blockedbyclient")
+  })
+  return page
+}
 const viewports = [
   { name: "1440", width: 1440, height: 900, isMobile: false, hasTouch: false, deviceScaleFactor: 1 },
   { name: "390", width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
@@ -234,7 +267,7 @@ console.log(`Checking ${pages.length} pages on ${base} (parts: ${SITE_PARTS.join
 for (const viewport of viewports) {
   for (const want of withShop ? [...pages, ...notFound, ...notBuilt] : []) {
     const label = `${viewport.name} ${want.path}`
-    const page = await browser.newPage()
+    const page = await openPage()
     await page.setViewport(viewport)
     // Statuses and headers from fresh answers (a 304 from the cache carries neither the status nor X-Robots-Tag).
     await page.setCacheEnabled(false)
@@ -285,7 +318,7 @@ for (const viewport of viewports) {
 
   for (const want of withShop ? accountPages : []) {
     const label = `${viewport.name} ${want.open}`
-    const page = await browser.newPage()
+    const page = await openPage()
     await page.setViewport(viewport)
     await page.setCacheEnabled(false)
     const errors: string[] = []
@@ -310,7 +343,7 @@ for (const viewport of viewports) {
 
   for (const want of withShop ? [] : studioPages) {
     const label = `${viewport.name} ${want.open}`
-    const page = await browser.newPage()
+    const page = await openPage()
     await page.setViewport(viewport)
     const errors: string[] = []
     page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)))
@@ -363,5 +396,6 @@ if (withShop) {
   else console.log(`  ok /sitemap.xml (${locs.length} pages)`)
 }
 
+if (local) console.log(`  ${answeredCalls} call(s) from the pages to the live API answered here, none sent (local address)`)
 console.log(failures.length === 0 ? "All pages passed." : `${failures.length} problem(s).`)
 process.exitCode = failures.length === 0 ? 0 : 1

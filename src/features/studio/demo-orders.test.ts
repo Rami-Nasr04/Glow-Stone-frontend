@@ -4,10 +4,9 @@ import { createStudioDemoFetch, STUDIO_DEMO_KEY, STUDIO_DEMO_REFUSE_KEY, studioD
 const BASE = "https://api.test"
 
 function setup(storage: Storage = window.localStorage) {
-  const real = vi.fn(async () => new Response(JSON.stringify({ success: true, data: [] }), { status: 200 }))
   const onUnauthorized = vi.fn()
-  const api = createAdminApi({ baseUrl: BASE, accessToken: async () => "access-1", onUnauthorized, fetch: createStudioDemoFetch({ storage, real }) })
-  return { api, real, onUnauthorized }
+  const api = createAdminApi({ baseUrl: BASE, accessToken: async () => "access-1", onUnauthorized, fetch: createStudioDemoFetch({ storage }) })
+  return { api, onUnauthorized }
 }
 
 async function caught(promise: Promise<unknown>): Promise<StudioError> {
@@ -140,10 +139,15 @@ describe("the studio's demo orders (npm run dev:demo)", () => {
     expect(await api.listOrders()).not.toHaveLength(0)
   })
 
-  it("leaves every other route to the real API (products stay real)", async () => {
-    const { api, real } = setup()
+  // Nothing local calls the live API any more (backend 9e28860): the pieces are demo ones too (demo-products.test.ts).
+  it("sends nothing to the network, whatever the route", async () => {
+    const network = vi.fn(async () => new Response("{}"))
+    vi.stubGlobal("fetch", network)
+    const { api } = setup()
+    await api.listOrders()
     await api.listProducts()
-    expect(real).toHaveBeenCalledWith(`${BASE}/admin/products`, expect.objectContaining({ method: "GET" }))
+    await expect(api.publish()).resolves.toBeUndefined()
+    expect(network).not.toHaveBeenCalled()
   })
 
   it("starts again from the seeded orders when its key is removed", async () => {
