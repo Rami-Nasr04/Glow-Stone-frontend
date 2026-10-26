@@ -1,15 +1,17 @@
 import { render, screen } from "@testing-library/react"
-import { createRoutesStub } from "react-router"
+import { createRoutesStub, type MetaDescriptor } from "react-router"
 import { PRODUCTS, productOf, stubApi } from "@/test/catalog"
 import { clientLoader as aboutClientLoader, loader as aboutLoader } from "./about"
-import { clientLoader as collectionClientLoader, loader as collectionLoader } from "./collection"
-import { clientLoader as homeClientLoader, loader as homeLoader } from "./home"
+import { clientLoader as collectionClientLoader, loader as collectionLoader, meta as collectionMeta } from "./collection"
+import { clientLoader as homeClientLoader, loader as homeLoader, meta as homeMeta } from "./home"
 import { clientLoader, ErrorBoundary, loader as productLoader, meta as productMeta } from "./product"
 import type { Route } from "./+types/product"
 
 // With ssr:false these loaders run only while the site is built; their data is written into each page.
 const args = <T,>(params: Record<string, string> = {}) => ({ params, request: new Request("https://site.test/") }) as unknown as T
 const productArgs = (id: string) => args<Route.LoaderArgs>({ id })
+// The structured data a page's meta carries, if any.
+const ldJson = (tags: MetaDescriptor[]) => tags.flatMap((tag) => ("script:ld+json" in tag ? [tag["script:ld+json"]] : []))[0]
 
 describe("route loaders", () => {
   beforeEach(() => vi.stubEnv("VITE_API_URL", "https://api.test"))
@@ -113,9 +115,37 @@ describe("route loaders", () => {
     const piece = productOf(5)
     const tags = productMeta({ params: { id: "5", name: "old-name" }, loaderData: { piece, products: PRODUCTS } } as unknown as Route.MetaArgs)
     expect(tags).toContainEqual({ title: "Qadisha — Glowstone" })
-    expect(tags).toContainEqual({ name: "description", content: "Tall slab with edge notches and central holes." })
+    expect(tags).toContainEqual({
+      name: "description",
+      content: "Qadisha: a hand-carved limestone wine rack for 14 bottles, made in Lebanon. Tall slab with edge notches and central holes.",
+    })
     expect(tags).toContainEqual({ property: "og:image", content: `${piece.images[0].url}/1440.webp` })
     expect(tags).toContainEqual(expect.objectContaining({ rel: "canonical", href: expect.stringMatching(/\/collection\/5\/qadisha$/) }))
+  })
+
+  it("product meta: the piece's Product data for search engines, at its current address", () => {
+    const piece = productOf(5)
+    const tags = productMeta({ params: { id: "5", name: "old-name" }, loaderData: { piece, products: PRODUCTS } } as unknown as Route.MetaArgs)
+    const data = ldJson(tags) as { "@type": string; url: string }
+    expect(data["@type"]).toBe("Product")
+    expect(data.url).toMatch(/\/collection\/5\/qadisha$/)
+  })
+
+  it("home meta: the store's data for search engines, and a description that says what is sold and where", () => {
+    const tags = homeMeta({ params: {} } as unknown as Parameters<typeof homeMeta>[0])
+    expect(ldJson(tags)).toMatchObject({ "@type": "OnlineStore", name: "Glowstone" })
+    const description = tags.find((tag) => "name" in tag && tag.name === "description") as { content: string }
+    expect(description.content).toMatch(/wine rack/i)
+    expect(description.content).toMatch(/limestone/i)
+    expect(description.content).toMatch(/Lebanon/)
+  })
+
+  it("collection meta: a description that says what is sold and where", () => {
+    const tags = collectionMeta({ params: {} } as unknown as Parameters<typeof collectionMeta>[0])
+    const description = tags.find((tag) => "name" in tag && tag.name === "description") as { content: string }
+    expect(description.content).toMatch(/wine rack/i)
+    expect(description.content).toMatch(/limestone/i)
+    expect(description.content).toMatch(/Lebanon/)
   })
 
   it("product meta: the hero for a piece without photos, and noindex for a missing piece", () => {

@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import config from "../react-router.config.ts"
 
@@ -10,6 +10,27 @@ function stubApi() {
   const fetch = vi.fn(async () => new Response(`{"success":true,"data":${list}}`))
   vi.stubGlobal("fetch", fetch)
   return fetch
+}
+
+// Runs buildEnd on a client folder holding `before` (paths may have folders), and returns the top-level files after.
+async function runBuildEnd(before: Record<string, string>): Promise<Record<string, string>> {
+  const dir = mkdtempSync(join(tmpdir(), "build-end-"))
+  try {
+    for (const [name, body] of Object.entries(before)) {
+      mkdirSync(dirname(join(dir, "client", name)), { recursive: true })
+      writeFileSync(join(dir, "client", name), body)
+    }
+    const buildEnd = config.buildEnd as (args: { reactRouterConfig: { buildDirectory: string } }) => Promise<void>
+    await buildEnd({ reactRouterConfig: { buildDirectory: dir } })
+    const client = join(dir, "client")
+    return Object.fromEntries(
+      readdirSync(client, { withFileTypes: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => [entry.name, readFileSync(join(client, entry.name), "utf8")]),
+    )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 // The build reads both addresses from the environment (.env locally, project settings on Vercel) and stops without them.
@@ -87,21 +108,51 @@ describe("the build", () => {
   // With nothing prerendered, React Router writes the app shell as index.html; vercel.json rewrites to
   // __spa-fallback.html, so the shell must carry that name. Every build also gets 404.html, the same shell: Vercel
   // answers an address with no file and no rewrite with it and status 404, and the app shows its 404 page.
+  const SHUT = "User-agent: *\nDisallow: /\n"
+  const HOME_ONLY = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://site.test/</loc></url>\n</urlset>\n'
   it.each([
-    ["studio", "/", { "index.html": "app shell" }, { "__spa-fallback.html": "app shell", "404.html": "app shell" }],
-    ["", "", { "index.html": "home page", "__spa-fallback.html": "app shell" }, { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell" }],
-    ["shop", "", { "index.html": "home page", "__spa-fallback.html": "app shell" }, { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell" }],
-  ])("names the app shell for the rewrites and the 404 (VITE_SITE_PARTS=%j)", async (parts, base, before, after) => {
+    ["studio", "/", { "index.html": "app shell" }, { "__spa-fallback.html": "app shell", "404.html": "app shell", "robots.txt": SHUT }],
+    [
+      "",
+      "",
+      { "index.html": "home page", "__spa-fallback.html": "app shell" },
+      { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell", "robots.txt": SHUT, "sitemap.xml": HOME_ONLY },
+    ],
+    [
+      "shop",
+      "",
+      { "index.html": "home page", "__spa-fallback.html": "app shell" },
+      { "index.html": "home page", "__spa-fallback.html": "app shell", "404.html": "app shell", "robots.txt": SHUT, "sitemap.xml": HOME_ONLY },
+    ],
+  ])("names the app shell for the rewrites and the 404, and writes robots.txt (VITE_SITE_PARTS=%j)", async (parts, base, before, after) => {
     vi.stubEnv("VITE_SITE_PARTS", parts)
     vi.stubEnv("VITE_STUDIO_BASE", base)
-    const dir = mkdtempSync(join(tmpdir(), "build-end-"))
-    mkdirSync(join(dir, "client"))
-    for (const [name, body] of Object.entries(before)) writeFileSync(join(dir, "client", name), body)
-    const buildEnd = config.buildEnd as (args: { reactRouterConfig: { buildDirectory: string } }) => Promise<void>
-    await buildEnd({ reactRouterConfig: { buildDirectory: dir } })
-    const files = Object.fromEntries(readdirSync(join(dir, "client")).map((name) => [name, readFileSync(join(dir, "client", name), "utf8")]))
-    expect(files).toEqual(after)
-    rmSync(dir, { recursive: true, force: true })
+    expect(await runBuildEnd(before)).toEqual(after)
+  })
+
+  // Search engines (Rami, 2026-10-26): the shop opens to them only with VITE_ALLOW_INDEXING=true; the studio never.
+  it("opens the shop to search engines and points them to a sitemap of every built page once indexing is on", async () => {
+    vi.stubEnv("VITE_SITE_PARTS", "shop")
+    vi.stubEnv("VITE_ALLOW_INDEXING", "true")
+    const files = await runBuildEnd({
+      "index.html": "home page",
+      "__spa-fallback.html": "app shell",
+      "collection/index.html": "collection",
+      "collection/5/qadisha/index.html": "qadisha",
+      "legal/terms/index.html": "terms",
+    })
+    expect(files["robots.txt"]).toBe("User-agent: *\nAllow: /\n\nSitemap: https://site.test/sitemap.xml\n")
+    const locs = [...files["sitemap.xml"].matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
+    expect(locs).toEqual(["https://site.test/", "https://site.test/collection", "https://site.test/collection/5/qadisha", "https://site.test/legal/terms"])
+  })
+
+  it("keeps the studio shut to search engines whatever VITE_ALLOW_INDEXING says", async () => {
+    vi.stubEnv("VITE_SITE_PARTS", "studio")
+    vi.stubEnv("VITE_STUDIO_BASE", "/")
+    vi.stubEnv("VITE_ALLOW_INDEXING", "true")
+    const files = await runBuildEnd({ "index.html": "app shell" })
+    expect(files["robots.txt"]).toBe(SHUT)
+    expect(files["sitemap.xml"]).toBeUndefined()
   })
 
   // The demo accounts keep accounts in the visitor's browser and say every code is 123456: a built site never opens them.

@@ -16,6 +16,8 @@ const FILES: Record<string, string> = {
   "collection/5/qadisha.data": "qadisha data",
   "__spa-fallback.html": "app shell",
   "404.html": "missing page",
+  "robots.txt": "User-agent: *",
+  "sitemap.xml": "<urlset/>",
   "assets/app-abc123.js": "console.log(1)",
   "secret.txt": "outside the site",
 }
@@ -88,7 +90,6 @@ describe("local site server (same rules as Vercel)", () => {
       expect(res.status).toBe(404)
       expect(res.body).toBe("missing page")
       expect(res.headers["content-type"]).toBe("text/html; charset=utf-8")
-      expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
     },
   )
 
@@ -101,7 +102,6 @@ describe("local site server (same rules as Vercel)", () => {
     const res = await get(path)
     expect(res.status).toBe(308)
     expect(res.headers.location).toBe(location)
-    expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
   })
 
   it("never redirects /studio on the studio's own host", async () => {
@@ -122,6 +122,28 @@ describe("local site server (same rules as Vercel)", () => {
     expect(res.status).toBe(200)
     expect(res.body).toBe(path === "/" ? "home page" : "app shell")
     expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow")
+  })
+
+  // The shop's indexing follows VITE_ALLOW_INDEXING through each page's robots tag and robots.txt, which the build
+  // writes; a fixed header would keep it shut after launch (Rami, 2026-10-26).
+  it("sends no robots header from the shop", async () => {
+    for (const path of ["/", "/collection", "/nothing-here", "/robots.txt"]) expect((await get(path)).headers["x-robots-tag"]).toBeUndefined()
+  })
+
+  it.each([
+    ["/robots.txt", "User-agent: *", "text/plain; charset=utf-8"],
+    ["/sitemap.xml", "<urlset/>", "application/xml; charset=utf-8"],
+  ])("serves %s as a file, not the app", async (path, body, type) => {
+    const res = await get(path)
+    expect(res.status).toBe(200)
+    expect(res.body).toBe(body)
+    expect(res.headers["content-type"]).toBe(type)
+  })
+
+  it("serves the studio's own robots.txt as a file on its host", async () => {
+    const res = await get("/robots.txt", "studio.glowstonelb.com")
+    expect(res.body).toBe("User-agent: *")
+    expect(res.headers["content-type"]).toBe("text/plain; charset=utf-8")
   })
 
   it("labels pages as UTF-8 HTML", async () => {

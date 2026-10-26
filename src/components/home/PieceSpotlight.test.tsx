@@ -21,6 +21,12 @@ describe("PieceSpotlight", () => {
     expect(screen.queryByText(/made to order|weeks|ready to deliver/i)).not.toBeInTheDocument()
   })
 
+  it("says what each photo shows", () => {
+    const { container } = renderAt(<PieceSpotlight />)
+    for (const img of container.querySelectorAll(`${full}, ${detail}`)) expect(img.getAttribute("alt")).toMatch(/^Qadisha limestone wine rack/)
+    expect(container.querySelectorAll(`${full}, ${detail}`).length).toBe(3)
+  })
+
   it("leads to the collection, never to the piece, which may be a draft or sold out", () => {
     renderAt(<PieceSpotlight />)
     expect(screen.getByRole("link", { name: "View the collection" })).toHaveAttribute("href", "/collection")

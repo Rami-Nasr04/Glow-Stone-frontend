@@ -45,14 +45,17 @@ export const en = {
   },
   edition: EDITION_EN,
   catalog: {
-    photoAlt: "{name}, photo {n} of {total}",
+    // Every product photo says what it shows, for screen readers and image search ({stone} in lower case).
+    pieceAlt: "{name} {stone} wine rack",
+    pieceAltOther: "{name} {stone} wine rack, another view",
+    photoAlt: "{name} {stone} wine rack, photo {n} of {total}",
     unnamedPiece: "a Glowstone piece",
     dimensions: "{height} × {width} × {depth} cm",
   },
   // Home lines become editable `site_content` in B6.
   home: {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
-    metaDescription: "Wine racks hand-carved from Lebanese limestone, in small numbered editions. Made in Lebanon.",
+    metaDescription: "Hand-carved limestone wine racks, made in Lebanon in small numbered editions.",
     // The hero and the spotlight show Qadisha with fixed text (Rami, 2026-10-15), so a draft, a sale or a price change
     // in the studio never touches the home page. Price and stock are left out: they change.
     heroAlt: "Qadisha rack in cream limestone with a glass of red wine on a stone wall above the misty Qadisha Valley",
@@ -76,11 +79,13 @@ export const en = {
     spotlightPlacard: ["Cream limestone", "118 × 36 × 20 cm"],
     spotlightEdition: "Edition of 8",
     spotlightText: "Tall slab with edge notches and central holes. Holds 14 bottles.",
+    spotlightAlt: "Qadisha limestone wine rack",
+    spotlightDetailAlt: "Qadisha limestone wine rack, in detail",
     viewTheCollection: "View the collection",
   },
   collection: {
     metaTitle: "The Collection — Glowstone",
-    metaDescription: "Wine racks and bottle holders hand-carved from Lebanese limestone, each in a small numbered edition.",
+    metaDescription: "Limestone wine racks and bottle holders, hand-carved in Lebanon, each in a small numbered edition.",
     title: "The Collection",
     intro: "{count} pieces in Lebanese limestone, each carved by hand in a small numbered edition.",
     introOne: "One piece in Lebanese limestone, carved by hand in a small numbered edition.",
@@ -110,6 +115,8 @@ export const en = {
   },
   product: {
     metaTitle: "{name} — Glowstone",
+    // Only facts the piece's data holds; then its summary, when it has one.
+    metaDescription: "{name}: a hand-carved {stone} wine rack for {bottles}, made in Lebanon.",
     breadcrumb: "Breadcrumb",
     collection: "Collection",
     photos: "Photos of {name}",
@@ -147,8 +154,8 @@ export const en = {
       "Always lift with two people; never drag the stone across the floor.",
     ],
     deliveryBody: [
-      "Delivery is free across Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order. Payment is in cash on delivery.",
-      "[Placeholder: delivery times.]",
+      "Delivery is free all over Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order, within 2 business days. Payment is in cash on delivery; a gift is paid by the buyer, by Whish or OMT.",
+      "Delivery usually takes about a week. On the delivery day, the courier calls or WhatsApps the phone number given with the order.",
       "[Placeholder: returns policy.]",
     ],
     alsoLike: "You may also like",
@@ -225,13 +232,13 @@ export const en = {
     giftPlaceholder: "Write a few words for the card",
     giftCount: "{count} / {max}",
     giftNote: "Prices are hidden on the delivery slip.",
-    giftPayment: "Omar will contact you to arrange the payment.",
+    giftPayment: "You pay by Whish or OMT once Omar has called and confirmed the order. The recipient pays nothing.",
     payment: "Payment",
     cod: "Cash on delivery",
     codNote: "Pay in cash when your piece arrives. Omar will call you to confirm your order before delivery.",
-    // A gift's buyer pays, never the recipient: Omar arranges it on his call (Rami, 2026-10-24).
-    codGift: "Cash, arranged with Omar",
-    codGiftNote: "You pay, not the recipient. Omar will call you to arrange the payment before delivery.",
+    // A gift's buyer pays, never the recipient, by Whish or OMT once Omar has confirmed the order (Omar, 2026-10-26).
+    codGift: "Whish or OMT",
+    codGiftNote: "You pay, not the recipient: by Whish or OMT, once Omar has called and confirmed the order.",
     summary: "Order summary",
     qty: "Qty {count}",
     removeToOrder: "Remove the pieces that can't be ordered to place your order.",
@@ -254,25 +261,25 @@ export const en = {
     thanksMetaTitle: "Thank you — Glowstone",
     thanks: "Thank you.",
     orderNumber: "Order {number}",
-    willCall: "Omar will call you to confirm your order. Nothing is due until your piece arrives.",
-    willCallGift: "Omar will call you to confirm your order and arrange the payment. The recipient pays nothing.",
+    willCall: "Omar will call you within 2 business days to confirm your order. Nothing is due until your piece arrives.",
+    willCallGift: "Omar will call you within 2 business days to confirm your order. You then pay by Whish or OMT; the recipient pays nothing.",
     nextSteps: "Next steps",
     steps: [
-      { when: "Now", title: "Confirmation call", body: "Omar calls to confirm the piece, the address and a delivery window." },
+      { when: "Now", title: "Confirmation call", body: "Within 2 business days, Omar calls to confirm the piece and the address." },
       { when: "Next", title: "Preparation", body: "Each piece is checked and packed in the workshop." },
-      { when: "Later", title: "Delivery", body: "Free delivery within Lebanon. [Placeholder: delivery times.]" },
+      { when: "Later", title: "Delivery", body: "Free delivery all over Lebanon, usually in about a week. On the day, the courier calls or WhatsApps the phone number given with the order." },
       { when: "Later", title: "Pay on arrival", body: "Pay in cash when your piece arrives." },
     ],
     // For a gift, the last step instead.
-    giftPaymentStep: { when: "Later", title: "Payment", body: "You pay, not the recipient, as arranged on Omar's call." },
+    giftPaymentStep: { when: "Later", title: "Payment", body: "You pay by Whish or OMT once Omar has confirmed the order." },
     summary: "Summary",
     deliverTo: "Deliver to",
     giftLabel: "Gift",
     noCard: "No card message.",
     pricesHidden: "Prices are hidden on the delivery slip.",
-    giftPayment: "Omar will contact you to arrange the payment.",
+    giftPayment: "You pay by Whish or OMT once Omar has called and confirmed the order. The recipient pays nothing.",
     totalCod: "Total · Cash on delivery",
-    totalGift: "Total · Cash, arranged with Omar",
+    totalGift: "Total · Whish or OMT, from you",
     viewOrders: "View my orders",
     continueBrowsing: "Continue browsing",
     notFound: "This order couldn't be found.",
@@ -409,7 +416,10 @@ export const en = {
         title: "Terms",
         sections: [
           { heading: "About these terms", paragraphs: ["[Placeholder: who operates the site and how these terms apply.]"] },
-          { heading: "Orders", paragraphs: ["[Placeholder: how an order is formed and confirmed by phone.]"] },
+          {
+            heading: "Orders",
+            paragraphs: ["You place an order on this site. Omar calls you within 2 business days to confirm it; nothing is sent before that call."],
+          },
           { heading: "Pieces and natural variation", paragraphs: ["Each piece is carved by hand. Natural variations in the stone are part of its character."] },
           { heading: "Prices", paragraphs: ["Prices are in US dollars.", "[Placeholder: currency and pricing terms.]"] },
           { heading: "Governing law", paragraphs: ["[Placeholder.]"] },
@@ -428,16 +438,22 @@ export const en = {
       delivery: {
         title: "Delivery & Returns",
         sections: [
-          { heading: "Where we deliver", paragraphs: ["We deliver within Lebanon only.", "[Placeholder: any areas with special arrangements.]"] },
+          { heading: "Where we deliver", paragraphs: ["We deliver all over Lebanon, and only within Lebanon."] },
           {
             heading: "Cost",
-            paragraphs: ["Delivery is free across Lebanon. For far-off areas, a delivery fee may be agreed with you on the confirmation call, before anything is sent."],
+            paragraphs: ["Delivery is free all over Lebanon. For far-off areas, a delivery fee may be agreed with you on the confirmation call, before anything is sent."],
           },
           {
             heading: "Timing",
-            paragraphs: ["[Placeholder: delivery times.]"],
+            paragraphs: ["Delivery usually takes about a week, with no set delivery times. On the delivery day, the courier calls or WhatsApps the phone number given with the order."],
           },
-          { heading: "Payment", paragraphs: ["Payment is cash on delivery. We call to confirm every order before it leaves the workshop."] },
+          {
+            heading: "Payment",
+            paragraphs: [
+              "Payment is cash on delivery. A gift is paid by the buyer, by Whish or OMT, once Omar has called and confirmed the order; the recipient pays nothing.",
+              "Omar calls to confirm every order within 2 business days, before it leaves the workshop.",
+            ],
+          },
           { heading: "Returns", paragraphs: ["[Placeholder: returns policy.]"] },
         ],
       },

@@ -222,8 +222,8 @@ export const STUDIO_COPY = {
     loadFailed: "The order couldn't be loaded.",
     retry: "Try again",
     placed: "Placed {time} · Cash on delivery",
-    // A gift's buyer pays, as Omar arranges with them; the recipient pays nothing.
-    placedGift: "Placed {time} · Cash, arranged with the buyer",
+    // A gift's buyer pays by Whish or OMT once the order is confirmed; the recipient pays nothing (Omar, 2026-10-26).
+    placedGift: "Placed {time} · Whish or OMT, from the buyer",
     timeline: "Order steps",
     placedStep: "Placed",
     wasCancelled: "This order was cancelled. Its pieces are back in stock.",
@@ -254,7 +254,7 @@ export const STUDIO_COPY = {
     delivery: "Delivery",
     free: "Free",
     total: "Total · cash on delivery",
-    totalGift: "Total · cash, arranged with the buyer",
+    totalGift: "Total · Whish or OMT, from the buyer",
     feeLabel: "Delivery fee (USD)",
     feeHint: "Agreed on the confirmation call; it can change until the order is confirmed.",
     feeSave: "Save fee",
@@ -273,7 +273,7 @@ export const STUDIO_COPY = {
     noCard: "No card message.",
     pricesHidden: "Prices are hidden on the delivery slip.",
     notGift: "Not a gift.",
-    payment: "Arrange the payment with {name}, the buyer, not with the recipient.",
+    payment: "{name}, the buyer, pays by Whish or OMT once you have confirmed the order. The recipient pays nothing.",
   },
   customers: {
     title: "Customers",

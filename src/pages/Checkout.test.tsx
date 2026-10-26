@@ -127,20 +127,20 @@ describe("Checkout", () => {
   })
 
   // Rami, 2026-10-24: payment stays cash, but Omar arranges it with the buyer of a gift.
-  it("says Omar will arrange the payment once it is a gift", async () => {
+  it("says the buyer pays by Whish or OMT once it is a gift", async () => {
     const user = await open()
-    expect(screen.queryByText("Omar will contact you to arrange the payment.")).not.toBeInTheDocument()
+    expect(screen.queryByText("You pay by Whish or OMT once Omar has called and confirmed the order. The recipient pays nothing.")).not.toBeInTheDocument()
     await user.click(screen.getByRole("switch", { name: "This is a gift" }))
-    expect(screen.getByText("Omar will contact you to arrange the payment.")).toBeInTheDocument()
+    expect(screen.getByText("You pay by Whish or OMT once Omar has called and confirmed the order. The recipient pays nothing.")).toBeInTheDocument()
   })
 
-  // Backend QA, 2026-10-25: the payment box contradicted the gift note by asking for cash on arrival.
-  it("words the payment box for a gift as the buyer paying, arranged on Omar's call", async () => {
+  // Backend QA, 2026-10-25: the payment box contradicted the gift note; Omar, 2026-10-26: a gift is paid by Whish or OMT.
+  it("words the payment box for a gift as the buyer paying by Whish or OMT", async () => {
     const user = await open()
     expect(screen.getByRole("radio", { name: /Cash on delivery/ })).toHaveAccessibleName(/Pay in cash when your piece arrives/)
     await user.click(screen.getByRole("switch", { name: "This is a gift" }))
-    const payment = screen.getByRole("radio", { name: /Cash, arranged with Omar/ })
-    expect(payment).toHaveAccessibleName(/You pay, not the recipient\. Omar will call you to arrange the payment before delivery\./)
+    const payment = screen.getByRole("radio", { name: /^Whish or OMT/ })
+    expect(payment).toHaveAccessibleName(/You pay, not the recipient: by Whish or OMT, once Omar has called and confirmed the order\./)
     expect(screen.queryByText(/Pay in cash when your piece arrives/)).not.toBeInTheDocument()
   })
 

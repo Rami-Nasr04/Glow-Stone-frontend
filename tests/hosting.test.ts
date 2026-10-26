@@ -121,9 +121,10 @@ describe("vercel.json", () => {
     expect(headersFor("/assets/(.*)")).toContainEqual({ key: "Cache-Control", value: "public, max-age=31536000, immutable" })
   })
 
-  // Until launch (VITE_ALLOW_INDEXING=false): the same rule as the robots tag on every page, for every file served.
-  it("asks search engines not to index anything", () => {
-    expect(headersFor("/(.*)")).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" })
+  // The shop's indexing follows VITE_ALLOW_INDEXING alone, through each page's robots tag and the robots.txt the build
+  // writes: a header here can't read it, and would keep the site shut after launch (Rami, 2026-10-26).
+  it("sets no robots header on the shop", () => {
+    for (const rule of config.headers.filter((h) => !h.has)) expect(rule.headers.map((h) => h.key)).not.toContain("X-Robots-Tag")
   })
 
   it("sends basic security headers on every response", () => {

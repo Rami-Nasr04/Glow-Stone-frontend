@@ -13,16 +13,16 @@ export default function PieceSpotlight() {
 
   return (
     <section aria-labelledby="spotlight-title" className="overflow-hidden pb-section pt-[calc(var(--spacing-straddle)+var(--spacing-section))]">
-      {/* The photos illustrate the text beside them; the one link is "View the collection". */}
+      {/* The photos show Qadisha, named beside them; the one link is "View the collection". */}
       <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6 lg:pe-gutter">
         <div className="aspect-2/3 overflow-hidden bg-photo-dark lg:hidden">
-          <Picture image={full} alt="" sizes="100vw" />
+          <Picture image={full} alt={m.home.spotlightAlt} sizes="100vw" />
         </div>
         <div className="relative z-10 hidden aspect-3/2 overflow-hidden bg-photo-dark lg:col-span-8 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:block">
-          <Picture image={detail} alt="" sizes="62vw" />
+          <Picture image={detail} alt={m.home.spotlightDetailAlt} sizes="62vw" />
         </div>
         <div className="relative z-20 hidden aspect-2/3 overflow-hidden border-10 border-background bg-background lg:col-span-2 lg:col-start-7 lg:row-start-2 lg:-mb-[14%] lg:block lg:self-end">
-          <Picture image={full} alt="" sizes="13vw" />
+          <Picture image={full} alt={m.home.spotlightAlt} sizes="13vw" />
         </div>
 
         <h2

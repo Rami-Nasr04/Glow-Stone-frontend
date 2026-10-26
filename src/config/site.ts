@@ -27,5 +27,6 @@ export function allowsIndexing(flag: boolean, parts: readonly SitePart[]): boole
   return flag && parts.includes("shop")
 }
 
-// "false" until launch: every page carries a noindex tag (vercel.json sends the same header; remove it at launch).
+// "false" until launch: every page carries a noindex tag and robots.txt shuts crawlers out. Setting it to "true" and
+// rebuilding is the whole switch (vercel.json sends a noindex header on the studio's host only).
 export const ALLOW_INDEXING = allowsIndexing(requireFlag("VITE_ALLOW_INDEXING", import.meta.env.VITE_ALLOW_INDEXING), SITE_PARTS)

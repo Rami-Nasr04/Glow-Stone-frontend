@@ -79,7 +79,7 @@ describe("one order in the studio", () => {
     expect(screen.getByRole("region", { name: t.deliverTo })).toHaveTextContent(t.noNotes)
   })
 
-  it("for a gift: the recipient with their own call link, the card, and that Omar arranges payment with the buyer", async () => {
+  it("for a gift: the recipient with their own call link, the card, and that the buyer pays by Whish or OMT", async () => {
     serve({ "GET /admin/orders/7": () => ok(giftOrderOf(7)) })
     renderOrder()
     await heading()
@@ -90,17 +90,18 @@ describe("one order in the studio", () => {
     const gift = screen.getByRole("region", { name: t.gift })
     expect(gift).toHaveTextContent("“Happy birthday, Rima”")
     expect(gift).toHaveTextContent(t.pricesHidden)
-    const payment = "Arrange the payment with Sara Khoury, the buyer, not with the recipient."
+    const payment = "Sara Khoury, the buyer, pays by Whish or OMT once you have confirmed the order. The recipient pays nothing."
     expect(screen.getAllByText(payment)).toHaveLength(2)
   })
 
   // Studio QA, 2026-10-25: a gift's header and total said cash on delivery, beside the line that the buyer pays.
-  it("says a gift is paid in cash as arranged with the buyer, never on delivery", async () => {
+  // Omar, 2026-10-26: the buyer pays a gift by Whish or OMT.
+  it("says a gift is paid by Whish or OMT, from the buyer, never on delivery", async () => {
     serve({ "GET /admin/orders/7": () => ok(giftOrderOf(7)) })
     renderOrder()
     await heading()
-    expect(screen.getByText("Placed 6 Nov 2026, 16:03 · Cash, arranged with the buyer")).toBeInTheDocument()
-    expect(screen.getByText("Total · cash, arranged with the buyer")).toBeInTheDocument()
+    expect(screen.getByText("Placed 6 Nov 2026, 16:03 · Whish or OMT, from the buyer")).toBeInTheDocument()
+    expect(screen.getByText("Total · Whish or OMT, from the buyer")).toBeInTheDocument()
     expect(screen.queryByText(/on delivery/i)).not.toBeInTheDocument()
   })
 
@@ -114,7 +115,7 @@ describe("one order in the studio", () => {
     renderOrder()
     await heading()
     expect(screen.getByRole("region", { name: t.gift })).toHaveTextContent(t.notGift)
-    expect(screen.queryByText(/Arrange the payment/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Whish or OMT/)).not.toBeInTheDocument()
   })
 
   it("asks on the page before a step forward, naming who gets the email, and takes the order back", async () => {
