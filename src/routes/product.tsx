@@ -6,8 +6,8 @@ import { interpolate } from "@/i18n/format"
 import { toLocale } from "@/i18n/locales"
 import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES, useLocale } from "@/i18n/useLocale"
-import { photoUrl } from "@/lib/images"
 import { pageMeta } from "@/lib/meta"
+import { productOgPath } from "@/lib/og-paths"
 import { pieceDescription, productJsonLd } from "@/lib/structured-data"
 import { SITE_URL } from "@/config/site"
 import Product from "@/pages/Product"
@@ -42,7 +42,6 @@ export function meta({ params, loaderData }: Route.MetaArgs) {
   const m = MESSAGES[locale]
   const piece = loaderData?.piece
   if (!piece) return [{ title: m.notFound.metaTitle }, { name: "robots", content: "noindex" }]
-  const cover = piece.images[0]
   // Always the current address, so a link with an old name still previews and indexes the right page.
   const path = localizedPath(locale, productPath(piece))
   return [
@@ -50,7 +49,7 @@ export function meta({ params, loaderData }: Route.MetaArgs) {
       title: interpolate(m.product.metaTitle, { name: piece.name }),
       description: pieceDescription(piece, m),
       path,
-      image: cover ? photoUrl(cover, 1440) : undefined,
+      image: productOgPath(piece) ?? undefined,
     }),
     { "script:ld+json": productJsonLd(piece, `${SITE_URL}${path}`, m) },
   ]

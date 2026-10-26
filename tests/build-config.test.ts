@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -15,6 +15,12 @@ function stubApi() {
 // Runs buildEnd on a client folder holding `before` (paths may have folders), and returns the top-level files after.
 async function runBuildEnd(before: Record<string, string>): Promise<Record<string, string>> {
   const dir = mkdtempSync(join(tmpdir(), "build-end-"))
+  // The bundled photos the link previews are made from (the build copies public/ into the client folder).
+  for (const photo of ["hero/desktop-1376.webp", "craft/crest-1440.webp"]) {
+    mkdirSync(dirname(join(dir, "client", "images", photo)), { recursive: true })
+    copyFileSync(join("public", "images", photo), join(dir, "client", "images", photo))
+  }
+  stubApi()
   try {
     for (const [name, body] of Object.entries(before)) {
       mkdirSync(dirname(join(dir, "client", name)), { recursive: true })

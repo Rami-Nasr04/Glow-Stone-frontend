@@ -6,6 +6,7 @@ import { readSiteParts, readStudioBase } from "./src/config/studio.ts"
 import { customerAuthSetup } from "./src/features/auth/setup.ts"
 import { fetchProducts, requireApiUrl } from "./src/features/catalog/api.ts"
 import { prerenderPaths } from "./src/i18n/paths.ts"
+import { writeOgImages } from "./src/lib/og-images.ts"
 import { robotsTxt, sitemapXml } from "./src/lib/seo-files.ts"
 import { requireClientId, requireFlag, requirePoolId, requireUrl } from "./src/lib/env.ts"
 
@@ -41,8 +42,8 @@ export default {
   // to /__spa-fallback.html, so the shell takes that name and "/" goes through the same rewrite. Every build also gets
   // 404.html, a copy of the shell: Vercel (and npm start) answer an address with no file and no rewrite with it and
   // status 404, and the app shows its 404 page there.
-  // Then robots.txt (shut unless VITE_ALLOW_INDEXING=true on a build with the shop) and, with the shop, sitemap.xml:
-  // every page this build prerendered, so never sign-in, checkout, the account or the studio.
+  // Then robots.txt (shut unless VITE_ALLOW_INDEXING=true on a build with the shop) and, with the shop, sitemap.xml
+  // (every page this build prerendered, so never sign-in, checkout, the account or the studio) and the link previews.
   async buildEnd({ reactRouterConfig }) {
     const env = loadEnv("production", process.cwd(), "VITE_")
     const parts = readSiteParts(env.VITE_SITE_PARTS)
@@ -61,5 +62,7 @@ export default {
       .filter((file) => file === "index.html" || file.endsWith(`${sep}index.html`))
       .map((file) => `/${file.split(sep).slice(0, -1).join("/")}`)
     writeFileSync(join(client, "sitemap.xml"), sitemapXml(siteUrl, pages))
+    // The 1200×630 link-preview JPEGs: the shop's, the About page's and each published piece's.
+    await writeOgImages(client, await fetchProducts(requireApiUrl(env.VITE_API_URL)))
   },
 } satisfies Config
