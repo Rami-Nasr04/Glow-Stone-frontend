@@ -37,8 +37,8 @@ describe("Legal", () => {
       "Payment is cash on delivery. A gift is paid by the buyer, by Whish or OMT, once Omar has called and confirmed the order; the recipient pays nothing.",
     )
     expect(document.getElementById("section-4")).toHaveTextContent("Omar calls to confirm every order within 2 business days, before it leaves the workshop.")
-    // Not covered by his answers: the returns policy and the date of the texts.
-    expect(screen.getAllByText(/^\[Placeholder/).map((p) => p.textContent)).toEqual(["[Placeholder: date]", "[Placeholder: returns policy.]"])
+    // Not covered by his answers: the returns policy.
+    expect(screen.getAllByText(/^\[Placeholder/).map((p) => p.textContent)).toEqual(["[Placeholder: returns policy.]"])
   })
 
   it("says Omar confirms an order by phone within 2 business days", () => {
@@ -55,8 +55,52 @@ describe("Legal", () => {
     expect(within(docs).getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/legal/privacy")
   })
 
-  it("shows unconfirmed text as a placeholder", () => {
+  // Drafted from what the code does (Rami, 2026-10-26): what is kept, why, where, who sees it, and no trackers.
+  it("says what is collected, why, where it is kept, who receives it, and that nothing tracks visitors", () => {
     renderDoc("privacy")
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "What we collect",
+      "How we use it",
+      "Where it is kept",
+      "Who we share it with",
+      "Cookies and tracking",
+      "Your choices",
+      "Contact",
+    ])
+    const section = (n: number) => document.getElementById(`section-${n}`)
+    expect(section(1)).toHaveTextContent("your name, email address and Lebanese phone number")
+    expect(section(1)).toHaveTextContent("the gift card message")
+    expect(section(1)).toHaveTextContent("your email address, and nothing else")
+    expect(section(3)).toHaveTextContent("Amazon Web Services (AWS) in Frankfurt, in the European Union")
+    expect(section(3)).toHaveTextContent("Amazon Cognito")
+    expect(section(3)).toHaveTextContent("Amazon SES")
+    expect(section(3)).toHaveTextContent("Vercel")
+    expect(section(4)).toHaveTextContent("The courier who delivers your order receives the recipient's name, phone number and delivery address.")
+    expect(section(4)).toHaveTextContent("We don't sell your data.")
+    expect(section(5)).toHaveTextContent("no cookies, no analytics and no advertising trackers")
+    expect(section(6)).toHaveTextContent("hello@glowstonelb.com")
+    expect(section(7)).toHaveTextContent("hello@glowstonelb.com")
+    expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
+  })
+
+  it("states the prices and payment terms, and leaves only what Omar must answer", () => {
+    renderDoc("terms")
+    expect(document.getElementById("section-4")).toHaveTextContent("Prices are in US dollars. The price shown at checkout is the price you pay.")
+    expect(document.getElementById("section-4")).toHaveTextContent("a gift is paid by the buyer, by Whish or OMT")
+    expect(screen.getAllByText(/^\[Placeholder/).map((p) => p.textContent)).toEqual([
+      "[Placeholder: who operates the site and how these terms apply.]",
+      "[Placeholder: governing law.]",
+    ])
+  })
+
+  it("dates the texts, in the page's own colour once the date is real", () => {
+    renderDoc("privacy")
+    const date = screen.getByText("26 October 2026")
+    expect(date).not.toHaveClass("text-accent")
+  })
+
+  it("shows unconfirmed text as a placeholder", () => {
+    renderDoc("terms")
     for (const placeholder of screen.getAllByText(/^\[Placeholder/)) expect(placeholder).toHaveClass("text-accent")
   })
 

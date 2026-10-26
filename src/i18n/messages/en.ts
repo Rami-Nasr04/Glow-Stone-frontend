@@ -411,7 +411,7 @@ export const en = {
     documents: "Documents",
     contents: "Contents",
     lastUpdated: "Last updated",
-    lastUpdatedValue: "[Placeholder: date]",
+    lastUpdatedValue: "26 October 2026",
     questions: "Questions? Write to",
     metaDescription: "{title} for Glowstone, hand-carved Lebanese limestone.",
     docs: {
@@ -424,18 +424,56 @@ export const en = {
             paragraphs: ["You place an order on this site. Omar calls you within 2 business days to confirm it; nothing is sent before that call."],
           },
           { heading: "Pieces and natural variation", paragraphs: ["Each piece is carved by hand. Natural variations in the stone are part of its character."] },
-          { heading: "Prices", paragraphs: ["Prices are in US dollars.", "[Placeholder: currency and pricing terms.]"] },
-          { heading: "Governing law", paragraphs: ["[Placeholder.]"] },
+          {
+            heading: "Prices",
+            paragraphs: [
+              "Prices are in US dollars. The price shown at checkout is the price you pay.",
+              "Omar confirms every order by phone before it is sent. Payment is cash on delivery; a gift is paid by the buyer, by Whish or OMT, once the order is confirmed.",
+              "Delivery is free all over Lebanon. For far-off areas, a delivery fee may be agreed on the confirmation call, as set out on the Delivery & Returns page.",
+            ],
+          },
+          { heading: "Governing law", paragraphs: ["[Placeholder: governing law.]"] },
         ],
       },
       privacy: {
         title: "Privacy",
         sections: [
-          { heading: "What we collect", paragraphs: ["[Placeholder: account, order and contact data collected.]"] },
-          { heading: "How we use it", paragraphs: ["[Placeholder.]"] },
-          { heading: "Who we share it with", paragraphs: ["[Placeholder: delivery partners, if any.]"] },
-          { heading: "Your choices", paragraphs: ["[Placeholder: access, correction and deletion.]"] },
-          { heading: "Contact", paragraphs: ["[Placeholder: data contact.]"] },
+          {
+            heading: "What we collect",
+            paragraphs: [
+              "When you create an account: your name, email address and Lebanese phone number.",
+              "When you order: the pieces and how many, the delivery address and city, your delivery notes, the recipient's name and phone number when someone else receives it, and, for a gift, the gift card message.",
+              "When you join the news list: your email address, and nothing else.",
+              "The contact form sends us nothing by itself: it opens your own email app with your message, and you decide whether to send it.",
+            ],
+          },
+          {
+            heading: "How we use it",
+            paragraphs: [
+              "To deliver your order, and to contact you about it: Omar's confirmation call, and emails about your order's progress. Your news-list email is used only for news about new editions.",
+            ],
+          },
+          {
+            heading: "Where it is kept",
+            paragraphs: [
+              "Our database runs on Amazon Web Services (AWS) in Frankfurt, in the European Union. Sign-in is handled by Amazon Cognito and our emails are sent by Amazon SES, in the same region. The website is hosted by Vercel.",
+            ],
+          },
+          {
+            heading: "Who we share it with",
+            paragraphs: [
+              "The courier who delivers your order receives the recipient's name, phone number and delivery address.",
+              "We don't sell your data.",
+            ],
+          },
+          {
+            heading: "Cookies and tracking",
+            paragraphs: [
+              "This site uses no cookies, no analytics and no advertising trackers. It keeps your cart in your own browser and, once you sign in, what keeps you signed in there. Clearing this site's data in your browser removes both.",
+            ],
+          },
+          { heading: "Your choices", paragraphs: ["To see, correct or delete your data, or to leave the news list, write to hello@glowstonelb.com."] },
+          { heading: "Contact", paragraphs: ["For anything about your data, write to hello@glowstonelb.com."] },
         ],
       },
       delivery: {

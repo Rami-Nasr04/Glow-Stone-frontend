@@ -40,7 +40,7 @@ export default function Legal() {
           <h1 className="font-display text-display-xl leading-[1.02] font-light">{title}</h1>
           <Rule />
           <p className="text-sm text-muted-foreground">
-            {m.legal.lastUpdated} <span className="text-accent">{m.legal.lastUpdatedValue}</span>
+            {m.legal.lastUpdated} <span className={cn(placeholder(m.legal.lastUpdatedValue) && "text-accent")}>{m.legal.lastUpdatedValue}</span>
           </p>
         </div>
 
