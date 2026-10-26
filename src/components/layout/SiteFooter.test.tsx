@@ -49,7 +49,7 @@ describe("SiteFooter", () => {
   it("links the wordmark home and offers the contact email", () => {
     renderFooter()
     expect(screen.getByRole("link", { name: "Glowstone home" })).toHaveAttribute("href", "/")
-    expect(screen.getByRole("link", { name: "glowstone216@gmail.com" })).toHaveAttribute("href", "mailto:glowstone216@gmail.com")
+    expect(screen.getByRole("link", { name: "hello@glowstonelb.com" })).toHaveAttribute("href", "mailto:hello@glowstonelb.com")
   })
 
   it("links Omar's WhatsApp, and hides Instagram until its handle is set", () => {

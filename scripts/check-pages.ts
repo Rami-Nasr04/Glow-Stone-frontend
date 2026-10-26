@@ -18,7 +18,7 @@
 //        npm run check:pages -- https://glowstonelb.com
 // A studio-only build locally: npm start -- 4173 studio.glowstonelb.com (the server then applies that host's rules).
 // The browser is Microsoft Edge; set EDGE_PATH if it is installed elsewhere.
-import { readdirSync, readFileSync } from "node:fs"
+import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join, sep } from "node:path"
 import puppeteer, { type Page } from "puppeteer-core"
 import { safeStudioNext, SITE_PARTS, studioPath } from "../src/config/studio.ts"
@@ -133,6 +133,11 @@ const assets = readdirSync(join(BUILD, "assets")).map((file) => ({ file, text: r
 const cognitoChunks = assets.filter(({ text }) => text.includes("USER_SRP_AUTH")).map(({ file }) => file)
 if (cognitoChunks.length === 0) throw new Error("No chunk carries the Cognito library; the check would prove nothing.")
 const carrying = (words: string[]) => assets.filter(({ text }) => words.some((word) => text.includes(word))).map(({ file }) => file)
+// Omar's public address is hello@glowstonelb.com: the Gmail behind it is in no file the build serves (Rami, 2026-10-26).
+const leaking = readdirSync(BUILD, { recursive: true, encoding: "utf8" }).filter(
+  (file) => !/\.(webp|png|jpe?g|woff2?)$/.test(file) && statSync(join(BUILD, file)).isFile() && readFileSync(join(BUILD, file), "utf8").includes("glowstone216"),
+)
+if (leaking.length > 0) fail(`the build shows the private Gmail address: ${leaking.join(", ")}`)
 // The demo orders answer only on npm run dev:demo: no build carries them.
 const demoChunks = carrying([STUDIO_DEMO_KEY])
 if (demoChunks.length > 0) fail(`the build carries the studio's demo orders: ${demoChunks.join(", ")}`)
