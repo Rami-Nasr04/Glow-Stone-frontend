@@ -38,7 +38,7 @@ function Timeline({ order }: { order: Order }) {
                 {t.timelineSteps[step].title}
                 {now && ` · ${t.now}`}
               </h3>
-              <p className="text-sm text-muted-foreground">{step === "pending" ? formatDate(order.createdAt) : t.timelineSteps[step].body}</p>
+              <p className="text-sm text-muted-foreground">{step === "pending" ? formatDate(order.createdAt) : step === "delivered" && order.isGift ? t.deliveredGift : t.timelineSteps[step].body}</p>
             </div>
           </li>
         )
@@ -95,7 +95,7 @@ export default function AccountOrder() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="font-display text-display-m leading-none font-light">{interpolate(t.orderNumber, { number: order.number })}</h1>
-            <p className="text-small text-muted-foreground">{interpolate(t.placed, { date: formatDate(order.createdAt) })}</p>
+            <p className="text-small text-muted-foreground">{interpolate(order.isGift ? t.placedGift : t.placed, { date: formatDate(order.createdAt) })}</p>
           </div>
           <StatusBadge status={order.status} />
         </div>

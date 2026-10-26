@@ -141,6 +141,23 @@ describe("AccountOrder", () => {
     expect(screen.getByRole("link", { name: /All orders/ })).toHaveAttribute("href", "/account")
   })
 
+  // Omar's answers, 2026-10-26: no set delivery times, and a gift is paid by the buyer by Whish or OMT, never in cash.
+  it("says how a gift is paid, and promises no delivery window", async () => {
+    const { auth, orders } = await demoCustomer()
+    const gift = await placeOrder(orders, { isGift: true, giftMessage: "For the new house." })
+    const plain = await placeOrder(orders, { items: [{ productId: 1, quantity: 1, unitPrice: 420 }] })
+    const steps = () => within(screen.getByRole("list", { name: "Progress" })).getAllByRole("listitem")
+    const view = renderAt(<p />, `/account/orders/${gift.id}`, { auth, routes: [{ path: "/account/orders/:id", Component: AccountOrder }] })
+    expect(await screen.findByText(/^Placed .+ · Whish or OMT$/)).toBeInTheDocument()
+    expect(steps()[1]).toHaveTextContent("Omar called to confirm the piece and the address.")
+    expect(steps()[3]).toHaveTextContent("Nothing to pay on arrival.")
+    expect(screen.queryByText(/cash|delivery window/i)).not.toBeInTheDocument()
+    view.unmount()
+    renderAt(<p />, `/account/orders/${plain.id}`, { auth, routes: [{ path: "/account/orders/:id", Component: AccountOrder }] })
+    expect(await screen.findByText(/^Placed .+ · Cash on delivery$/)).toBeInTheDocument()
+    expect(steps()[3]).toHaveTextContent("Paid in cash on arrival.")
+  })
+
   it("on a 401 while cancelling, sends the customer to sign in and back to the order", async () => {
     const { auth, orders } = await demoCustomer()
     const order = await placeOrder(orders)
