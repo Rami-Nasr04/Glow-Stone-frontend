@@ -3,8 +3,8 @@ import { listProducts } from "@/features/catalog/catalog"
 import { toLocale } from "@/i18n/locales"
 import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES } from "@/i18n/useLocale"
-import { imageUrl } from "@/lib/images"
 import { pageMeta } from "@/lib/meta"
+import { ABOUT_OG } from "@/lib/og-paths"
 import About from "@/pages/About"
 import type { Route } from "./+types/about"
 
@@ -38,7 +38,7 @@ export function meta({ params }: Route.MetaArgs) {
     title: m.about.metaTitle,
     description: m.about.metaDescription,
     path: localizedPath(locale, "/about"),
-    image: imageUrl(CRAFT_IMAGES.crest.key, 1440),
+    image: ABOUT_OG,
   })
 }
 

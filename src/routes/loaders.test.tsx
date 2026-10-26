@@ -119,7 +119,8 @@ describe("route loaders", () => {
       name: "description",
       content: "Qadisha: a hand-carved limestone wine rack for 14 bottles, made in Lebanon. Tall slab with edge notches and central holes.",
     })
-    expect(tags).toContainEqual({ property: "og:image", content: `${piece.images[0].url}/1440.webp` })
+    // The preview is the piece's own 1200×630 JPEG, named after its cover so a new cover gets a new address.
+    expect(tags).toContainEqual({ property: "og:image", content: `https://site.test/og/products/5-${piece.images[0].url.split("/").pop()}.jpg` })
     expect(tags).toContainEqual(expect.objectContaining({ rel: "canonical", href: expect.stringMatching(/\/collection\/5\/qadisha$/) }))
   })
 
@@ -151,7 +152,7 @@ describe("route loaders", () => {
   it("product meta: the hero for a piece without photos, and noindex for a missing piece", () => {
     const piece = { ...productOf(5), images: [] }
     const withoutPhotos = productMeta({ params: { id: "5" }, loaderData: { piece, products: [] } } as unknown as Route.MetaArgs)
-    expect(withoutPhotos).toContainEqual({ property: "og:image", content: expect.stringContaining("/images/hero/desktop-1376.webp") })
+    expect(withoutPhotos).toContainEqual({ property: "og:image", content: "https://site.test/og/glowstone.jpg" })
     const missing = productMeta({ params: { id: "99" }, loaderData: { piece: null, products: [] } } as unknown as Route.MetaArgs)
     expect(missing).toContainEqual({ name: "robots", content: "noindex" })
   })

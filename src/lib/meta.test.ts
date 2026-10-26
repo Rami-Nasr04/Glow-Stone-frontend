@@ -11,9 +11,13 @@ describe("pageMeta", () => {
     expect(meta).toContainEqual({ tagName: "link", rel: "canonical", href: "https://site.test/about" })
   })
 
-  it("gives link previews an absolute image, defaulting to the hero", () => {
+  // WhatsApp and Instagram previews want a JPEG of about 1200×630; the build writes them (Rami, 2026-10-26).
+  it("gives link previews an absolute 1200×630 JPEG, defaulting to the shop's own", () => {
     const meta = pageMeta({ title: "Glowstone", description: "x", path: "/" })
-    expect(find(meta, "og:image")).toMatchObject({ content: "https://site.test/images/hero/desktop-1376.webp" })
+    expect(find(meta, "og:image")).toMatchObject({ content: "https://site.test/og/glowstone.jpg" })
+    expect(find(meta, "og:image:width")).toMatchObject({ content: "1200" })
+    expect(find(meta, "og:image:height")).toMatchObject({ content: "630" })
+    expect(find(meta, "og:image:type")).toMatchObject({ content: "image/jpeg" })
     expect(find(meta, "twitter:card")).toMatchObject({ content: "summary_large_image" })
   })
 
