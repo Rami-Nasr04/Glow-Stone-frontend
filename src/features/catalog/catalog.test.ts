@@ -59,10 +59,11 @@ describe("the catalog on npm run dev:demo", () => {
   })
   afterEach(() => vi.unstubAllEnvs())
 
-  it("lists the saved pieces, newest first, and reads one with all its photos, without calling the API", async () => {
+  it("lists the saved pieces in Omar's order, and reads one with all its photos, without calling the API", async () => {
     const fetch = stubApi()
-    expect((await listProducts()).map((p) => p.id)).toEqual([6, 5, 4, 3, 2, 1])
-    expect(await getProduct(5)).toEqual(productOf(5))
+    expect((await listProducts()).map((p) => `${p.id} ${p.name}`)).toEqual(["5 Tura", "6 Atera", "1 Arz", "2 Nahr", "4 RESH", "3 Qadi_sha"])
+    const tura = await getProduct(5)
+    expect([tura?.name, tura?.stoneType, tura?.images.length]).toEqual(["Tura", "Granite", 8])
     expect(await getProduct(99)).toBeNull()
     expect(fetch).not.toHaveBeenCalled()
   })

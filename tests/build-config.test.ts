@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import config from "../react-router.config.ts"
 
 // GET /products answered with the live list saved on 2026-10-14.
-const list = readFileSync("src/features/catalog/demo/products-list.json", "utf8")
+const list = readFileSync("src/test/fixtures/products-list.json", "utf8")
 function stubApi() {
   const fetch = vi.fn(async () => new Response(`{"success":true,"data":${list}}`))
   vi.stubGlobal("fetch", fetch)
@@ -65,7 +65,7 @@ describe("the build", () => {
   it("lists the pages from the saved catalog on the dev server, without asking the API", async () => {
     const fetch = stubApi()
     vi.stubEnv("NODE_ENV", "development")
-    expect(await prerender()).toContain("/collection/5/qadisha")
+    expect(await prerender()).toContain("/collection/5/tura")
     expect(fetch).not.toHaveBeenCalled()
   })
 

@@ -5,7 +5,7 @@ import { AVAILABILITIES, CAPACITIES, readFilters, writeFilters, type FilterOptio
 // Value of the "All stones" / "Any capacity" / "All pieces" choice.
 export const ALL = "all"
 
-// A group needs at least two real choices; with one (every piece is limestone today) it would filter nothing.
+// A group needs at least two real choices; with one (every piece is granite today) it would filter nothing.
 const MIN_CHOICES = 2
 
 export interface FilterGroup {

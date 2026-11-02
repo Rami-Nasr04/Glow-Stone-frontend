@@ -37,7 +37,7 @@ describe("Legal", () => {
       "Payment is cash on delivery. A gift is paid by the buyer, by Whish or OMT, once Omar has called and confirmed the order; the recipient pays nothing.",
     )
     expect(document.getElementById("section-4")).toHaveTextContent("Omar calls to confirm every order within 2 business days, before it leaves the workshop.")
-    expect(document.getElementById("section-5")).toHaveTextContent("Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.")
+    expect(document.getElementById("section-5")).toHaveTextContent("Because every piece is carved by hand from natural stone, we don't take returns for a change of mind. Please check your piece with the courier before they leave. If it arrives damaged, send us a photo on WhatsApp or to hello@glowstonelb.com within 48 hours: Omar will repair or replace it, or refund you in full.")
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
@@ -87,9 +87,17 @@ describe("Legal", () => {
     renderDoc("terms")
     expect(document.getElementById("section-4")).toHaveTextContent("Prices are in US dollars. The price shown at checkout is the price you pay.")
     expect(document.getElementById("section-4")).toHaveTextContent("a gift is paid by the buyer, by Whish or OMT")
-    expect(document.getElementById("section-1")).toHaveTextContent("This website is run by Glowstone, in Lebanon. These terms apply to every order placed on glowstonelb.com.")
-    expect(document.getElementById("section-5")).toHaveTextContent("These terms are governed by the laws of Lebanon.")
+    expect(document.getElementById("section-1")).toHaveTextContent("This website is run by Omar Al Bakeer, trading as Glowstone, Beirut, Lebanon. These terms apply to every order placed on glowstonelb.com. By placing an order, you accept them.")
+    expect(document.getElementById("section-5")).toHaveTextContent("These terms are governed by the laws of Lebanon. If a problem arises, write to us first and we will do our best to solve it together. If we can't, the courts of Beirut will decide.")
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
+  })
+
+  // Omar's final texts (Rami, 2026-11-02): the designs, photos and texts are Glowstone's, the last section of the terms.
+  it("ends the terms with who owns the designs, photos and texts", () => {
+    renderDoc("terms")
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
+    expect(headings.at(-1)).toBe("Designs, photos and texts")
+    expect(document.getElementById(`section-${headings.length}`)).toHaveTextContent("All designs, photographs and texts on this website belong to Glowstone, except where a photo is credited to its author. Please don't copy or reproduce them without our written permission. Sharing a link to a page is always welcome.")
   })
 
   it("dates the texts, in the page's own colour once the date is real", () => {

@@ -81,7 +81,7 @@ const ELIE = "4e8f0d5b-7a6c-4d4e-8f1a-5b9c3d4e6f7a"
 const piece = (productId: number, name: string, color: string, unitPrice: number, quantity = 1) => ({
   productId,
   name,
-  stoneType: "Limestone",
+  stoneType: "Granite",
   color,
   quantity,
   unitPrice,
@@ -115,11 +115,11 @@ function seed(): Store {
   })
   const orders: DemoOrder[] = [
     order(8, "pending", "2026-10-24T07:40:00Z", SARA, {
-      items: [piece(2, "Arz", "Cream", 290), piece(5, "Qadisha", "Sand", 890, 2)],
+      items: [piece(1, "Arz", "Beige & Brown", 330), piece(5, "Tura", "Beige & Brown", 480, 2)],
       deliveryNotes: "Call before coming; the building has no lift.",
     }),
     order(7, "pending", "2026-10-23T18:12:00Z", KARIM, {
-      items: [piece(6, "Sannine", "Ivory", 560)],
+      items: [piece(6, "Atera", "Beige & Brown", 400)],
       isGift: true,
       giftMessage: "Happy birthday, Rima. Open it with your favourite bottle.",
       recipient: { name: "Rima Saad", phone: "+96170111222", isAccountHolder: false },
@@ -127,18 +127,18 @@ function seed(): Store {
       address: "Old souk, the blue door after the bakery",
     }),
     order(6, "pending", "2026-10-22T10:05:00Z", MAYA, {
-      items: [piece(3, "Batroun", "Honey", 1120)],
+      items: [piece(4, "RESH", "Beige & Brown", 280)],
       isGift: true,
       recipient: { name: "Nadim Haddad", phone: "+9613998877", isAccountHolder: false },
       city: "Zahle",
       address: "Boulevard, Massabki bldg, 5th floor",
       deliveryFee: 12.5,
     }),
-    order(5, "confirmed", "2026-10-20T13:30:00Z", ELIE, { items: [piece(4, "Nahr", "Grey", 640)], city: "Byblos", address: "Port road, Abi Saab bldg", deliveryFee: 10 }),
-    order(4, "out_for_delivery", "2026-10-18T09:00:00Z", SARA, { items: [piece(3, "Batroun", "Honey", 1120)] }),
-    order(3, "delivered", "2026-10-15T16:45:00Z", KARIM, { items: [piece(4, "Nahr", "Grey", 640, 2)], city: "Beirut", address: "Gemmayze, Pasteur street, 2nd floor" }),
-    order(2, "cancelled", "2026-10-14T12:20:00Z", MAYA, { items: [piece(2, "Arz", "Cream", 290)], city: "Zahle", address: "Boulevard, Massabki bldg, 5th floor" }),
-    order(1, "delivered", "2026-10-13T08:10:00Z", SARA, { items: [piece(5, "Qadisha", "Sand", 890)] }),
+    order(5, "confirmed", "2026-10-20T13:30:00Z", ELIE, { items: [piece(2, "Nahr", "Beige & Brown", 280)], city: "Byblos", address: "Port road, Abi Saab bldg", deliveryFee: 10 }),
+    order(4, "out_for_delivery", "2026-10-18T09:00:00Z", SARA, { items: [piece(3, "Qadi_sha", "Beige & Brown", 180)] }),
+    order(3, "delivered", "2026-10-15T16:45:00Z", KARIM, { items: [piece(2, "Nahr", "Beige & Brown", 280, 2)], city: "Beirut", address: "Gemmayze, Pasteur street, 2nd floor" }),
+    order(2, "cancelled", "2026-10-14T12:20:00Z", MAYA, { items: [piece(1, "Arz", "Beige & Brown", 330)], city: "Zahle", address: "Boulevard, Massabki bldg, 5th floor" }),
+    order(1, "delivered", "2026-10-13T08:10:00Z", SARA, { items: [piece(5, "Tura", "Beige & Brown", 480)] }),
   ]
   return { customers, orders }
 }

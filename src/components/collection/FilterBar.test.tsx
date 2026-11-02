@@ -11,7 +11,7 @@ describe("FilterBar", () => {
   it("offers the filters that have a real choice, and the piece count", () => {
     renderAt(<FilterBar filters={NO_FILTERS} options={options} count={8} onChange={vi.fn()} />)
     for (const name of ["Colour", "Capacity", "Availability"]) expect(screen.getByRole("button", { name })).toBeInTheDocument()
-    // Every piece is limestone today, so there is nothing to choose between.
+    // Every piece in the test catalog is the same stone, so there is nothing to choose between.
     expect(screen.queryByRole("button", { name: "Stone" })).not.toBeInTheDocument()
     expect(screen.getByText("8 pieces")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument()

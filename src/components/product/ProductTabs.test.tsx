@@ -60,7 +60,7 @@ describe("ProductTabs", () => {
     await user.click(screen.getByRole("tab", { name: "Care" }))
     expect(screen.getByText(/Dust with a soft, dry cloth/)).toBeInTheDocument()
     await user.click(screen.getByRole("tab", { name: "Delivery" }))
-    expect(screen.getByText("Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.")).toBeInTheDocument()
+    expect(screen.getByText("Because every piece is carved by hand from natural stone, we don't take returns for a change of mind. Please check your piece with the courier before they leave. If it arrives damaged, send us a photo on WhatsApp or to hello@glowstonelb.com within 48 hours: Omar will repair or replace it, or refund you in full.")).toBeInTheDocument()
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 

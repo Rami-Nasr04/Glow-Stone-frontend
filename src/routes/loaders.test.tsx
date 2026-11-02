@@ -17,19 +17,19 @@ describe("route loaders", () => {
   beforeEach(() => vi.stubEnv("VITE_API_URL", "https://api.test"))
   afterEach(() => vi.unstubAllEnvs())
 
-  it("home: every published piece, and nothing else from the API", async () => {
+  // The hero and the spotlight follow the first piece in Omar's order (Rami, 2026-11-02): the loader reads it whole.
+  it("home: every published piece in Omar's order, and the first one with all its photos", async () => {
     const fetch = stubApi()
-    expect(await homeLoader()).toEqual({ products: PRODUCTS })
-    expect(fetch.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual(["/products"])
+    const first = PRODUCTS[0]
+    expect(await homeLoader()).toEqual({ products: PRODUCTS, first: productOf(first.id) })
+    expect(fetch.mock.calls.map(([input]) => new URL(String(input)).pathname).sort()).toEqual(["/products", `/products/${first.id}`])
   })
 
-  // The hero and the spotlight are fixed Qadisha content (Rami, 2026-10-15): the home page builds whatever its state.
   it.each([
-    ["a draft", PRODUCTS.filter((p) => p.id !== 5)],
-    ["sold out", PRODUCTS.map((p) => (p.id === 5 ? { ...p, remaining: 0, soldOut: true } : p))],
-  ])("home: builds when Qadisha is %s", async (_state, products) => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ success: true, data: products }))))
-    expect(await homeLoader()).toEqual({ products })
+    ["sold out", PRODUCTS.map((p, i) => (i === 0 ? { ...p, remaining: 0, soldOut: true } : p))],
+  ])("home: builds when the first piece is %s", async (_state, products) => {
+    stubApi(() => products)
+    expect((await homeLoader()).products).toEqual(products)
   })
 
   it("stops the build on a bad answer", async () => {
@@ -81,7 +81,7 @@ describe("route loaders", () => {
   // A host that answers with another page's HTML (vite preview without a trailing slash) leaves a route with no built
   // data: every page then asks the API itself instead of failing.
   it.each([
-    ["home", homeClientLoader, ["products"]],
+    ["home", homeClientLoader, ["products", "first"]],
     ["collection", collectionClientLoader, ["products"]],
     ["about", aboutClientLoader, ["crestName"]],
   ] as const)("%s in the browser: the built data, else the live API", async (_, clientLoader, keys) => {
@@ -132,21 +132,25 @@ describe("route loaders", () => {
     expect(data.url).toMatch(/\/collection\/5\/qadisha$/)
   })
 
-  it("home meta: the store's data for search engines, and a description that says what is sold and where", () => {
-    const tags = homeMeta({ params: {} } as unknown as Parameters<typeof homeMeta>[0])
+  it("home meta: the store's data for search engines, and the brand description", () => {
+    const tags = homeMeta({ params: {}, loaderData: { products: PRODUCTS, first: null } } as unknown as Parameters<typeof homeMeta>[0])
     expect(ldJson(tags)).toMatchObject({ "@type": "OnlineStore", name: "Glowstone" })
     const description = tags.find((tag) => "name" in tag && tag.name === "description") as { content: string }
-    expect(description.content).toMatch(/wine rack/i)
-    expect(description.content).toMatch(/limestone/i)
-    expect(description.content).toMatch(/Lebanon/)
+    // The pieces are granite (Rami, 2026-11-02); where the granite comes from isn't known, so never "Lebanese granite".
+    expect(description.content).toBe("Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.")
   })
 
-  it("collection meta: a description that says what is sold and where", () => {
+  it("home meta: the link preview is the first piece's", () => {
+    const tags = homeMeta({ params: {}, loaderData: { products: PRODUCTS, first: null } } as unknown as Parameters<typeof homeMeta>[0])
+    const cover = PRODUCTS[0].images[0].url.split("/").pop()
+    expect(tags).toContainEqual({ property: "og:image", content: `https://site.test/og/products/${PRODUCTS[0].id}-${cover}.jpg` })
+  })
+
+  it("collection meta: the brand description", () => {
     const tags = collectionMeta({ params: {} } as unknown as Parameters<typeof collectionMeta>[0])
     const description = tags.find((tag) => "name" in tag && tag.name === "description") as { content: string }
-    expect(description.content).toMatch(/wine rack/i)
-    expect(description.content).toMatch(/limestone/i)
-    expect(description.content).toMatch(/Lebanon/)
+    // The pieces are granite (Rami, 2026-11-02); where the granite comes from isn't known, so never "Lebanese granite".
+    expect(description.content).toBe("Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.")
   })
 
   it("product meta: the hero for a piece without photos, and noindex for a missing piece", () => {
