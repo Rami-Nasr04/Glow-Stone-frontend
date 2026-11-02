@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import config from "../react-router.config.ts"
 
 // GET /products answered with the live list saved on 2026-10-14.
-const list = readFileSync("src/test/fixtures/products-list.json", "utf8")
+const list = readFileSync("src/features/catalog/demo/products-list.json", "utf8")
 function stubApi() {
   const fetch = vi.fn(async () => new Response(`{"success":true,"data":${list}}`))
   vi.stubGlobal("fetch", fetch)
@@ -58,6 +58,15 @@ describe("the build", () => {
   it("lists the pages from the API when every variable is set", async () => {
     stubApi()
     expect(await prerender()).toContain("/collection/5/qadisha")
+  })
+
+  // React Router asks for the pages on the dev server too: there they come from the saved catalog, so nothing local
+  // calls the live API (it answers only the live shop and studio, backend 9e28860).
+  it("lists the pages from the saved catalog on the dev server, without asking the API", async () => {
+    const fetch = stubApi()
+    vi.stubEnv("NODE_ENV", "development")
+    expect(await prerender()).toContain("/collection/5/qadisha")
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it("refuses a missing VITE_SITE_URL before asking the API", async () => {

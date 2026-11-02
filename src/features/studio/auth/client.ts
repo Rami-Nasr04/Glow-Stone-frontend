@@ -25,4 +25,4 @@ export const studioDemo = import.meta.env.DEV && studioDemoOn({ dev: true, mode:
 
 // The network, or on `npm run dev:demo` the demo for the orders and customers routes (the rest still goes out).
 export const adminFetch: typeof fetch | undefined =
-  import.meta.env.DEV && studioDemo ? createStudioDemoFetch({ storage: browserStorage(), real: (input, init) => fetch(input, init) }) : undefined
+  import.meta.env.DEV && studioDemo ? createStudioDemoFetch({ storage: browserStorage() }) : undefined

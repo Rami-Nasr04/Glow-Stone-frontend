@@ -1,9 +1,11 @@
+import { createDemoProducts, DemoRefusal } from "./demo-products.ts"
 import type { AdminCustomer, AdminOrder, AdminOrderLine, AdminOrderSummary, ForwardStatus, OrderStatus } from "./orders.ts"
 
 // Stand-in for the admin orders and customers routes on `npm run dev:demo`: the backend's shapes, order of checks and
 // words, answered in this browser from made-up orders (every person here is invented). The admin still signs in with
-// the real admin pool, and every other route (products, photos, publish) goes to the real API. Nothing here changes
-// real stock: cancelling a demo order only changes the demo.
+// the real admin pool; the pieces, photos and publish routes are demo ones too (demo-products.ts), so nothing here
+// reaches the live API, which answers only the live shop and studio (backend 9e28860). Cancelling a demo order only
+// changes the demo.
 
 export const STUDIO_DEMO_KEY = "glowstone.studio-demo"
 /** Set to UNAUTHORIZED to have the next orders or customers call answered with a 401, once. */
@@ -213,13 +215,12 @@ const unauthorized = () => json(401, { message: "Unauthorized" })
 
 interface DemoOptions {
   storage: Storage | null
-  /** Every route that isn't an order or customer route. */
-  real: typeof fetch
 }
 
 const ROUTE = /\/admin\/(orders|customers)(?:\/([^/?]+))?(?:\/(status|cancel))?\/?(?:\?.*)?$/
 
-export function createStudioDemoFetch({ storage, real }: DemoOptions): typeof fetch {
+export function createStudioDemoFetch({ storage }: DemoOptions): typeof fetch {
+  const products = createDemoProducts(storage)
   let memory: Store | null = null
   const load = (): Store => {
     const saved = storage?.getItem(STUDIO_DEMO_KEY)
@@ -308,8 +309,8 @@ export function createStudioDemoFetch({ storage, real }: DemoOptions): typeof fe
 
   return async (input, init) => {
     const url = input instanceof Request ? input.url : String(input)
-    const match = ROUTE.exec(new URL(url).pathname)
-    if (!match) return real(input, init)
+    const path = new URL(url).pathname
+    const match = ROUTE.exec(path)
     const headers = new Headers(init?.headers)
     if (!headers.get("Authorization")?.startsWith("Bearer ")) return unauthorized()
     if (storage?.getItem(STUDIO_DEMO_REFUSE_KEY) === "UNAUTHORIZED") {
@@ -317,7 +318,6 @@ export function createStudioDemoFetch({ storage, real }: DemoOptions): typeof fe
       return unauthorized()
     }
     const method = (init?.method ?? "GET").toUpperCase()
-    const [, collection, id, action] = match
     let body: unknown = null
     try {
       body = typeof init?.body === "string" ? JSON.parse(init.body) : null
@@ -325,6 +325,12 @@ export function createStudioDemoFetch({ storage, real }: DemoOptions): typeof fe
       body = null
     }
     try {
+      if (!match) {
+        const answer = await products.answer(method, path, body)
+        if (!answer) throw new Refusal(404, "NOT_FOUND", "Not found")
+        return answer.status === 204 ? new Response(null, { status: 204 }) : json(answer.status, { success: true, data: answer.data })
+      }
+      const [, collection, id, action] = match
       const store = load()
       if (collection === "orders") {
         if (method === "GET" && id === undefined) return ok([...store.orders].sort(newestFirst).map((order) => summaryOf(order, store)))
@@ -337,7 +343,7 @@ export function createStudioDemoFetch({ storage, real }: DemoOptions): typeof fe
       }
       throw new Refusal(404, "NOT_FOUND", "Not found")
     } catch (error) {
-      if (error instanceof Refusal) return json(error.status, { success: false, error: { code: error.code, message: error.message } })
+      if (error instanceof Refusal || error instanceof DemoRefusal) return json(error.status, { success: false, error: { code: error.code, message: error.message } })
       throw error
     }
   }

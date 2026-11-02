@@ -57,3 +57,17 @@ describe("subscribe (POST /subscribers)", () => {
     vi.useRealTimers()
   })
 })
+
+// On `npm run dev:demo` nothing local calls the live API (backend 9e28860): the sign-up answers in the browser.
+describe("subscribe on npm run dev:demo", () => {
+  beforeEach(() => vi.stubEnv("MODE", "demo"))
+  afterEach(() => vi.unstubAllEnvs())
+
+  it("answers without calling the API, refusing what isn't an email in the API's words", async () => {
+    const fetch = vi.fn(async () => answer(204))
+    vi.stubGlobal("fetch", fetch)
+    await expect(subscribe({ email: "sara@example.com", rejoin: true, website: "" })).resolves.toEqual({ ok: true })
+    await expect(subscribe({ email: "sara", rejoin: true, website: "" })).resolves.toEqual({ ok: false, reason: "invalid", message: "Please enter a valid email." })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})

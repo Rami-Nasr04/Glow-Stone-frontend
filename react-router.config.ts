@@ -36,6 +36,9 @@ export default {
       clientId: env.VITE_CUSTOMER_APP_CLIENT_ID,
       accountsOpen: env.VITE_ACCOUNTS_OPEN,
     })
+    // React Router asks on the dev server too: there the saved catalog answers, as nothing local calls the live API
+    // (it answers only the live shop and studio, backend 9e28860).
+    if (process.env.NODE_ENV === "development") return prerenderPaths((await import("./src/features/catalog/demo/catalog.ts")).demoProducts())
     return prerenderPaths(await fetchProducts(api))
   },
   // With nothing prerendered (the studio alone) React Router writes the app shell as index.html. vercel.json rewrites

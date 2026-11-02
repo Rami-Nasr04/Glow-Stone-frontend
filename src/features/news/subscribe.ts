@@ -1,4 +1,5 @@
 import { apiBase } from "@/features/catalog/catalog"
+import { localDemo } from "@/lib/local-demo"
 
 export interface SubscribeRequest {
   email: string
@@ -17,6 +18,8 @@ interface SubscribeOptions {
 // POST /subscribers, the news list. Never throws: every outcome is a result, so a quiet caller can ignore it.
 // 204 never says whether the email was new, already there, or a bot's (that's on purpose, server side).
 export async function subscribe(request: SubscribeRequest, { timeoutMs = 15_000 }: SubscribeOptions = {}): Promise<SubscribeResult> {
+  // On `npm run dev:demo` the list is never reached; a plain check stands in for the API's.
+  if (import.meta.env.DEV && localDemo()) return request.email.includes("@") ? { ok: true } : { ok: false, reason: "invalid", message: "Please enter a valid email." }
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(new Error("timed out")), timeoutMs)
   try {
