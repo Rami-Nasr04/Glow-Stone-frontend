@@ -392,8 +392,6 @@ export const en = {
       "A bottle resting in a hand-cut notch",
       "Light passing through a hole bored in stone",
     ],
-    // The licence (CC BY-SA 4.0) asks for a visible credit linking to the photo and the licence.
-    valleyCredit: { place: "Qadisha Valley.", photo: "Photo:", author: "Evan Williams", licence: "CC BY-SA 4.0" },
     quote: "Stone keeps its own time. My work is to wait for it.",
     quoteBy: "Omar, stonemason",
     closing: "Made in Lebanon.",
@@ -464,6 +462,14 @@ export const en = {
           {
             heading: "Designs, photos and texts",
             paragraphs: ["All designs, photographs and texts on this website belong to Glowstone, except where a photo is credited to its author. Please don't copy or reproduce them without our written permission. Sharing a link to a page is always welcome."],
+            // The About valley photo's CC BY-SA 4.0 credit, linking to the photo and the licence (Rami, 2026-11-02).
+            credit: {
+              before: "The photo of the Qadisha Valley on the About page is by ",
+              author: "Evan Williams",
+              middle: " (cropped), licensed under ",
+              licence: "CC BY-SA 4.0",
+              after: ".",
+            },
           },
         ],
       },

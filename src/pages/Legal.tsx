@@ -1,6 +1,7 @@
 import { NavLink, useParams } from "react-router"
 import { isLegalDoc, LEGAL_DOCS, type LegalDoc } from "@/components/legal/docs"
 import { Rule } from "@/components/ui/rule"
+import { ABOUT_IMAGES } from "@/config/images"
 import { CONTACT_EMAIL } from "@/config/site"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
@@ -8,6 +9,8 @@ import NotFound from "@/pages/NotFound"
 
 // Unconfirmed text is written in brackets, as [Placeholder: …], and shown in wine until Omar replaces it.
 const placeholder = (text: string) => text.startsWith("[")
+
+const creditLink = "underline underline-offset-4 transition-colors duration-500 hover:text-accent"
 
 export default function Legal() {
   const { doc } = useParams()
@@ -71,6 +74,19 @@ export default function Legal() {
                     {paragraph}
                   </p>
                 ))}
+                {"credit" in section && (
+                  <p className="leading-relaxed">
+                    {section.credit.before}
+                    <a href={ABOUT_IMAGES.qadishaValley.page} target="_blank" rel="noopener noreferrer" className={creditLink}>
+                      {section.credit.author}
+                    </a>
+                    {section.credit.middle}
+                    <a href={ABOUT_IMAGES.qadishaValley.licence} target="_blank" rel="noopener noreferrer license" className={cn(creditLink, "whitespace-nowrap")}>
+                      {section.credit.licence}
+                    </a>
+                    {section.credit.after}
+                  </p>
+                )}
               </article>
             ))}
             <p className="border-t border-border pt-8 text-small text-muted-foreground">

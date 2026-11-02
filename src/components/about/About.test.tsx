@@ -63,19 +63,14 @@ describe("About sections", () => {
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
-  // Evan Williams' photo, CC BY-SA 4.0: the licence asks for a visible credit with links to the file and the licence.
-  it("shows the Qadisha Valley in the chapter on the stone, credited under the photo", () => {
+  // Evan Williams' photo, CC BY-SA 4.0: its credit is on the Terms page, not under the photo (Rami, 2026-11-02).
+  it("shows the Qadisha Valley in the chapter on the stone, with no caption under it", () => {
     const { container } = renderAt(<Chapters />)
     const valley = screen.getAllByAltText(/^The Qadisha Valley from the air/)
     expect(valley.length).toBeGreaterThan(0)
     expect(valley[0]).toHaveAttribute("src", "/images/about/qadisha-valley-960.webp")
-    const credits = container.querySelectorAll("[data-photo-credit]")
-    expect(credits.length).toBeGreaterThan(0)
-    for (const credit of credits) {
-      expect(credit).toHaveTextContent("Qadisha Valley. Photo: Evan Williams, CC BY-SA 4.0")
-      expect(credit.querySelector('a[href="https://commons.wikimedia.org/wiki/File:Qadisha_Valley,_Aerial_View_From_Qannoubine_Monastery.jpg"]')).toHaveTextContent("Evan Williams")
-      expect(credit.querySelector('a[href="https://creativecommons.org/licenses/by-sa/4.0/"]')).toHaveTextContent("CC BY-SA 4.0")
-    }
+    expect(container.querySelector("[data-photo-credit]")).toBeNull()
+    expect(screen.queryByText(/Evan Williams|CC BY-SA/)).not.toBeInTheDocument()
   })
 
   it("labels the photo panel with the chapter in view, following the scroll", () => {
