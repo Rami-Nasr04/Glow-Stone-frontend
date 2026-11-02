@@ -39,6 +39,26 @@ describe("About sections", () => {
     expect(lines).toEqual(["هون في تاريخ، وزمن، وطبيعة.", "هون في خطوط رسمتها الطبيعة،", "وهون مرق شتي وشمس،", "وربيع وخريف.", "نحن مناخد هالصخرة من الأرض،", "ومنحوّلها لتصبح جزءاً من قصة أكبر.", "قطعة بتحمل تاريخ النبيذ وفلسفته،", "وبتكمّل قصته، من الأرض إلى الكأس،", "ومن الكأس إلى قطعة بتعيش بمكان جديد.", "وكل Collection بتحمل روح المكان اللي إجت منه،", "وبتعكس طبيعته، هويته، وأثر الزمن عليه.", "Glow Stone", "حكاية الأرض، بتكمّل قصة النبيذ."])
   })
 
+  // From the desktop breakpoint the English and the Arabic face each other (Rami, 2026-11-02): one grid filled column by
+  // column, a row per stanza, so stanza n of each language shares row n whatever its length. Below it: English, then Arabic.
+  it("pairs each English stanza with its Arabic stanza on desktop, and keeps them one under the other below it", () => {
+    renderAt(<OmarStory />)
+    const story = screen.getByRole("region", { name: "Omar's story" })
+    const spread = story.querySelector("[data-spread]")!
+    const [english, arabic] = [...spread.children]
+    expect(arabic).toHaveAttribute("lang", "ar")
+    const englishStanzas = english.querySelectorAll("[data-stanza]")
+    const arabicStanzas = arabic.querySelectorAll("[data-stanza]")
+    expect(englishStanzas).toHaveLength(arabicStanzas.length)
+    expect(spread.className).toMatch(/(^| )flex-col( |$)/)
+    for (const name of ["lg:grid", "lg:grid-flow-col", `lg:grid-rows-[repeat(${englishStanzas.length},auto)]`, "lg:items-baseline"]) {
+      expect(spread.className.split(" ")).toContain(name)
+    }
+    for (const side of [english, arabic]) expect(side.className.split(" ")).toContain("lg:contents")
+    expect(englishStanzas[englishStanzas.length - 1]).toHaveTextContent("Glowstone")
+    expect(arabicStanzas[arabicStanzas.length - 1]).toHaveTextContent("Glow Stone")
+  })
+
   it("tells four chapters, each with its own landscape photo on phones", () => {
     const { container } = renderAt(<Chapters />)
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["The stone", "The carving", "The edition", "Time"])
