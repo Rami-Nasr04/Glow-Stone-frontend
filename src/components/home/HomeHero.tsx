@@ -36,7 +36,7 @@ export default function HomeHero({ piece }: HomeHeroProps) {
       {/* Names the piece in the photo; not a link, so the home page never depends on that piece being for sale. */}
       <figure className="flex flex-col items-end gap-3 upright:items-center">
         <div className="aspect-2/3 h-[min(calc(100svh-11rem),60rem)] overflow-hidden bg-photo-dark upright:h-auto upright:w-[min(78vw,26rem)]">
-          {cover && <Picture image={cover} alt={pieceAlt(piece, m)} sizes="(orientation: landscape) 42svh, 78vw" priority />}
+          {cover && <Picture image={cover} alt={pieceAlt(piece, m)} sizes="(orientation: landscape) 34vw, 78vw" priority />}
         </div>
         <figcaption className={caption}>
           <span className="upright:hidden">{`${name} · ${stoneLabel(piece)} · ${edition}`}</span>

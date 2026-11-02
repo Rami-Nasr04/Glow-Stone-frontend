@@ -115,12 +115,12 @@ describe("sending a photo to storage", () => {
 })
 
 describe("adding one photo", () => {
-  it("makes the three calls in order, then pre-warms the five sizes", async () => {
+  it("makes the three calls in order, then pre-warms the six sizes", async () => {
     const { api, calls } = setup()
     const photo = await addPhoto(api, 5, fileOf("a.jpg"))
     expect(photo.id).toBe(901)
     expect(calls()).toEqual(["POST /admin/products/5/photos/upload", `POST ${STORAGE}`, "POST /admin/products/5/photos"])
-    expect(warmed).toEqual([480, 960, 1440, 2048, 2880].map((w) => `${photo.url}/${w}.webp`))
+    expect(warmed).toEqual([480, 720, 960, 1440, 2048, 2880].map((w) => `${photo.url}/${w}.webp`))
   })
 
   it("sends the slot's upload id to the confirm", async () => {
@@ -251,15 +251,16 @@ describe("adding several photos", () => {
 })
 
 describe("pre-warming", () => {
-  it("loads every allowed width once", () => {
+  it("loads every allowed width once, 720 included", () => {
     prewarm(adminProductOf(5).images[0])
-    expect(warmed).toHaveLength(5)
-    expect(warmed[4]).toBe(`${adminProductOf(5).images[0].url}/2880.webp`)
+    expect(warmed).toHaveLength(6)
+    expect(warmed[1]).toBe(`${adminProductOf(5).images[0].url}/720.webp`)
+    expect(warmed[5]).toBe(`${adminProductOf(5).images[0].url}/2880.webp`)
   })
 
   it("loads only the addresses the website asks for, for a photo narrower than 2880", () => {
     const photo = { ...adminProductOf(5).images[0], width: 1067, height: 1600 }
     prewarm(photo)
-    expect(warmed).toEqual([480, 960, 1440].map((w) => `${photo.url}/${w}.webp`))
+    expect(warmed).toEqual([480, 720, 960, 1440].map((w) => `${photo.url}/${w}.webp`))
   })
 })

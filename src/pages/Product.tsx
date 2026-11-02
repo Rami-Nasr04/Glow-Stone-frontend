@@ -13,7 +13,8 @@ import type { Product as ProductData, ProductSummary } from "@/features/catalog/
 import { useLocale } from "@/i18n/useLocale"
 import NotFound from "@/pages/NotFound"
 
-const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 640px) 50vw, 100vw"
+// Phones: a card spans the page between its gutters, about 90% of the screen (so a 3× phone takes the 720 file).
+const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 640px) 50vw, 90vw"
 
 interface ProductProps {
   /** GET /products/{id}, or null for an unknown or unpublished piece. */

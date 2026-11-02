@@ -5,6 +5,7 @@ import Picture from "./Picture"
 const PHOTO = "https://photos.test/products/5/abc"
 
 describe("Picture", () => {
+  // The site's own photos have no 720 file: only the CDN makes it.
   it("builds a srcset that never asks for variants larger than the original", () => {
     render(<Picture image={{ key: "craft/bore", width: 1440, height: 2160 }} alt="Bore" sizes="50vw" />)
     const img = screen.getByAltText("Bore")
@@ -18,12 +19,13 @@ describe("Picture", () => {
     expect(screen.getByAltText("Crest").getAttribute("srcset")).toContain("/images/craft/crest-2880.webp 2880w")
   })
 
-  it("serves a product photo from the API at the allowed widths up to its own", () => {
+  // The CDN makes 720 for product photos too (backend, 2026-11-02): phones' cards and pieces fall between 480 and 960.
+  it("serves a product photo from the API at the allowed widths up to its own, 720 included", () => {
     render(<Picture image={{ url: PHOTO, width: 2880, height: 4318 }} alt="Qadisha" sizes="100vw" />)
     const img = screen.getByAltText("Qadisha")
     expect(img).toHaveAttribute("src", `${PHOTO}/960.webp`)
     expect(img.getAttribute("srcset")).toBe(
-      [480, 960, 1440, 2048, 2880].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
+      [480, 720, 960, 1440, 2048, 2880].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
     )
     expect(img).toHaveAttribute("width", "2880")
     expect(img).toHaveAttribute("height", "4318")
@@ -33,11 +35,11 @@ describe("Picture", () => {
   it("stops a smaller photo's srcset at its own width", () => {
     render(<Picture image={{ url: PHOTO, width: 2048, height: 1365 }} alt="Wide" sizes="62vw" />)
     expect(screen.getByAltText("Wide").getAttribute("srcset")).toBe(
-      [480, 960, 1440, 2048].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
+      [480, 720, 960, 1440, 2048].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
     )
     render(<Picture image={{ url: PHOTO, width: 1440, height: 2160 }} alt="Exact" sizes="62vw" />)
     expect(screen.getByAltText("Exact").getAttribute("srcset")).toBe(
-      [480, 960, 1440].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
+      [480, 720, 960, 1440].map((w) => `${PHOTO}/${w}.webp ${w}w`).join(", "),
     )
   })
 
@@ -46,7 +48,7 @@ describe("Picture", () => {
   it("offers a photo between two sizes at its real width, once", () => {
     render(<Picture image={{ url: PHOTO, width: 1067, height: 1600 }} alt="Sannine" sizes="100vw" />)
     expect(screen.getByAltText("Sannine").getAttribute("srcset")).toBe(
-      `${PHOTO}/480.webp 480w, ${PHOTO}/960.webp 960w, ${PHOTO}/1440.webp 1067w`,
+      `${PHOTO}/480.webp 480w, ${PHOTO}/720.webp 720w, ${PHOTO}/960.webp 960w, ${PHOTO}/1440.webp 1067w`,
     )
     render(<Picture image={{ url: PHOTO, width: 300, height: 450 }} alt="Tiny" sizes="56px" />)
     expect(screen.getByAltText("Tiny").getAttribute("srcset")).toBe(`${PHOTO}/480.webp 300w`)

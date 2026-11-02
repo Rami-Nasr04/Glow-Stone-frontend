@@ -27,7 +27,8 @@ interface CommissionTileProps {
   count: number
 }
 
-const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 768px) 50vw, 100vw"
+// Phones: a card spans the page between its gutters, about 90% of the screen (so a 3× phone takes the 720 file).
+const CARD_SIZES = "(min-width: 1024px) 410px, (min-width: 768px) 50vw, 90vw"
 // Static class names so Tailwind generates them.
 const MD_SPAN = { 1: "md:col-span-1", 2: "md:col-span-2" } as const
 const LG_SPAN = { 1: "lg:col-span-1", 2: "lg:col-span-2", 3: "lg:col-span-3" } as const
