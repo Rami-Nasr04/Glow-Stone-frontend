@@ -156,7 +156,7 @@ export const en = {
     deliveryBody: [
       "Delivery is free all over Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order, within 2 business days. Payment is in cash on delivery; a gift is paid by the buyer, by Whish or OMT.",
       "Delivery usually takes about a week. On the delivery day, the courier calls or WhatsApps the phone number given with the order.",
-      "[Placeholder: returns policy.]",
+      "Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.",
     ],
     alsoLike: "You may also like",
   },
@@ -361,7 +361,7 @@ export const en = {
       {
         title: "The edition",
         lead: "This is why every form is made in a small numbered edition.",
-        body: ["[Placeholder: how each piece is marked and documented.]"],
+        body: ["Each piece carries its number within its edition."],
       },
       {
         title: "Time",
@@ -406,19 +406,23 @@ export const en = {
     copyByHand: "Copy your message below and paste it in the chat.",
     yourMessage: "Your message",
   },
-  // Legal texts are placeholders until Omar sends real ones (ideally checked by a Lebanese lawyer); `site_content` in B6.
+  // Legal texts: drafted from what the site does, with interim lines for launch (Rami, 2026-11-02) until Omar sends his
+  // own (ideally checked by a Lebanese lawyer); `site_content` in B6.
   legal: {
     documents: "Documents",
     contents: "Contents",
     lastUpdated: "Last updated",
-    lastUpdatedValue: "26 October 2026",
+    lastUpdatedValue: "2 November 2026",
     questions: "Questions? Write to",
     metaDescription: "{title} for Glowstone, hand-carved Lebanese limestone.",
     docs: {
       terms: {
         title: "Terms",
         sections: [
-          { heading: "About these terms", paragraphs: ["[Placeholder: who operates the site and how these terms apply.]"] },
+          {
+            heading: "About these terms",
+            paragraphs: ["This website is run by Glowstone, in Lebanon. These terms apply to every order placed on glowstonelb.com."],
+          },
           {
             heading: "Orders",
             paragraphs: ["You place an order on this site. Omar calls you within 2 business days to confirm it; nothing is sent before that call."],
@@ -432,7 +436,7 @@ export const en = {
               "Delivery is free all over Lebanon. For far-off areas, a delivery fee may be agreed on the confirmation call, as set out on the Delivery & Returns page.",
             ],
           },
-          { heading: "Governing law", paragraphs: ["[Placeholder: governing law.]"] },
+          { heading: "Governing law", paragraphs: ["These terms are governed by the laws of Lebanon."] },
         ],
       },
       privacy: {
@@ -495,7 +499,7 @@ export const en = {
               "Omar calls to confirm every order within 2 business days, before it leaves the workshop.",
             ],
           },
-          { heading: "Returns", paragraphs: ["[Placeholder: returns policy.]"] },
+          { heading: "Returns", paragraphs: ["Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally."] },
         ],
       },
     },

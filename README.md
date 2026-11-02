@@ -11,14 +11,14 @@ React 19 · React Router 8 (framework mode, prerendered) · TypeScript · Vite �
 ```bash
 npm install
 cp .env.example .env   # fill in the values
-npm run dev
+npm run dev:demo
 ```
 
 ## Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the dev server (`react-router dev`) |
+| `npm run dev:demo` | Start the dev server on demo data (`react-router dev --mode demo`): the live API answers only glowstonelb.com and studio.glowstonelb.com, so local work never calls it. Customers, orders and the studio's pieces live in this browser; the studio signs in with the real admin pool |
 | `npm run build` | Prerender every public page to static HTML in `build/client` |
 | `npm run start` | Serve the production build locally |
 | `npm run type-check` | Generate route types and type-check |
@@ -30,7 +30,7 @@ npm run dev
 
 ## Hosting
 
-Two Vercel projects build this repo from `build/client` (`vercel.json`): the shop at https://glowstonelb.com (`VITE_SITE_PARTS=shop`) and the studio at https://studio.glowstonelb.com (`VITE_SITE_PARTS=studio`, `VITE_STUDIO_BASE=/`). Pages that are not prerendered (sign-in, a piece published since the build, every studio page) are served by the app shell `/__spa-fallback.html`; any other address answers 404 with `404.html`. On the shop, the studio's old addresses (`/studio/...`) answer 308 to the same page on the studio's host. Product photos come from the API's CloudFront addresses.
+Two Vercel projects build this repo from `build/client` (`vercel.json`): the shop at https://glowstonelb.com (`VITE_SITE_PARTS=shop`) and the studio at https://studio.glowstonelb.com (`VITE_SITE_PARTS=studio`, `VITE_STUDIO_BASE=/`). Pages that are not prerendered (sign-in, checkout, the account, every studio page) are served by the app shell `/__spa-fallback.html`; any other address answers 404 with `404.html`. On the shop, the studio's old addresses (`/studio/...`) answer 308 to the same page on the studio's host. Product photos come from the API's CloudFront addresses.
 
 ## Layout
 

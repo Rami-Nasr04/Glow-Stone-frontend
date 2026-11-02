@@ -6,7 +6,7 @@ import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 import NotFound from "@/pages/NotFound"
 
-// Unconfirmed text is written as "[Placeholder: …]" and shown in wine until Omar replaces it.
+// Unconfirmed text is written in brackets, as [Placeholder: …], and shown in wine until Omar replaces it.
 const placeholder = (text: string) => text.startsWith("[")
 
 export default function Legal() {

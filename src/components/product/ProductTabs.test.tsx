@@ -54,13 +54,14 @@ describe("ProductTabs", () => {
     expect(screen.getByRole("tab", { name: "Care" })).toHaveAttribute("aria-selected", "true")
   })
 
-  it("shows the site-wide care text, and marks unconfirmed delivery text as a placeholder", async () => {
+  it("shows the site-wide care text, and what happens if something isn't right on arrival", async () => {
     const user = userEvent.setup()
     renderAt(<ProductTabs piece={piece(BATROUN)} />)
     await user.click(screen.getByRole("tab", { name: "Care" }))
     expect(screen.getByText(/Dust with a soft, dry cloth/)).toBeInTheDocument()
     await user.click(screen.getByRole("tab", { name: "Delivery" }))
-    expect(screen.getByText("[Placeholder: returns policy.]")).toHaveClass("text-accent")
+    expect(screen.getByText("Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.")).toBeInTheDocument()
+    expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
   it("says delivery is free, and that Omar may agree a fee for far-off areas when he calls", async () => {

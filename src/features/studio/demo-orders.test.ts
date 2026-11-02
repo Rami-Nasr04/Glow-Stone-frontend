@@ -160,7 +160,7 @@ describe("the studio's demo orders (npm run dev:demo)", () => {
 })
 
 describe("when the studio uses the demo orders", () => {
-  it("only on the dev server started with npm run dev:demo, never in a build or with npm run dev", () => {
+  it("only on the dev server started with npm run dev:demo, never in a build or in any other mode", () => {
     expect(studioDemoOn({ dev: true, mode: "demo" })).toBe(true)
     expect(studioDemoOn({ dev: true, mode: "development" })).toBe(false)
     expect(studioDemoOn({ dev: false, mode: "demo" })).toBe(false)

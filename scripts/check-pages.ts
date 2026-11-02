@@ -139,6 +139,11 @@ const leaking = readdirSync(BUILD, { recursive: true, encoding: "utf8" }).filter
   (file) => !/\.(webp|png|jpe?g|woff2?)$/.test(file) && statSync(join(BUILD, file)).isFile() && readFileSync(join(BUILD, file), "utf8").includes("glowstone216"),
 )
 if (leaking.length > 0) fail(`the build shows the private Gmail address: ${leaking.join(", ")}`)
+// Since launch no unconfirmed "[Placeholder …]" text is shown anywhere (Rami, 2026-11-02).
+const placeholders = readdirSync(BUILD, { recursive: true, encoding: "utf8" }).filter(
+  (file) => !/\.(webp|png|jpe?g|woff2?)$/.test(file) && statSync(join(BUILD, file)).isFile() && readFileSync(join(BUILD, file), "utf8").includes("[Placeholder"),
+)
+if (placeholders.length > 0) fail(`the build shows placeholder text: ${placeholders.join(", ")}`)
 // The demo orders answer only on npm run dev:demo: no build carries them.
 // Nor the saved catalog the shop and the studio use there: a saved photo's address in a script means it came along
 // (a built page keeps its pieces in its HTML and .data files, never in the scripts).

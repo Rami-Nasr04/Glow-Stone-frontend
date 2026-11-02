@@ -37,7 +37,7 @@ interface ParagraphsProps {
   items: readonly string[]
 }
 
-// Unconfirmed facts are written as "[Placeholder: …]" and shown in wine until Omar replaces them.
+// Unconfirmed facts are written in brackets, as [Placeholder: …], and shown in wine until Omar replaces them.
 function Paragraphs({ items }: ParagraphsProps) {
   return items.map((text) => (
     <p key={text} className={cn("text-small", text.startsWith("[") ? "text-accent" : "text-muted-foreground")}>

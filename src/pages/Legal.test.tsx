@@ -37,8 +37,8 @@ describe("Legal", () => {
       "Payment is cash on delivery. A gift is paid by the buyer, by Whish or OMT, once Omar has called and confirmed the order; the recipient pays nothing.",
     )
     expect(document.getElementById("section-4")).toHaveTextContent("Omar calls to confirm every order within 2 business days, before it leaves the workshop.")
-    // Not covered by his answers: the returns policy.
-    expect(screen.getAllByText(/^\[Placeholder/).map((p) => p.textContent)).toEqual(["[Placeholder: returns policy.]"])
+    expect(document.getElementById("section-5")).toHaveTextContent("Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.")
+    expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
   it("says Omar confirms an order by phone within 2 business days", () => {
@@ -83,25 +83,19 @@ describe("Legal", () => {
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
-  it("states the prices and payment terms, and leaves only what Omar must answer", () => {
+  it("states who runs the site, the prices and payment terms, and the governing law", () => {
     renderDoc("terms")
     expect(document.getElementById("section-4")).toHaveTextContent("Prices are in US dollars. The price shown at checkout is the price you pay.")
     expect(document.getElementById("section-4")).toHaveTextContent("a gift is paid by the buyer, by Whish or OMT")
-    expect(screen.getAllByText(/^\[Placeholder/).map((p) => p.textContent)).toEqual([
-      "[Placeholder: who operates the site and how these terms apply.]",
-      "[Placeholder: governing law.]",
-    ])
+    expect(document.getElementById("section-1")).toHaveTextContent("This website is run by Glowstone, in Lebanon. These terms apply to every order placed on glowstonelb.com.")
+    expect(document.getElementById("section-5")).toHaveTextContent("These terms are governed by the laws of Lebanon.")
+    expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
   it("dates the texts, in the page's own colour once the date is real", () => {
     renderDoc("privacy")
-    const date = screen.getByText("26 October 2026")
+    const date = screen.getByText("2 November 2026")
     expect(date).not.toHaveClass("text-accent")
-  })
-
-  it("shows unconfirmed text as a placeholder", () => {
-    renderDoc("terms")
-    for (const placeholder of screen.getAllByText(/^\[Placeholder/)) expect(placeholder).toHaveClass("text-accent")
   })
 
   it("shows the missing page for an unknown document", () => {
