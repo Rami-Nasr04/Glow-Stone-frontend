@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { createRoutesStub, type MetaDescriptor } from "react-router"
 import { PRODUCTS, productOf, stubApi } from "@/test/catalog"
-import { clientLoader as aboutClientLoader, loader as aboutLoader } from "./about"
 import { clientLoader as collectionClientLoader, loader as collectionLoader, meta as collectionMeta } from "./collection"
 import { clientLoader as homeClientLoader, loader as homeLoader, meta as homeMeta } from "./home"
 import { clientLoader, ErrorBoundary, loader as productLoader, meta as productMeta } from "./product"
@@ -43,13 +42,6 @@ describe("route loaders", () => {
     expect((await collectionLoader()).products.map((p) => p.id)).toEqual([6, 5, 4, 3, 2, 1])
   })
 
-  it("about: the name of the piece in the crest photo, or null when it is not published", async () => {
-    const fetch = stubApi()
-    expect(await aboutLoader()).toEqual({ crestName: "Arz" })
-    fetch.mockImplementation(async () => new Response(JSON.stringify({ success: true, data: PRODUCTS.filter((p) => p.id !== 1) })))
-    expect(await aboutLoader()).toEqual({ crestName: null })
-  })
-
   it("product: the piece with all its photos, and the list for related pieces", async () => {
     stubApi()
     const data = await productLoader(productArgs("4"))
@@ -83,7 +75,6 @@ describe("route loaders", () => {
   it.each([
     ["home", homeClientLoader, ["products", "first"]],
     ["collection", collectionClientLoader, ["products"]],
-    ["about", aboutClientLoader, ["crestName"]],
   ] as const)("%s in the browser: the built data, else the live API", async (_, clientLoader, keys) => {
     const fetch = stubApi()
     const built = { built: true }
@@ -101,7 +92,6 @@ describe("route loaders", () => {
   it.each([
     ["home", homeClientLoader],
     ["collection", collectionClientLoader],
-    ["about", aboutClientLoader],
     ["product", clientLoader],
   ] as const)("%s in the browser: nothing to load under an unknown first segment", async (_, load) => {
     const fetch = stubApi()

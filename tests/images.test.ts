@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs"
 import sharp from "sharp"
 import { describe, expect, it } from "vitest"
-import { CRAFT_IMAGES, HERO_IMAGES } from "../src/config/images.ts"
+import { ABOUT_IMAGES, CRAFT_IMAGES, HERO_IMAGES } from "../src/config/images.ts"
 
 // The sizes in src/config/images.ts must match the generated files, or the browser reserves the wrong space.
 describe("generated images", () => {
@@ -12,7 +12,7 @@ describe("generated images", () => {
     expect([meta.width, meta.height]).toEqual([width, height])
   })
 
-  it.each(Object.values(CRAFT_IMAGES))("records the real size of $key", async ({ key, width, height }) => {
+  it.each([...Object.values(CRAFT_IMAGES), ...Object.values(ABOUT_IMAGES)])("records the real size of $key", async ({ key, width, height }) => {
     const meta = await sharp(`public/images/${key}-${width}.webp`).metadata()
     expect([meta.width, meta.height]).toEqual([width, height])
   })

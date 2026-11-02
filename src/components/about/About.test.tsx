@@ -3,6 +3,7 @@ import { renderAt } from "@/test/render"
 import AboutClose from "./AboutClose"
 import AboutIntro from "./AboutIntro"
 import Chapters from "./Chapters"
+import OmarStory from "./OmarStory"
 import PullQuote from "./PullQuote"
 
 describe("About sections", () => {
@@ -19,14 +20,33 @@ describe("About sections", () => {
     expect(title.querySelector("em")).toHaveTextContent("stone.")
   })
 
+  // Omar's own words open the page (Rami, 2026-11-02): the approved translation as verse, then his Arabic as written.
+  it("opens with Omar's story as verse, signed Glowstone", () => {
+    renderAt(<OmarStory />)
+    const story = screen.getByRole("region", { name: "Omar's story" })
+    const stanzas = [...story.querySelectorAll("[data-stanza]")].filter((stanza) => !stanza.closest('[lang="ar"]')).map((stanza) => stanza.innerHTML.split("<br>").map((line) => line.replace(/<[^>]+>/g, "")))
+    expect(stanzas[0]).toEqual(["Here, there is history, and time, and nature."])
+    expect(stanzas[1]).toEqual(["Here are lines that nature drew,", "here rain and sun have passed,", "and spring, and autumn."])
+    expect(stanzas.at(-1)).toEqual(["Glowstone", "The tale of the land, carrying on the story of wine."])
+    expect(stanzas).toHaveLength(6)
+  })
+
+  it("gives Omar's Arabic as written, right to left, in its own block", () => {
+    renderAt(<OmarStory />)
+    const arabic = screen.getByRole("region", { name: "Omar's story" }).querySelector('[lang="ar"]')!
+    expect(arabic).toHaveAttribute("dir", "rtl")
+    const lines = [...arabic.querySelectorAll("[data-stanza]")].flatMap((stanza) => stanza.innerHTML.split("<br>").map((line) => line.replace(/<[^>]+>/g, "")))
+    expect(lines).toEqual(["هون في تاريخ، وزمن، وطبيعة.", "هون في خطوط رسمتها الطبيعة،", "وهون مرق شتي وشمس،", "وربيع وخريف.", "نحن مناخد هالصخرة من الأرض،", "ومنحوّلها لتصبح جزءاً من قصة أكبر.", "قطعة بتحمل تاريخ النبيذ وفلسفته،", "وبتكمّل قصته، من الأرض إلى الكأس،", "ومن الكأس إلى قطعة بتعيش بمكان جديد.", "وكل Collection بتحمل روح المكان اللي إجت منه،", "وبتعكس طبيعته، هويته، وأثر الزمن عليه.", "Glow Stone", "حكاية الأرض، بتكمّل قصة النبيذ."])
+  })
+
   it("tells four chapters, each with its own landscape photo on phones", () => {
-    const { container } = renderAt(<Chapters crestName="Arz" />)
+    const { container } = renderAt(<Chapters />)
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["The stone", "The carving", "The edition", "Time"])
     expect(container.querySelectorAll("article .aspect-3\\/2")).toHaveLength(4)
   })
 
   it("tells of the stone as granite, without the limestone quarries", () => {
-    renderAt(<Chapters crestName="Arz" />)
+    renderAt(<Chapters />)
     expect(screen.getByText("Omar grew up in a village above the Qadisha Valley, where houses, terraces and chapels are all built of stone.")).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -38,13 +58,28 @@ describe("About sections", () => {
   })
 
   it("says how each piece is marked in its edition", () => {
-    renderAt(<Chapters crestName="Arz" />)
+    renderAt(<Chapters />)
     expect(screen.getByText("Each piece is signed by hand and carries its number in the edition, for example 3 / 8, carved discreetly into its base. It comes with a card naming the piece, its stone and its number, signed by Omar.")).toBeInTheDocument()
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
+  // Evan Williams' photo, CC BY-SA 4.0: the licence asks for a visible credit with links to the file and the licence.
+  it("shows the Qadisha Valley in the chapter on the stone, credited under the photo", () => {
+    const { container } = renderAt(<Chapters />)
+    const valley = screen.getAllByAltText(/^The Qadisha Valley from the air/)
+    expect(valley.length).toBeGreaterThan(0)
+    expect(valley[0]).toHaveAttribute("src", "/images/about/qadisha-valley-960.webp")
+    const credits = container.querySelectorAll("[data-photo-credit]")
+    expect(credits.length).toBeGreaterThan(0)
+    for (const credit of credits) {
+      expect(credit).toHaveTextContent("Qadisha Valley. Photo: Evan Williams, CC BY-SA 4.0")
+      expect(credit.querySelector('a[href="https://commons.wikimedia.org/wiki/File:Qadisha_Valley,_Aerial_View_From_Qannoubine_Monastery.jpg"]')).toHaveTextContent("Evan Williams")
+      expect(credit.querySelector('a[href="https://creativecommons.org/licenses/by-sa/4.0/"]')).toHaveTextContent("CC BY-SA 4.0")
+    }
+  })
+
   it("labels the photo panel with the chapter in view, following the scroll", () => {
-    const { container } = renderAt(<Chapters crestName="Arz" />)
+    const { container } = renderAt(<Chapters />)
     const label = container.querySelector("[data-chapter-label]")!
     expect(label).toHaveTextContent("01 / 04 · The stone")
     const articles = container.querySelectorAll("article")

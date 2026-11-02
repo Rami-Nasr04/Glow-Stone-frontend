@@ -19,7 +19,7 @@ describe("photo frames", () => {
   it.each([
     ["Home", <Home key="home" products={PRODUCTS} first={productOf(PRODUCTS[0].id)} />, "/"],
     ["Collection", <Collection key="collection" products={PRODUCTS} />, "/collection"],
-    ["About", <About key="about" crestName="Arz" />, "/about"],
+    ["About", <About key="about" />, "/about"],
   ])("clips every aspect-ratio frame on %s", (_, page, path) => {
     expectClippedFrames(renderAt(page, path).container)
   })
