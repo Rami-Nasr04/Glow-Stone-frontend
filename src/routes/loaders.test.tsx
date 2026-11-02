@@ -130,10 +130,10 @@ describe("route loaders", () => {
     expect(description.content).toBe("Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.")
   })
 
-  it("home meta: the link preview is the first piece's", () => {
+  // The home preview is Rami's hero scene (2026-11-02), whatever Omar's order.
+  it("home meta: the link preview is the hero scene, never the first piece's", () => {
     const tags = homeMeta({ params: {}, loaderData: { products: PRODUCTS, first: null } } as unknown as Parameters<typeof homeMeta>[0])
-    const cover = PRODUCTS[0].images[0].url.split("/").pop()
-    expect(tags).toContainEqual({ property: "og:image", content: `https://site.test/og/products/${PRODUCTS[0].id}-${cover}.jpg` })
+    expect(tags).toContainEqual({ property: "og:image", content: "https://site.test/og/glowstone.jpg" })
   })
 
   it("collection meta: the brand description", () => {

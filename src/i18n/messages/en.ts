@@ -57,7 +57,10 @@ export const en = {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
     // The pieces are granite (Rami, 2026-11-02); where the granite comes from isn't known, so it is never called Lebanese.
     metaDescription: "Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.",
-    // The hero and the spotlight follow the first piece in Omar's order, from its data (Rami, 2026-11-02).
+    // Rami's hero scene never changes (2026-11-02); its caption and alt name the piece in it from its data (by id).
+    // The spotlight further down follows the first piece in Omar's order.
+    heroAlt: "{name} wine rack in {stone}, with a glass of red wine, on a stone wall above the misty Qadisha Valley",
+    heroAltUnnamed: "A Glowstone wine rack with a glass of red wine, on a stone wall above the misty Qadisha Valley",
     shopCollection: "Shop collection",
     quote: "From stone, form emerges.",
     quoteLine: "Limited objects for wine & living.",

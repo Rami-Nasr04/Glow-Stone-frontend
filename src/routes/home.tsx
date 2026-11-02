@@ -4,7 +4,6 @@ import { knownPrefix, localizedPath } from "@/i18n/paths"
 import { MESSAGES } from "@/i18n/useLocale"
 import { SITE_URL } from "@/config/site"
 import { pageMeta } from "@/lib/meta"
-import { productOgPath } from "@/lib/og-paths"
 import { storeJsonLd } from "@/lib/structured-data"
 import Home from "@/pages/Home"
 import type { Route } from "./+types/home"
@@ -33,13 +32,12 @@ export async function clientLoader({ params, serverLoader }: Route.ClientLoaderA
   }
 }
 
-export function meta({ params, loaderData }: Route.MetaArgs) {
+// The link preview is Rami's hero scene (the default), never the first piece's.
+export function meta({ params }: Route.MetaArgs) {
   const locale = toLocale(params.lang)
   const m = MESSAGES[locale]
-  // The link preview is the first piece's, as the hero is.
-  const lead = loaderData?.products[0]
   return [
-    ...pageMeta({ title: m.home.metaTitle, description: m.home.metaDescription, path: localizedPath(locale, "/"), image: (lead && productOgPath(lead)) ?? undefined }),
+    ...pageMeta({ title: m.home.metaTitle, description: m.home.metaDescription, path: localizedPath(locale, "/") }),
     { "script:ld+json": storeJsonLd(SITE_URL) },
   ]
 }
