@@ -69,11 +69,22 @@ describe.each(Object.keys(PAGES) as (keyof typeof PAGES)[])("the %s page's photo
   })
 })
 
+// The cards sit inside the page's gutters (about 90% of a phone's width): with the 720 file (2026-11-02), an iPhone
+// takes 720 for a card, not 960.
+describe("the cards on a phone", () => {
+  it.each(["collection", "product"] as const)("take the 720 file on the %s page", (page) => {
+    const cards = photosOf(page).filter((photo) => photo.getAttribute("sizes")?.includes("410px"))
+    expect(cards.length).toBeGreaterThan(0)
+    for (const card of cards) expect(chosen(card, PHONES["iPhone 15 upright"]).width).toBe(720)
+  })
+})
+
 describe("on a desktop", () => {
   it("each photo is chosen as before", () => {
     // The phone rule only applies below the desktop layout, on 2.5× screens.
     const chosen = photosOf("product").map((photo) => chosenWidth(photo, DESKTOP))
-    expect(chosen[0]).toBe(960)
+    // 45vw of 1440 is 648px: the 720 file (2026-11-02) is enough, where the 960 was taken before.
+    expect(chosen[0]).toBe(720)
     for (const screen of [DESKTOP, { ...DESKTOP, dpr: 2 }]) {
       for (const page of Object.keys(PAGES) as (keyof typeof PAGES)[]) {
         for (const photo of photosOf(page)) {

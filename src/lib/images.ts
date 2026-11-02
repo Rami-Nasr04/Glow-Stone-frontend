@@ -1,6 +1,9 @@
-// The widths every image is offered at: bundled craft photos (scripts/build-images.ts) and the API's product photos.
+// The widths the site's own photos are offered at (scripts/build-images.ts makes these files).
 export const IMAGE_WIDTHS = [480, 960, 1440, 2048, 2880] as const
-export type ImageWidth = (typeof IMAGE_WIDTHS)[number]
+// The API's product photos: the CDN also makes 720 (backend, 2026-11-02), for phones' cards and pieces that fall
+// between 480 and 960.
+export const PHOTO_WIDTHS = [480, 720, 960, 1440, 2048, 2880] as const
+export type ImageWidth = (typeof PHOTO_WIDTHS)[number]
 
 const IMAGE_BASE: string = import.meta.env.VITE_IMAGE_BASE_URL ?? "/images"
 
@@ -43,8 +46,8 @@ export function photoUrl(photo: ApiImage, width: ImageWidth): string {
 // The allowed widths below the photo's own, then the next one once: a master is never enlarged, so every wider ask
 // returns the same file, and naming it twice would have the CDN cache it under two addresses.
 export function photoWidths(photo: ApiImage): ImageWidth[] {
-  const below = IMAGE_WIDTHS.filter((w) => w < photo.width)
-  const next = IMAGE_WIDTHS.find((w) => w >= photo.width)
+  const below = PHOTO_WIDTHS.filter((w) => w < photo.width)
+  const next = PHOTO_WIDTHS.find((w) => w >= photo.width)
   return next ? [...below, next] : below
 }
 
