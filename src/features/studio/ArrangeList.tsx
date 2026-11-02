@@ -106,7 +106,12 @@ export default function ArrangeList({ pieces, saving, onSave, onCancel }: Arrang
                 aria-label={interpolate(t.drag, { name: piece.name })}
                 onPointerDown={(event) => {
                   event.preventDefault()
-                  event.currentTarget.setPointerCapture?.(event.pointerId)
+                  // Keeps the drag when the pointer leaves the handle; a browser may refuse it, and the drag goes on.
+                  try {
+                    event.currentTarget.setPointerCapture?.(event.pointerId)
+                  } catch {
+                    // the window's listeners still follow the pointer
+                  }
                   setDragging(piece.id)
                 }}
                 onKeyDown={(event) => {

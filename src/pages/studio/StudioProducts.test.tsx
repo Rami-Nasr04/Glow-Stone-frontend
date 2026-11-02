@@ -371,4 +371,27 @@ describe("arranging the pieces", () => {
     expect(namesInOrder()).toEqual(["Studio check", "Arz", "Sannine", "Qadisha", "Jbeil", "Batroun", "Nahr"])
     expect(screen.getByRole("button", { name: a.save })).toBeEnabled()
   })
+
+  // Found in the browser (2026-11-02): a browser may refuse pointer capture, and the drag must still go on.
+  it("still drags when the browser refuses to capture the pointer", async () => {
+    stubApi()
+    await arrange()
+    order().forEach((row, i) => {
+      row.getBoundingClientRect = () => ({ top: i * 60, bottom: i * 60 + 60, height: 60, left: 0, right: 400, width: 400 }) as DOMRect
+    })
+    const handle = screen.getByRole("button", { name: "Drag Arz to a new place" })
+    handle.setPointerCapture = () => {
+      throw new DOMException("No active pointer", "NotFoundError")
+    }
+    act(() => {
+      handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 9, clientY: 390, pointerType: "touch" }))
+    })
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 9, clientY: 30, pointerType: "touch" }))
+    })
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 9, clientY: 30, pointerType: "touch" }))
+    })
+    expect(namesInOrder()[0]).toBe("Arz")
+  })
 })
