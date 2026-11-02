@@ -247,6 +247,25 @@ describe("the admin photo calls", () => {
   })
 })
 
+// Omar's order of the collection (contract, "Arrange the pieces", 2026-11-02).
+describe("arranging the pieces", () => {
+  it("sends every piece's id, first to last, and reads the whole list back in the new order", async () => {
+    const { api, fetch } = setup(() => ok([adminProductOf(2), adminProductOf(1)]))
+    const pieces = await api.reorderProducts([2, 1])
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/products/order`)
+    expect(init?.method).toBe("PUT")
+    expect(JSON.parse(String(init?.body))).toEqual({ productIds: [2, 1] })
+    expect(pieces.map((p) => p.id)).toEqual([2, 1])
+  })
+
+  it("passes a stale list's refusal on in the API's words", async () => {
+    const message = "Send every piece exactly once. If a piece was just added or deleted, reload the list."
+    const { api } = setup(() => failure(400, "VALIDATION_ERROR", message))
+    expect(await caught(api.reorderProducts([1]))).toMatchObject({ status: 400, message })
+  })
+})
+
 describe("deleting a piece and publishing the website", () => {
   it("deletes a draft on a 204 with no body", async () => {
     const { api, fetch } = setup(() => new Response(null, { status: 204 }))

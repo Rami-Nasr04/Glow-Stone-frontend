@@ -20,8 +20,3 @@ export async function getProduct(id: number, signal?: AbortSignal): Promise<Prod
   if (import.meta.env.DEV && localDemo()) return (await import("./demo/catalog")).demoProduct(id)
   return fetchProduct(apiBase(), id, signal)
 }
-
-// The API's order: created_at desc, id desc.
-export function newestFirst(a: ProductSummary, b: ProductSummary): number {
-  return b.createdAt.localeCompare(a.createdAt) || b.id - a.id
-}

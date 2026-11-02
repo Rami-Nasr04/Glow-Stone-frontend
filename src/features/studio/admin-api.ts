@@ -67,6 +67,8 @@ export interface AdminApi {
   getProduct(id: number): Promise<AdminProduct>
   createProduct(input: ProductInput): Promise<AdminProduct>
   updateProduct(id: number, changes: Partial<ProductInput>): Promise<AdminProduct>
+  /** Omar's order: every piece's id, drafts too, first to last; answers the whole list in that order. */
+  reorderProducts(productIds: number[]): Promise<AdminProduct[]>
   requestUpload(id: number): Promise<UploadSlot>
   /** The uploaded photo, added at the end of the piece's photos. */
   confirmUpload(id: number, uploadId: string): Promise<AdminProductImage>
@@ -204,6 +206,11 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized, fetch: se
     },
     async updateProduct(id, changes) {
       return piece((await call("PATCH", `/admin/products/${id}`, pickInput(changes))).data)
+    },
+    async reorderProducts(productIds) {
+      const { data } = await call("PUT", "/admin/products/order", { productIds })
+      if (!Array.isArray(data)) throw unexpected("PUT /admin/products/order: data must be a list")
+      return data.map(piece)
     },
     async requestUpload(id) {
       return slotOf((await call("POST", `/admin/products/${id}/photos/upload`)).data)

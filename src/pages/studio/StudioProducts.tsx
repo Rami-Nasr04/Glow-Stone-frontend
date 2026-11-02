@@ -5,6 +5,7 @@ import type { AdminProduct } from "@/features/catalog/types"
 import NoPhoto from "@/features/catalog/NoPhoto"
 import { stoneLabel } from "@/features/catalog/format"
 import { StudioError } from "@/features/studio/admin-api"
+import ArrangeList from "@/features/studio/ArrangeList"
 import { useAdminAuth } from "@/features/studio/auth/admin-auth-context"
 import { STUDIO_COPY } from "@/features/studio/copy"
 import StatusBadge from "@/features/studio/StatusBadge"
@@ -55,6 +56,11 @@ export default function StudioProducts() {
   const [resting, setResting] = useState<number | null>(restingUntil)
   const [publishing, setPublishing] = useState(false)
   const sending = useRef(false)
+  const [arranging, setArranging] = useState(false)
+  const [savingOrder, setSavingOrder] = useState(false)
+  const [orderRefused, setOrderRefused] = useState<string | null>(null)
+  // Counts the lists read again after a refused order: the arranging starts over on each.
+  const [arrangeRound, setArrangeRound] = useState(0)
 
   // A 401 has already ended the session; anything else can be tried again.
   const fetchList = useCallback(
@@ -108,6 +114,33 @@ export default function StudioProducts() {
     void fetchList().then(setLoad)
   }
 
+  // The whole list in Omar's order; the answer is the list as the server now has it. A stale list (a piece added or
+  // deleted since) is refused in the API's words: the list is read again and he arranges once more.
+  const saveOrder = async (productIds: number[]) => {
+    setSavingOrder(true)
+    setOrderRefused(null)
+    try {
+      const pieces = await api.reorderProducts(productIds)
+      setLoad({ state: "ready", pieces })
+      setArranging(false)
+      studioToast.success(STUDIO_COPY.arrange.saved, { description: STUDIO_COPY.arrange.followsPublish })
+    } catch (error) {
+      // A 401 has already sent the admin to sign in.
+      if (error instanceof StudioError && error.status === 401) return
+      if (error instanceof StudioError && error.status === 400) {
+        setOrderRefused(error.message)
+        const next = await fetchList()
+        setLoad(next)
+        setArrangeRound((round) => round + 1)
+        if (next.state !== "ready") setArranging(false)
+      } else {
+        studioToast.error(STUDIO_COPY.arrange.saveFailed)
+      }
+    } finally {
+      setSavingOrder(false)
+    }
+  }
+
   const setFeatured = (id: number, featured: boolean) =>
     setLoad((current) => (current.state === "ready" ? { ...current, pieces: current.pieces.map((p) => (p.id === id ? { ...p, featured } : p)) } : current))
 
@@ -135,6 +168,18 @@ export default function StudioProducts() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-4xl font-light lg:text-[2.75rem]">{t.title}</h1>
         <div className="flex flex-wrap gap-2">
+          {load.state === "ready" && load.pieces.length > 1 && !arranging && (
+            <button
+              type="button"
+              onClick={() => {
+                setOrderRefused(null)
+                setArranging(true)
+              }}
+              className="flex min-h-11 items-center border border-primary px-5 text-label uppercase tracking-caps transition-colors duration-500 hover:bg-primary hover:text-primary-foreground"
+            >
+              {STUDIO_COPY.arrange.open}
+            </button>
+          )}
           <button
             type="button"
             disabled={publishOff}
@@ -168,7 +213,16 @@ export default function StudioProducts() {
           </button>
         </div>
       )}
-      {load.state === "ready" && (
+      {orderRefused && (
+        <div role="alert" className="flex flex-col gap-1 border border-destructive/40 bg-studio-panel px-5 py-4 text-sm">
+          <p className="text-destructive">{orderRefused}</p>
+          <p className="text-muted-foreground">{STUDIO_COPY.arrange.reloaded}</p>
+        </div>
+      )}
+      {load.state === "ready" && arranging && (
+        <ArrangeList key={arrangeRound} pieces={load.pieces} saving={savingOrder} onSave={(ids) => void saveOrder(ids)} onCancel={() => setArranging(false)} />
+      )}
+      {load.state === "ready" && !arranging && (
         <section aria-label={t.title} className="border border-border bg-studio-panel">
           <div aria-hidden="true" className={cn(columns, "hidden border-b border-border px-5 py-3 text-label uppercase tracking-caps text-muted-foreground lg:grid")}>
             <span />

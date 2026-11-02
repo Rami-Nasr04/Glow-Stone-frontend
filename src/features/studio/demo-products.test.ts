@@ -31,9 +31,9 @@ describe("the studio's demo pieces (npm run dev:demo)", () => {
   })
   afterEach(() => expect(network).not.toHaveBeenCalled())
 
-  it("starts with the six saved pieces, published, newest first, each photo with its id and place", async () => {
+  it("starts with the six saved pieces, published, in Omar's order, each photo with its id and place", async () => {
     const pieces = await setup().listProducts()
-    expect(pieces.map((p) => p.id)).toEqual([6, 5, 4, 3, 2, 1])
+    expect(pieces.map((p) => p.id)).toEqual([5, 6, 1, 2, 4, 3])
     expect(pieces.every((p) => p.status === "published")).toBe(true)
     const qadisha = await setup().getProduct(5)
     expect(qadisha.images.length).toBeGreaterThan(2)
@@ -70,6 +70,24 @@ describe("the studio's demo pieces (npm run dev:demo)", () => {
   it("refuses to add photos, saying why", async () => {
     const refused = await caught(setup().requestUpload(5))
     expect([refused.code, refused.message]).toEqual(["CONFLICT", DEMO_PHOTO_REFUSAL])
+  })
+
+  // Contract, "Arrange the pieces" (2026-11-02): a new piece goes first; the whole list is sent in the new order.
+  it("puts a new piece first, and keeps the order Omar saves", async () => {
+    const api = setup()
+    const draft = await api.createProduct(INPUT)
+    const ids = (await api.listProducts()).map((p) => p.id)
+    expect(ids).toEqual([draft.id, 5, 6, 1, 2, 4, 3])
+    const wanted = [3, 5, 6, draft.id, 1, 2, 4]
+    expect((await api.reorderProducts(wanted)).map((p) => p.id)).toEqual(wanted)
+    expect((await api.listProducts()).map((p) => p.id)).toEqual(wanted)
+  })
+
+  it("refuses an order that isn't every piece once, in the API's words, and moves nothing", async () => {
+    const api = setup()
+    const refused = await caught(api.reorderProducts([5, 6, 1]))
+    expect([refused.status, refused.message]).toEqual([400, "Send every piece exactly once. If a piece was just added or deleted, reload the list."])
+    expect((await api.listProducts()).map((p) => p.id)).toEqual([5, 6, 1, 2, 4, 3])
   })
 
   it("starts publishing as the API does, without publishing anything", async () => {
