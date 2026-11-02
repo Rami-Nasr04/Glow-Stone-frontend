@@ -27,9 +27,10 @@ function piece(id: number, stoneType: string, soldOut = false): ProductSummary {
 const ids = (list: ProductSummary[]) => list.map((p) => p.id)
 
 describe("relatedPieces", () => {
-  it("puts the same stone type first, then other pieces still available, each newest first", () => {
-    const all = [piece(1, "Limestone"), piece(2, "Marble"), piece(3, "Limestone", true), piece(4, "Marble", true), piece(5, "Marble"), piece(6, "Limestone")]
-    expect(ids(relatedPieces(all, 1))).toEqual([6, 3, 5])
+  // The list comes in Omar's order (contract, "Arrange the pieces", 2026-11-02): nothing is re-sorted by date.
+  it("puts the same stone type first, then other pieces still available, each in Omar's order", () => {
+    const all = [piece(6, "Granite"), piece(2, "Marble"), piece(3, "Granite", true), piece(4, "Marble", true), piece(5, "Marble"), piece(1, "Granite")]
+    expect(ids(relatedPieces(all, 1))).toEqual([6, 3, 2])
   })
 
   it("never suggests the piece itself and stops at three", () => {

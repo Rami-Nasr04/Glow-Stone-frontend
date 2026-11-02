@@ -17,10 +17,16 @@ const pieces: AdminProduct[] = [
   ...[6, 5, 4, 3, 2, 1].map((id) => adminProductOf(id)),
 ]
 
-function stubApi(answers: { list?: () => Response; patch?: (body: unknown) => Response; publish?: () => Response | Promise<Response> } = {}) {
+function stubApi(
+  answers: { list?: () => Response; patch?: (body: unknown) => Response; publish?: () => Response | Promise<Response>; order?: (ids: number[]) => Response } = {},
+) {
   const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(url)).pathname
     if (path === "/admin/publish") return answers.publish?.() ?? ok({ started: true }, 202)
+    if (path === "/admin/products/order") {
+      const ids = (JSON.parse(String(init?.body)) as { productIds: number[] }).productIds
+      return answers.order?.(ids) ?? ok(ids.map((id) => pieces.find((p) => p.id === id)))
+    }
     if (init?.method === "PATCH") {
       const id = Number(path.split("/").pop())
       const body = JSON.parse(String(init.body)) as Partial<AdminProduct>
@@ -257,5 +263,112 @@ describe("publishing the website", () => {
     await user.dblClick(publishButton())
     await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1))
     expect(publishCalls(fetch)).toHaveLength(1)
+  })
+})
+
+// Omar's order of the collection (contract, "Arrange the pieces", 2026-11-02): the list is already in it; Arrange lets
+// him move pieces by dragging a handle (a finger on iPhone, or a mouse) or with the arrows, then save or cancel.
+describe("arranging the pieces", () => {
+  const a = STUDIO_COPY.arrange
+  const all = /^(Studio check|Sannine|Qadisha|Jbeil|Batroun|Nahr|Arz)$/
+  const startOrder = ["Studio check", "Sannine", "Qadisha", "Jbeil", "Batroun", "Nahr", "Arz"]
+  const order = () => within(screen.getByRole("list", { name: a.listLabel })).getAllByRole("listitem")
+  const namesInOrder = () => order().map((row) => row.querySelector("[data-name]")?.textContent)
+  const ids = (names: string[]) => names.map((name) => pieces.find((p) => p.name === name)!.id)
+
+  async function arrange(user = userEvent.setup()) {
+    renderList()
+    await screen.findByRole("link", { name: "Arz" })
+    await user.click(screen.getByRole("button", { name: a.open }))
+    return user
+  }
+
+  it("shows every piece with its position, a handle and arrows, and nothing to save until something moves", async () => {
+    stubApi()
+    await arrange()
+    expect(order().map((row) => row.querySelector("[data-position]")?.textContent)).toEqual(["1", "2", "3", "4", "5", "6", "7"])
+    expect(namesInOrder()).toEqual(startOrder)
+    expect(screen.getByRole("button", { name: "Drag Qadisha to a new place" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Move Studio check up" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Move Arz down" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: a.save })).toBeDisabled()
+    expect(screen.queryByRole("link", { name: "Qadisha" })).not.toBeInTheDocument()
+  })
+
+  it("moves a piece with the arrows, saves the whole order, and says the shop follows after the next publish", async () => {
+    const fetch = stubApi()
+    const user = await arrange()
+    await user.click(screen.getByRole("button", { name: "Move Arz up" }))
+    await user.click(screen.getByRole("button", { name: "Move Qadisha up" }))
+    const moved = ["Studio check", "Qadisha", "Sannine", "Jbeil", "Batroun", "Arz", "Nahr"]
+    expect(namesInOrder()).toEqual(moved)
+    expect(screen.getByRole("status", { name: a.announcer })).toHaveTextContent("Qadisha is now number 2 of 7.")
+    await user.click(screen.getByRole("button", { name: a.save }))
+    const put = fetch.mock.calls.find(([url]) => String(url).endsWith("/admin/products/order"))!
+    expect(put[1]?.method).toBe("PUT")
+    expect(JSON.parse(String(put[1]?.body))).toEqual({ productIds: ids(moved) })
+    await waitFor(() => expect(screen.queryByRole("list", { name: a.listLabel })).not.toBeInTheDocument())
+    expect(screen.getAllByRole("link", { name: all }).map((link) => link.textContent)).toEqual(moved)
+    expect(toast.success).toHaveBeenCalledWith(a.saved, { description: a.followsPublish, position: "top-center" })
+  })
+
+  it("puts everything back on Cancel, sending nothing", async () => {
+    const fetch = stubApi()
+    const user = await arrange()
+    await user.click(screen.getByRole("button", { name: "Move Arz up" }))
+    await user.click(screen.getByRole("button", { name: a.cancel }))
+    expect(screen.getAllByRole("link", { name: all }).map((link) => link.textContent)).toEqual(startOrder)
+    expect(fetch.mock.calls.some(([url]) => String(url).endsWith("/admin/products/order"))).toBe(false)
+  })
+
+  it("on a stale list, says so in the API's words, reloads the list and lets him arrange again", async () => {
+    const message = "Send every piece exactly once. If a piece was just added or deleted, reload the list."
+    const fetch = stubApi({ order: () => failure(400, "VALIDATION_ERROR", message) })
+    const user = await arrange()
+    await user.click(screen.getByRole("button", { name: "Move Arz up" }))
+    await user.click(screen.getByRole("button", { name: a.save }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    const reads = fetch.mock.calls.filter(([url, init]) => String(url).endsWith("/admin/products") && (init?.method ?? "GET") === "GET")
+    expect(reads).toHaveLength(2)
+    expect(namesInOrder()).toEqual(startOrder)
+  })
+
+  it("keeps the new order on screen when the save doesn't go through", async () => {
+    stubApi({ order: () => failure(500, "INTERNAL", "Something went wrong") })
+    const user = await arrange()
+    await user.click(screen.getByRole("button", { name: "Move Arz up" }))
+    await user.click(screen.getByRole("button", { name: a.save }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(a.saveFailed, { position: "top-center" }))
+    expect(namesInOrder()).toEqual(["Studio check", "Sannine", "Qadisha", "Jbeil", "Batroun", "Arz", "Nahr"])
+  })
+
+  it("moves the focused handle's piece with the arrow keys", async () => {
+    stubApi()
+    const user = await arrange()
+    screen.getByRole("button", { name: "Drag Sannine to a new place" }).focus()
+    await user.keyboard("{ArrowDown}{ArrowDown}")
+    expect(namesInOrder()).toEqual(["Studio check", "Qadisha", "Jbeil", "Sannine", "Batroun", "Nahr", "Arz"])
+    expect(screen.getByRole("button", { name: "Drag Sannine to a new place" })).toHaveFocus()
+  })
+
+  it("moves a piece where it is dragged by its handle (a finger or a mouse)", async () => {
+    stubApi()
+    await arrange()
+    // jsdom does no layout: each row is 60px tall, one under the other.
+    order().forEach((row, i) => {
+      row.getBoundingClientRect = () => ({ top: i * 60, bottom: i * 60 + 60, height: 60, left: 0, right: 400, width: 400 }) as DOMRect
+    })
+    const handle = screen.getByRole("button", { name: "Drag Arz to a new place" })
+    act(() => {
+      handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientY: 390, pointerType: "touch" }))
+    })
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 1, clientY: 100, pointerType: "touch" }))
+    })
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, clientY: 100, pointerType: "touch" }))
+    })
+    expect(namesInOrder()).toEqual(["Studio check", "Arz", "Sannine", "Qadisha", "Jbeil", "Batroun", "Nahr"])
+    expect(screen.getByRole("button", { name: a.save })).toBeEnabled()
   })
 })

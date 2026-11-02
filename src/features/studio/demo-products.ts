@@ -17,6 +17,7 @@ const WORDS = {
   draftFirst: "Set this piece to draft before deleting it.",
   nothingToChange: "Send at least one field to change",
   badOrder: "Send every photo of this piece exactly once.",
+  badPieceOrder: "Send every piece exactly once. If a piece was just added or deleted, reload the list.",
 } as const
 
 const INPUT_KEYS = [
@@ -54,8 +55,10 @@ export interface DemoAnswer {
   data?: unknown
 }
 
-function seedFrom(details: readonly Product[]): AdminProduct[] {
-  return details.map((piece) => ({
+// The saved pieces in Omar's order (the saved list's order), each with all its photos.
+function seedFrom(details: readonly Product[], order: readonly { id: number }[]): AdminProduct[] {
+  const inOrder = order.map(({ id }) => details.find((piece) => piece.id === id)).filter((piece): piece is Product => piece !== undefined)
+  return inOrder.map((piece) => ({
     ...piece,
     status: "published" as const,
     updatedAt: piece.createdAt,
@@ -63,7 +66,6 @@ function seedFrom(details: readonly Product[]): AdminProduct[] {
   }))
 }
 
-const newestFirst = (a: AdminProduct, b: AdminProduct) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id
 
 function idOf(raw: string | undefined, word: string): number {
   if (raw === undefined || !/^\d{1,9}$/.test(raw) || Number(raw) < 1) throw new DemoRefusal(400, "VALIDATION", word)
@@ -93,8 +95,8 @@ export function createDemoProducts(storage: Storage | null) {
       }
     }
     if (!storage && memory) return memory
-    const { demoDetails } = await import("../catalog/demo/catalog.ts")
-    const fresh = seedFrom(demoDetails())
+    const { demoDetails, demoProducts } = await import("../catalog/demo/catalog.ts")
+    const fresh = seedFrom(demoDetails(), demoProducts())
     save(fresh)
     return fresh
   }
@@ -111,9 +113,21 @@ export function createDemoProducts(storage: Storage | null) {
     return found
   }
 
-  /** "/admin/products[/{id}[/photos[/upload|/order|/{imageId}]]]" or "/admin/publish"; null for any other path. */
+  /** "/admin/products[/order|/{id}[/photos[/upload|/order|/{imageId}]]]" or "/admin/publish"; null for any other path. */
   async function answer(method: string, path: string, body: unknown): Promise<DemoAnswer | null> {
     if (path === "/admin/publish") return method === "POST" ? { status: 202, data: { started: true } } : null
+    // Omar's order: every piece exactly once, first to last; anything else moves nothing (contract, 2026-11-02).
+    if (path === "/admin/products/order") {
+      if (method !== "PUT") return null
+      const pieces = await load()
+      const ids: unknown[] = typeof body === "object" && body !== null && Array.isArray((body as { productIds?: unknown }).productIds) ? (body as { productIds: unknown[] }).productIds : []
+      const sent = new Set(ids)
+      const exact = sent.size === ids.length && sent.size === pieces.length && pieces.every((piece) => sent.has(piece.id))
+      if (!exact) throw new DemoRefusal(400, "VALIDATION_ERROR", WORDS.badPieceOrder)
+      const arranged = ids.map((id) => pieces.find((piece) => piece.id === id) as AdminProduct)
+      save(arranged)
+      return { status: 200, data: arranged }
+    }
     const match = /^\/admin\/products(?:\/([^/]+))?(?:\/photos(?:\/([^/]+))?)?\/?$/.exec(path)
     if (!match) return null
     const [, rawId, photoPart] = match
@@ -121,7 +135,8 @@ export function createDemoProducts(storage: Storage | null) {
     const pieces = await load()
 
     if (!photos && rawId === undefined) {
-      if (method === "GET") return { status: 200, data: [...pieces].sort(newestFirst) }
+      // The array order is Omar's order.
+      if (method === "GET") return { status: 200, data: pieces }
       if (method === "POST") {
         const now = new Date().toISOString()
         const fields = inputOf(body)
@@ -142,7 +157,8 @@ export function createDemoProducts(storage: Storage | null) {
           images: [],
           // The studio's form checks every field before it sends (the backend checks again); the demo trusts it.
         } as unknown as AdminProduct
-        save([...pieces, piece])
+        // A new piece goes first, until Omar arranges again.
+        save([piece, ...pieces])
         return { status: 201, data: piece }
       }
       return null

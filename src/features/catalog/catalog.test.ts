@@ -1,6 +1,5 @@
 import { PRODUCTS, productOf, stubApi } from "@/test/catalog"
-import { apiBase, getProduct, listProducts, newestFirst } from "./catalog"
-import type { ProductSummary } from "./types"
+import { apiBase, getProduct, listProducts } from "./catalog"
 
 // The products seeded in the database (2026-10-13).
 const SEED = [
@@ -41,12 +40,6 @@ describe("catalog", () => {
     vi.stubEnv("VITE_API_URL", "")
     expect(() => apiBase()).toThrow("VITE_API_URL is not set")
     await expect(listProducts()).rejects.toThrow("VITE_API_URL is not set")
-  })
-
-  it("orders by creation date, then by id, both newest first", () => {
-    const at = (id: number, createdAt: string) => ({ id, createdAt }) as ProductSummary
-    const sorted = [at(1, "2026-01-01T00:00:00Z"), at(3, "2026-02-01T00:00:00Z"), at(2, "2026-02-01T00:00:00Z")].sort(newestFirst)
-    expect(sorted.map((p) => p.id)).toEqual([3, 2, 1])
   })
 })
 
