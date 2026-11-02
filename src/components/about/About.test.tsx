@@ -39,7 +39,7 @@ describe("About sections", () => {
 
   it("says how each piece is marked in its edition", () => {
     renderAt(<Chapters crestName="Arz" />)
-    expect(screen.getByText("Each piece carries its number within its edition.")).toBeInTheDocument()
+    expect(screen.getByText("Each piece is signed by hand and carries its number in the edition, for example 3 / 8, carved discreetly into its base. It comes with a card naming the piece, its stone and its number, signed by Omar.")).toBeInTheDocument()
     expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 

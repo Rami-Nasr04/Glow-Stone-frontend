@@ -151,7 +151,7 @@ export const en = {
     deliveryBody: [
       "Delivery is free all over Lebanon. For far-off areas, Omar may agree a small delivery fee with you when he calls to confirm your order, within 2 business days. Payment is in cash on delivery; a gift is paid by the buyer, by Whish or OMT.",
       "Delivery usually takes about a week. On the delivery day, the courier calls or WhatsApps the phone number given with the order.",
-      "Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally.",
+      "Because every piece is carved by hand from natural stone, we don't take returns for a change of mind. Please check your piece with the courier before they leave. If it arrives damaged, send us a photo on WhatsApp or to hello@glowstonelb.com within 48 hours: Omar will repair or replace it, or refund you in full.",
     ],
     alsoLike: "You may also like",
   },
@@ -356,7 +356,7 @@ export const en = {
       {
         title: "The edition",
         lead: "This is why every form is made in a small numbered edition.",
-        body: ["Each piece carries its number within its edition."],
+        body: ["Each piece is signed by hand and carries its number in the edition, for example 3 / 8, carved discreetly into its base. It comes with a card naming the piece, its stone and its number, signed by Omar."],
       },
       {
         title: "Time",
@@ -416,7 +416,7 @@ export const en = {
         sections: [
           {
             heading: "About these terms",
-            paragraphs: ["This website is run by Glowstone, in Lebanon. These terms apply to every order placed on glowstonelb.com."],
+            paragraphs: ["This website is run by Omar Al Bakeer, trading as Glowstone, Beirut, Lebanon. These terms apply to every order placed on glowstonelb.com. By placing an order, you accept them."],
           },
           {
             heading: "Orders",
@@ -431,7 +431,16 @@ export const en = {
               "Delivery is free all over Lebanon. For far-off areas, a delivery fee may be agreed on the confirmation call, as set out on the Delivery & Returns page.",
             ],
           },
-          { heading: "Governing law", paragraphs: ["These terms are governed by the laws of Lebanon."] },
+          {
+            heading: "Governing law",
+            paragraphs: [
+              "These terms are governed by the laws of Lebanon. If a problem arises, write to us first and we will do our best to solve it together. If we can't, the courts of Beirut will decide.",
+            ],
+          },
+          {
+            heading: "Designs, photos and texts",
+            paragraphs: ["All designs, photographs and texts on this website belong to Glowstone, except where a photo is credited to its author. Please don't copy or reproduce them without our written permission. Sharing a link to a page is always welcome."],
+          },
         ],
       },
       privacy: {
@@ -494,7 +503,7 @@ export const en = {
               "Omar calls to confirm every order within 2 business days, before it leaves the workshop.",
             ],
           },
-          { heading: "Returns", paragraphs: ["Every piece is checked before it leaves the workshop. If something isn't right when your piece arrives, write to hello@glowstonelb.com or message us on WhatsApp, and Omar will look at it with you personally."] },
+          { heading: "Returns", paragraphs: ["Because every piece is carved by hand from natural stone, we don't take returns for a change of mind. Please check your piece with the courier before they leave. If it arrives damaged, send us a photo on WhatsApp or to hello@glowstonelb.com within 48 hours: Omar will repair or replace it, or refund you in full."] },
         ],
       },
     },

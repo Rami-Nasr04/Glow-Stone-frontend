@@ -40,7 +40,9 @@ export interface ProductJsonLd {
 }
 
 // Google's Product snippet: a name and an Offer with its price, currency and availability. `url` is the piece's
-// current address, absolute.
+// current address, absolute. No hasMerchantReturnPolicy: schema.org can't state the policy truthfully (no returns for a
+// change of mind, but a damaged piece repaired, replaced or refunded if reported within 48 hours). "Not permitted" would
+// deny the refund for damage, and a return window would promise change-of-mind returns (Rami, 2026-11-02).
 export function productJsonLd(piece: ProductSummary, url: string, m: Messages = MESSAGES.en): ProductJsonLd {
   return {
     "@context": "https://schema.org",
