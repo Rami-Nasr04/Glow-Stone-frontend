@@ -24,12 +24,18 @@ describe("Home", () => {
     expect(screen.queryByText(/new editions/i)).not.toBeInTheDocument()
   })
 
-  // Omar's #1 piece leads the page (Rami, 2026-11-02): when he arranges and publishes, the hero and spotlight follow.
-  it("leads with the first piece in Omar's order, in the hero and the spotlight", () => {
+  // Omar's #1 piece leads the spotlight (2026-11-02); Rami's hero never follows the order: its scene is piece 5, and
+  // only its caption comes from piece 5's data, wherever Omar puts it.
+  it("shows Omar's first piece in the spotlight, and keeps the hero on piece 5 whatever the order", () => {
     const tura = { ...productOf(5), name: "Tura" }
-    renderAt(<Home products={[tura, ...PRODUCTS.filter((p) => p.id !== 5)]} first={tura} />)
-    expect(screen.getByRole("heading", { level: 2, name: "Tura" })).toBeInTheDocument()
-    expect(screen.getAllByAltText(/^Tura limestone wine rack/).length).toBeGreaterThan(1)
+    const atera = { ...productOf(6), name: "Atera" }
+    const order = [atera, ...PRODUCTS.filter((p) => p.id !== 5 && p.id !== 6), tura]
+    const { container } = renderAt(<Home products={order} first={atera} />)
+    expect(screen.getByRole("heading", { level: 2, name: "Atera" })).toBeInTheDocument()
+    const hero = container.querySelector("section")!
+    expect(hero.querySelector("img")?.getAttribute("srcset")).toContain("/images/hero/desktop-1376.webp")
+    expect(hero).toHaveTextContent(/^.*Tura · .* · Edition of \d+/)
+    expect(hero).not.toHaveTextContent("Atera")
   })
 
   it("shows the built stock first, then the live stock in the rail", async () => {

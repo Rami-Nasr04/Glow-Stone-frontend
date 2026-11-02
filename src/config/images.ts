@@ -1,9 +1,11 @@
-// The scene composite (D12, 1376px, never upscaled): the home hero shows the first piece's cover now (2026-11-02), so
-// this is only the source of the shop's default link preview (src/lib/og-images.ts).
+// Rami's hero scene (D12, 1376px, never upscaled), also the shop's default link preview (src/lib/og-images.ts).
 export const HERO_IMAGES = {
   desktop: { key: "hero/desktop", widths: [480, 960, 1376], width: 1376, height: 768 },
   mobile: { key: "hero/mobile", widths: [480, 768], width: 768, height: 1376 },
 } as const
+
+// The piece in the hero scene: Tura (id 5, once Qadisha). The caption names it from the data, whatever Omar's order.
+export const HERO_PIECE_ID = 5
 
 // Photos by others, used under their licence and credited where they show (scripts/image-map.ts, EXTERNAL_MAP).
 export const ABOUT_IMAGES = {
