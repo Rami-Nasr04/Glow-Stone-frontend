@@ -8,7 +8,7 @@ export const AVAILABILITIES = ["available", "sold_out"] as const
 export type Availability = (typeof AVAILABILITIES)[number]
 
 export interface Filters {
-  /** Readable stone type, e.g. "limestone". */
+  /** Readable stone type, e.g. "granite". */
   stone: string | null
   /** Readable colour, e.g. "ash-grey". */
   color: string | null

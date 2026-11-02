@@ -25,6 +25,18 @@ describe("About sections", () => {
     expect(container.querySelectorAll("article .aspect-3\\/2")).toHaveLength(4)
   })
 
+  it("tells of the stone as granite, without the limestone quarries", () => {
+    renderAt(<Chapters crestName="Arz" />)
+    expect(screen.getByText("Omar grew up in a village above the Qadisha Valley, where houses, terraces and chapels are all built of stone.")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "His grandfather cut stone for walls. His father cut it for thresholds and fountains. Omar learned to read stone before he learned to carve it: where the grain runs, where a block will split cleanly, and where it will not.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Today he carves granite: dense, hard and slow to shape, in warm shades of beige and brown. He still chooses every block himself.")).toBeInTheDocument()
+    expect(screen.queryByText(/limestone|Sannine|Batroun|laid down by a sea/i)).not.toBeInTheDocument()
+  })
+
   it("says how each piece is marked in its edition", () => {
     renderAt(<Chapters crestName="Arz" />)
     expect(screen.getByText("Each piece carries its number within its edition.")).toBeInTheDocument()

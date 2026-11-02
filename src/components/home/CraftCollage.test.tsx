@@ -6,7 +6,8 @@ describe("CraftCollage", () => {
   it("introduces the craft and links to the story", () => {
     renderAt(<CraftCollage crestName="Arz" />)
     expect(screen.getByRole("heading", { level: 2, name: "The craft" })).toBeInTheDocument()
-    expect(screen.getByText(/Every piece begins as a single block/)).toBeInTheDocument()
+    expect(screen.getByText("Every piece begins as a single block of granite and is carved by hand.")).toBeInTheDocument()
+    expect(screen.getByText("The marks of the chisel stay in the stone.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Our story" })).toHaveAttribute("href", "/about")
   })
 

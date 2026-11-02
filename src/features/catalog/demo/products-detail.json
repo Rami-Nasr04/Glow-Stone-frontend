@@ -2,14 +2,14 @@
   {
     "id": 1,
     "name": "Arz",
-    "stoneType": "Limestone",
-    "color": "Warm beige",
-    "price": 420,
-    "bottles": 5,
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
+    "price": 330,
+    "bottles": 7,
     "heightCm": 72,
-    "widthCm": 28,
+    "widthCm": 22,
     "depthCm": 14,
-    "weightKg": 34,
+    "weightKg": 70,
     "editionSize": 12,
     "remaining": 3,
     "soldOut": false,
@@ -18,17 +18,17 @@
     "createdAt": "2026-10-01T09:00:00.000Z",
     "images": [
       {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/1/f3p346jh4k20",
+        "width": 2880,
+        "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/1/1g53f6x0s8su",
+        "width": 2880,
+        "height": 4317
+      },
+      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/1/enqibf6fm9c0",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/n5pg2hwzyhxn",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/rdbcxmctnog9",
         "width": 2880,
         "height": 4318
       },
@@ -46,26 +46,6 @@
         "url": "https://disbl63io6ns2.cloudfront.net/products/1/e1fabn2ceyg1",
         "width": 2880,
         "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/f3p346jh4k20",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/pw62606lcy9m",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/ag5et7tzx3ye",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/1/1g53f6x0s8su",
-        "width": 2880,
-        "height": 4317
       },
       {
         "url": "https://disbl63io6ns2.cloudfront.net/products/1/rx0ceiubka7s",
@@ -88,14 +68,14 @@
   {
     "id": 2,
     "name": "Nahr",
-    "stoneType": "Limestone",
-    "color": "Earth brown",
-    "price": 290,
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
+    "price": 280,
     "bottles": 5,
-    "heightCm": 36,
+    "heightCm": 35,
     "widthCm": 22,
-    "depthCm": 20,
-    "weightKg": 16,
+    "depthCm": 14,
+    "weightKg": 35,
     "editionSize": 15,
     "remaining": 0,
     "soldOut": true,
@@ -104,17 +84,12 @@
     "createdAt": "2026-10-02T09:00:00.000Z",
     "images": [
       {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/2/dhln6uehjer7",
+        "width": 2880,
+        "height": 4318
+      },
+      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/2/zhzamigj42f6",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/dg2ilil6366a",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/bepukk9n1wl1",
         "width": 2880,
         "height": 4318
       },
@@ -124,42 +99,27 @@
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/xfv0asc9ajow",
-        "width": 2880,
-        "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/b14ntg35lu3i",
-        "width": 2880,
-        "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/9kdlj1ydahl0",
-        "width": 2880,
-        "height": 4318
-      },
-      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/2/opix4x50s88o",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/h47k9aw6uzy0",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/2/bepukk9n1wl1",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/74k9nrxj1cdu",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/5pobkyt8tohn",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/2/dg2ilil6366a",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/2/dhln6uehjer7",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/2/xfv0asc9ajow",
+        "width": 2880,
+        "height": 1921
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/2/9kdlj1ydahl0",
         "width": 2880,
         "height": 4318
       }
@@ -168,15 +128,15 @@
   },
   {
     "id": 3,
-    "name": "Batroun",
-    "stoneType": "Limestone",
-    "color": "Taupe",
+    "name": "Qadi_sha",
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
     "price": 180,
     "bottles": 1,
-    "heightCm": 26,
-    "widthCm": 18,
-    "depthCm": 18,
-    "weightKg": 9,
+    "heightCm": 22,
+    "widthCm": 17,
+    "depthCm": 22,
+    "weightKg": 20,
     "editionSize": 15,
     "remaining": 9,
     "soldOut": false,
@@ -185,32 +145,12 @@
     "createdAt": "2026-10-03T09:00:00.000Z",
     "images": [
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/mubg8mf9n8iz",
-        "width": 2880,
-        "height": 4318
-      },
-      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/3/okgnc4eguray",
         "width": 2880,
         "height": 4317
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/ioynvrfwdgip",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/z7xi3cjnfmsf",
-        "width": 2880,
-        "height": 4318
-      },
-      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/3/0e3z4sehekof",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/8fsun7baloqp",
         "width": 2880,
         "height": 4317
       },
@@ -220,29 +160,39 @@
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/8i6zl0a11bx8",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/3/ioynvrfwdgip",
+        "width": 2880,
+        "height": 4317
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/3/mubg8mf9n8iz",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/3/739d57jujax5",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/3/z7xi3cjnfmsf",
         "width": 2880,
         "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/3/8fsun7baloqp",
+        "width": 2880,
+        "height": 4317
       }
     ],
     "story": null
   },
   {
     "id": 4,
-    "name": "Jbeil",
-    "stoneType": "Limestone",
-    "color": "Grey",
-    "price": 640,
+    "name": "RESH",
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
+    "price": 280,
     "bottles": 5,
-    "heightCm": null,
-    "widthCm": null,
-    "depthCm": null,
-    "weightKg": null,
+    "heightCm": 35,
+    "widthCm": 22,
+    "depthCm": 14,
+    "weightKg": 50,
     "editionSize": 10,
     "remaining": 6,
     "soldOut": false,
@@ -251,17 +201,22 @@
     "createdAt": "2026-10-04T09:00:00.000Z",
     "images": [
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/bfqbpk4a5161",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/4wepwxm0db3l",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/i79zr2dmcqwn",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/w9bgxwyqumpm",
         "width": 2880,
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/s8rjrj27ycc5",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/40pjuno0nl9i",
+        "width": 2880,
+        "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/viso8p2x7ayj",
         "width": 2880,
         "height": 4318
       },
@@ -271,27 +226,7 @@
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/smb6rye76ggc",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/qskpkbwh9u6p",
-        "width": 2880,
-        "height": 4318
-      },
-      {
         "url": "https://disbl63io6ns2.cloudfront.net/products/4/x2ckwpivr6i3",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/b5xv7laic8gn",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/99x0geayjfes",
         "width": 2880,
         "height": 4318
       },
@@ -301,12 +236,12 @@
         "height": 1921
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/5bi2xb6lqfez",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/s8rjrj27ycc5",
         "width": 2880,
-        "height": 1921
+        "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/4wepwxm0db3l",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/99x0geayjfes",
         "width": 2880,
         "height": 4318
       },
@@ -316,12 +251,7 @@
         "height": 1921
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/j0y8jhf6hh29",
-        "width": 2880,
-        "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/w9bgxwyqumpm",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/4/jsv9dd0bz8l1",
         "width": 2880,
         "height": 4318
       },
@@ -329,36 +259,21 @@
         "url": "https://disbl63io6ns2.cloudfront.net/products/4/z2d99hm4zmzg",
         "width": 2880,
         "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/40pjuno0nl9i",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/jsv9dd0bz8l1",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/4/viso8p2x7ayj",
-        "width": 2880,
-        "height": 4318
       }
     ],
     "story": null
   },
   {
     "id": 5,
-    "name": "Qadisha",
-    "stoneType": "Limestone",
-    "color": "Cream",
-    "price": 890,
+    "name": "Tura",
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
+    "price": 480,
     "bottles": 14,
-    "heightCm": 118,
-    "widthCm": 36,
-    "depthCm": 20,
-    "weightKg": 72,
+    "heightCm": 70,
+    "widthCm": 22,
+    "depthCm": 14,
+    "weightKg": 50,
     "editionSize": 8,
     "remaining": 4,
     "soldOut": false,
@@ -372,7 +287,7 @@
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/5/2vgblbyzgnww",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/5/2secauyoxl67",
         "width": 2880,
         "height": 4318
       },
@@ -382,12 +297,7 @@
         "height": 4318
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/5/f97k3uic5po3",
-        "width": 2880,
-        "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/5/2secauyoxl67",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/5/2vgblbyzgnww",
         "width": 2880,
         "height": 4318
       },
@@ -395,6 +305,11 @@
         "url": "https://disbl63io6ns2.cloudfront.net/products/5/1640dvsw4nkv",
         "width": 2880,
         "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/5/f97k3uic5po3",
+        "width": 2880,
+        "height": 1921
       },
       {
         "url": "https://disbl63io6ns2.cloudfront.net/products/5/z4fnu41a9i6t",
@@ -405,37 +320,47 @@
         "url": "https://disbl63io6ns2.cloudfront.net/products/5/r835qoromfxv",
         "width": 2880,
         "height": 1921
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/5/znaumtv8obon",
-        "width": 2880,
-        "height": 1921
       }
     ],
     "story": null
   },
   {
     "id": 6,
-    "name": "Sannine",
-    "stoneType": "Limestone",
-    "color": "Earth brown",
-    "price": 560,
+    "name": "Atera",
+    "stoneType": "Granite",
+    "color": "Beige & Brown",
+    "price": 400,
     "bottles": 10,
-    "heightCm": 96,
-    "widthCm": 30,
-    "depthCm": 18,
-    "weightKg": 48,
-    "editionSize": 10,
-    "remaining": 2,
+    "heightCm": 70,
+    "widthCm": 22,
+    "depthCm": 14,
+    "weightKg": 60,
+    "editionSize": 20,
+    "remaining": 10,
     "soldOut": false,
     "featured": true,
     "summary": "Tall column with five half-moon notches on each side.",
     "createdAt": "2026-10-06T09:00:00.000Z",
     "images": [
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/hdv41g5ofs5p",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/6/v221ljfcfjhu",
         "width": 2880,
         "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/6/01bb3r2jdihd",
+        "width": 2880,
+        "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/6/c8l2ia0kgjgl",
+        "width": 2880,
+        "height": 4318
+      },
+      {
+        "url": "https://disbl63io6ns2.cloudfront.net/products/6/axni5k0udl3h",
+        "width": 2880,
+        "height": 4317
       },
       {
         "url": "https://disbl63io6ns2.cloudfront.net/products/6/h29ai957hn5d",
@@ -448,17 +373,7 @@
         "height": 4317
       },
       {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/c8l2ia0kgjgl",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/01bb3r2jdihd",
-        "width": 2880,
-        "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/v221ljfcfjhu",
+        "url": "https://disbl63io6ns2.cloudfront.net/products/6/hdv41g5ofs5p",
         "width": 2880,
         "height": 4318
       },
@@ -466,16 +381,6 @@
         "url": "https://disbl63io6ns2.cloudfront.net/products/6/op1d8yehve0c",
         "width": 2880,
         "height": 4318
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/ggmje80rrcoo",
-        "width": 2880,
-        "height": 4317
-      },
-      {
-        "url": "https://disbl63io6ns2.cloudfront.net/products/6/axni5k0udl3h",
-        "width": 2880,
-        "height": 4317
       }
     ],
     "story": null

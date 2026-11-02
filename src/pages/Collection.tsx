@@ -25,7 +25,7 @@ export default function Collection({ products }: CollectionProps) {
     // overflow-x-clip: the interlude's charcoal band runs to the viewport edges.
     <section className="overflow-x-clip px-gutter pt-section pb-[clamp(4.5rem,7vw,6.5rem)]">
       <div className="mx-auto max-w-content">
-        <CollectionIntro count={all.length} />
+        <CollectionIntro stoneTypes={all.map((piece) => piece.stoneType)} />
         <div className="mt-[clamp(3.5rem,7vw,6rem)] mb-[clamp(3rem,6vw,5rem)]">
           <FilterBar filters={filters} options={options} count={pieces.length} onChange={setFilters} className="hidden md:flex" />
           <FilterSheet filters={filters} options={options} count={pieces.length} onChange={setFilters} className="md:hidden" />

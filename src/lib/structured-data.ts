@@ -8,14 +8,14 @@ import { photoUrl } from "@/lib/images"
 // What search engines read about a piece and about the shop (schema.org, as JSON-LD in the page's head). Written from
 // the piece's own data only: nothing here states a fact the API doesn't hold.
 
-/** "Sannine: a hand-carved limestone wine rack for 10 bottles, made in Lebanon." and the piece's summary after it. */
+/** "Atera: a hand-carved granite wine rack for 10 bottles, made in Lebanon." and the piece's summary after it. */
 export function pieceDescription(piece: ProductSummary, m: Messages = MESSAGES.en): string {
   const bottles = piece.bottles === 1 ? m.product.specs.bottle : interpolate(m.product.specs.bottles, { count: piece.bottles })
   const first = interpolate(m.product.metaDescription, { name: piece.name, stone: piece.stoneType.toLowerCase(), bottles })
   return piece.summary ? `${first} ${piece.summary}` : first
 }
 
-/** "Sannine limestone wine rack": the alt text of a piece's photo. */
+/** "Atera granite wine rack": the alt text of a piece's photo. */
 export function pieceAlt(piece: Pick<ProductSummary, "name" | "stoneType">, m: Messages, template = m.catalog.pieceAlt): string {
   return interpolate(template, { name: piece.name, stone: piece.stoneType.toLowerCase() })
 }

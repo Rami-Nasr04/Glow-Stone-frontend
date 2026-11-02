@@ -1,15 +1,16 @@
 import { screen } from "@testing-library/react"
-import { PRODUCTS } from "@/test/catalog"
+import { PRODUCTS, productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import Home from "./Home"
 
-const page = <Home products={PRODUCTS} />
+const first = productOf(PRODUCTS[0].id)
+const page = <Home products={PRODUCTS} first={first} />
 
 describe("Home", () => {
   it("follows the agreed order with one h1", () => {
     renderAt(page)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Selected pieces", "The craft", "Qadisha"])
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["Selected pieces", "The craft", first.name])
     expect(screen.getByText("From stone, form emerges.")).toBeInTheDocument()
   })
 
@@ -23,10 +24,12 @@ describe("Home", () => {
     expect(screen.queryByText(/new editions/i)).not.toBeInTheDocument()
   })
 
-  it("shows the Qadisha hero and spotlight even when Qadisha is not published", () => {
-    renderAt(<Home products={PRODUCTS.filter((p) => p.id !== 5)} />)
-    expect(screen.getByRole("heading", { level: 2, name: "Qadisha" })).toBeInTheDocument()
-    expect(screen.getByAltText(/^Qadisha rack in cream limestone/)).toBeInTheDocument()
+  // Omar's #1 piece leads the page (Rami, 2026-11-02): when he arranges and publishes, the hero and spotlight follow.
+  it("leads with the first piece in Omar's order, in the hero and the spotlight", () => {
+    const tura = { ...productOf(5), name: "Tura" }
+    renderAt(<Home products={[tura, ...PRODUCTS.filter((p) => p.id !== 5)]} first={tura} />)
+    expect(screen.getByRole("heading", { level: 2, name: "Tura" })).toBeInTheDocument()
+    expect(screen.getAllByAltText(/^Tura limestone wine rack/).length).toBeGreaterThan(1)
   })
 
   it("shows the built stock first, then the live stock in the rail", async () => {

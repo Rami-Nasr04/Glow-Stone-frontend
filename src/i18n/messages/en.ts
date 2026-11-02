@@ -55,12 +55,9 @@ export const en = {
   // Home lines become editable `site_content` in B6.
   home: {
     metaTitle: "Glowstone — Time is the ultimate luxury.",
-    metaDescription: "Hand-carved limestone wine racks, made in Lebanon in small numbered editions.",
-    // The hero and the spotlight show Qadisha with fixed text (Rami, 2026-10-15), so a draft, a sale or a price change
-    // in the studio never touches the home page. Price and stock are left out: they change.
-    heroAlt: "Qadisha rack in cream limestone with a glass of red wine on a stone wall above the misty Qadisha Valley",
-    heroCaption: "Qadisha · Cream limestone · Edition of 8",
-    heroCaptionShort: "Qadisha · Edition of 8",
+    // The pieces are granite (Rami, 2026-11-02); where the granite comes from isn't known, so it is never called Lebanese.
+    metaDescription: "Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.",
+    // The hero and the spotlight follow the first piece in Omar's order, from its data (Rami, 2026-11-02).
     shopCollection: "Shop collection",
     quote: "From stone, form emerges.",
     quoteLine: "Limited objects for wine & living.",
@@ -69,26 +66,24 @@ export const en = {
     previousPieces: "Previous pieces",
     nextPieces: "Next pieces",
     craftLabel: "The craft",
-    craftLead: "Every piece begins as a single block of Lebanese limestone and is carved by hand, with chisel and mallet.",
+    craftLead: "Every piece begins as a single block of granite and is carved by hand.",
     craftBody: "The marks of the chisel stay in the stone.",
     ourStory: "Our story",
     crestAlt: "The hand-broken crest of {name}, its chisel marks catching the light",
-    boreAlt: "The ringed wall of a hole bored through limestone",
+    boreAlt: "The ringed wall of a hole bored through stone",
     boreCaption: "The bore",
-    spotlightName: "Qadisha",
-    spotlightPlacard: ["Cream limestone", "118 × 36 × 20 cm"],
-    spotlightEdition: "Edition of 8",
-    spotlightText: "Tall slab with edge notches and central holes. Holds 14 bottles.",
-    spotlightAlt: "Qadisha limestone wine rack",
-    spotlightDetailAlt: "Qadisha limestone wine rack, in detail",
+    spotlightHolds: "Holds {bottles}.",
+    spotlightDetailAlt: "{name} {stone} wine rack, in detail",
     viewTheCollection: "View the collection",
   },
   collection: {
     metaTitle: "The Collection — Glowstone",
-    metaDescription: "Limestone wine racks and bottle holders, hand-carved in Lebanon, each in a small numbered edition.",
+    metaDescription: "Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.",
     title: "The Collection",
-    intro: "{count} pieces in Lebanese limestone, each carved by hand in a small numbered edition.",
-    introOne: "One piece in Lebanese limestone, carved by hand in a small numbered edition.",
+    // {stone}: the pieces' stone from the data, in lower case, or "stone" when they differ.
+    intro: "{count} pieces in {stone}, each carved by hand in a small numbered edition.",
+    introOne: "One piece in {stone}, carved by hand in a small numbered edition.",
+    mixedStone: "stone",
     numberWords: ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"],
     pieces: "{count} pieces",
     piece: "1 piece",
@@ -109,7 +104,7 @@ export const en = {
     none: "No pieces match these filters.",
     interludeLine: "The marks of the chisel stay in the stone.",
     interludeBy: "The craft",
-    interludeAlt: "Light passing through a hole bored in limestone",
+    interludeAlt: "Light passing through a hole bored in stone",
     bespoke: "For bespoke pieces or commissions, write to us.",
     contact: "Contact",
   },
@@ -150,7 +145,7 @@ export const en = {
       edition: "Edition",
     },
     careBody: [
-      "Dust with a soft, dry cloth. Limestone is porous, so wipe away spilled wine promptly and avoid acidic or abrasive cleaners.",
+      "Dust with a soft, dry cloth. Natural stone can stain, so wipe away spilled wine promptly and avoid acidic or abrasive cleaners.",
       "Always lift with two people; never drag the stone across the floor.",
     ],
     deliveryBody: [
@@ -345,10 +340,10 @@ export const en = {
     chapters: [
       {
         title: "The stone",
-        lead: "Omar grew up in a village above the Qadisha Valley, where houses, terraces and chapels are all made of the same pale limestone.",
+        lead: "Omar grew up in a village above the Qadisha Valley, where houses, terraces and chapels are all built of stone.",
         body: [
-          "His grandfather cut it for walls. His father cut it for thresholds and fountains. Omar learned to read it before he learned to carve it: where the grain runs, where a block will split cleanly, and where it will not.",
-          "He still chooses every block himself, from small quarries on the slopes of Sannine and along the coast near Batroun. Cream, ash, earth and taupe each come from a different bed of the mountain, laid down by a sea that disappeared long before the cedars.",
+          "His grandfather cut stone for walls. His father cut it for thresholds and fountains. Omar learned to read stone before he learned to carve it: where the grain runs, where a block will split cleanly, and where it will not.",
+          "Today he carves granite: dense, hard and slow to shape, in warm shades of beige and brown. He still chooses every block himself.",
         ],
       },
       {
@@ -370,10 +365,10 @@ export const en = {
       },
     ],
     photoAlts: [
-      "The hand-broken crest of {name}, showing the grain of the limestone",
-      "The ringed wall of a hole bored through limestone",
+      "The hand-broken crest of {name}, showing the grain of the stone",
+      "The ringed wall of a hole bored through stone",
       "A bottle resting in a hand-cut notch",
-      "Light passing through a hole bored in limestone",
+      "Light passing through a hole bored in stone",
     ],
     quote: "Stone keeps its own time. My work is to wait for it.",
     quoteBy: "Omar, stonemason",
@@ -414,7 +409,7 @@ export const en = {
     lastUpdated: "Last updated",
     lastUpdatedValue: "2 November 2026",
     questions: "Questions? Write to",
-    metaDescription: "{title} for Glowstone, hand-carved Lebanese limestone.",
+    metaDescription: "{title} for Glowstone. Wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.",
     docs: {
       terms: {
         title: "Terms",

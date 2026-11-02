@@ -1,6 +1,6 @@
 # Glow Stone — Frontend
 
-Web store for Glowstone: hand-carved Lebanese limestone wine racks in small numbered editions.
+Web store for Glowstone: wine racks hand-carved from granite, in small numbered editions. Made in Lebanon.
 
 ## Stack
 

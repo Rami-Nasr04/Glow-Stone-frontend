@@ -20,7 +20,7 @@ const PHONES: Record<string, TestScreen> = {
 const DESKTOP: TestScreen = { width: 1440, height: 900, dpr: 1 }
 
 const PAGES = {
-  home: () => <Home products={PRODUCTS} />,
+  home: () => <Home products={PRODUCTS} first={productOf(PRODUCTS[0].id)} />,
   collection: () => <Collection products={PRODUCTS} />,
   product: () => <Product piece={productOf(4)} products={PRODUCTS} />,
   about: () => <About crestName="Arz" />,

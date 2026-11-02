@@ -147,7 +147,8 @@ if (placeholders.length > 0) fail(`the build shows placeholder text: ${placehold
 // The demo orders answer only on npm run dev:demo: no build carries them.
 // Nor the saved catalog the shop and the studio use there: a saved photo's address in a script means it came along
 // (a built page keeps its pieces in its HTML and .data files, never in the scripts).
-const demoChunks = carrying([STUDIO_DEMO_KEY, STUDIO_DEMO_PRODUCTS_KEY, "products/5/6m2q4gr2hfl7"])
+const demoPhoto = new URL((JSON.parse(readFileSync("src/features/catalog/demo/products-list.json", "utf8")) as { images: { url: string }[] }[])[0].images[0].url).pathname
+const demoChunks = carrying([STUDIO_DEMO_KEY, STUDIO_DEMO_PRODUCTS_KEY, demoPhoto])
 if (demoChunks.length > 0) fail(`the build carries the demo data of npm run dev:demo: ${demoChunks.join(", ")}`)
 // A shop-only build carries no studio code: not its sign-in, not its words, not its admin variables.
 if (!withStudio) {

@@ -3,17 +3,18 @@ import { renderAt } from "@/test/render"
 import CollectionIntro from "./CollectionIntro"
 
 describe("CollectionIntro", () => {
-  it("counts the pieces in words, so the intro never goes stale", () => {
-    renderAt(<CollectionIntro count={8} />)
+  it("counts the pieces in words and names their stone from the data, so the intro never goes stale", () => {
+    renderAt(<CollectionIntro stoneTypes={Array<string>(8).fill("Granite")} />)
     expect(screen.getByRole("heading", { level: 1, name: "The Collection" })).toBeInTheDocument()
-    expect(screen.getByText("Eight pieces in Lebanese limestone, each carved by hand in a small numbered edition.")).toBeInTheDocument()
+    expect(screen.getByText("Eight pieces in granite, each carved by hand in a small numbered edition.")).toBeInTheDocument()
   })
 
-  it("handles a single piece and counts beyond twelve in digits", () => {
-    const { unmount } = renderAt(<CollectionIntro count={1} />)
-    expect(screen.getByText(/^One piece in Lebanese limestone/)).toBeInTheDocument()
+  it("handles a single piece, counts beyond twelve in digits, and says stone when the pieces differ", () => {
+    const { unmount } = renderAt(<CollectionIntro stoneTypes={["Granite"]} />)
+    expect(screen.getByText("One piece in granite, carved by hand in a small numbered edition.")).toBeInTheDocument()
     unmount()
-    renderAt(<CollectionIntro count={15} />)
-    expect(screen.getByText(/^15 pieces in Lebanese limestone/)).toBeInTheDocument()
+    renderAt(<CollectionIntro stoneTypes={[...Array<string>(14).fill("Granite"), "Marble"]} />)
+    expect(screen.getByText(/^15 pieces in stone,/)).toBeInTheDocument()
+    expect(screen.queryByText(/limestone|Lebanese granite/i)).not.toBeInTheDocument()
   })
 })

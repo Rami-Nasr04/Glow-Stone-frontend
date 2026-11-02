@@ -12,7 +12,7 @@ describe("Collection", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6)
     expect(screen.getAllByText("6 pieces").length).toBeGreaterThan(0)
-    expect(screen.getByText("Six pieces in Lebanese limestone, each carved by hand in a small numbered edition.")).toBeInTheDocument()
+    expect(screen.getByText("Six pieces in limestone, each carved by hand in a small numbered edition.")).toBeInTheDocument()
   })
 
   it("lists every piece newest first", () => {

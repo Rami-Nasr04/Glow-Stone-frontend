@@ -1,64 +1,43 @@
 import { screen } from "@testing-library/react"
+import { productOf } from "@/test/catalog"
 import { renderAt } from "@/test/render"
 import PieceSpotlight from "./PieceSpotlight"
 
-const detail = 'img[src="/images/home/spotlight-detail-960.webp"]'
-const full = 'img[src="/images/home/spotlight-full-960.webp"]'
+// The spotlight follows the first piece in Omar's order (Rami, 2026-11-02), all from its data.
+const qadisha = productOf(5)
+const landscape = qadisha.images.find((photo) => photo.width > photo.height)!
 
 describe("PieceSpotlight", () => {
-  it("presents Qadisha with fixed text: placard, summary and capacity, and no price, stock or lead time", () => {
-    renderAt(<PieceSpotlight />)
-    expect(screen.getByRole("heading", { level: 2, name: "Qadisha" })).toBeInTheDocument()
+  it("presents the piece from its data: name, stone and colour, sizes, edition, summary and bottles; no price, stock or lead time", () => {
+    renderAt(<PieceSpotlight piece={{ ...qadisha, name: "Tura", stoneType: "Granite", color: "Beige & Brown" }} />)
+    expect(screen.getByRole("heading", { level: 2, name: "Tura" })).toBeInTheDocument()
+    // One line per part, so a long stone name never leaves a dot hanging at a line end.
+    const placard = screen.getByText("Edition of 8").parentElement!
+    expect([...placard.children].map((line) => line.textContent)).toEqual(["Beige & Brown granite", "118 × 36 × 20 cm", "Edition of 8"])
+    for (const line of placard.children) expect(line).toHaveClass("block")
     expect(screen.getByText("Tall slab with edge notches and central holes. Holds 14 bottles.")).toBeInTheDocument()
-    // Two lines as in the prototype, never a dot left hanging at a line end.
-    const placard = screen.getByText("Edition of 8").parentElement
-    expect(placard?.firstChild?.textContent).toBe("Cream limestone · 118 × 36 × 20 cm")
-    expect(placard?.querySelector("br")).not.toBeNull()
-    expect(screen.getByText("Edition of 8")).toHaveClass("whitespace-nowrap")
-    // Price and stock change in the studio; fixed text could only go stale (Rami, 2026-10-15).
     expect(screen.queryByText(/\$/)).not.toBeInTheDocument()
     expect(screen.queryByText(/remaining|sold out/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/made to order|weeks|ready to deliver/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/made to order|weeks|ready to deliver|limestone/i)).not.toBeInTheDocument()
   })
 
-  it("says what each photo shows", () => {
-    const { container } = renderAt(<PieceSpotlight />)
-    for (const img of container.querySelectorAll(`${full}, ${detail}`)) expect(img.getAttribute("alt")).toMatch(/^Qadisha limestone wine rack/)
-    expect(container.querySelectorAll(`${full}, ${detail}`).length).toBe(3)
+  it("shows its cover and its first landscape photo, each named from the piece", () => {
+    const { container } = renderAt(<PieceSpotlight piece={qadisha} />)
+    const srcs = [...container.querySelectorAll("img")].map((img) => img.getAttribute("src"))
+    expect(srcs).toContain(`${qadisha.images[0].url}/960.webp`)
+    expect(srcs).toContain(`${landscape.url}/960.webp`)
+    for (const img of container.querySelectorAll("img")) expect(img.getAttribute("alt")).toMatch(/^Qadisha limestone wine rack/)
   })
 
-  it("leads to the collection, never to the piece, which may be a draft or sold out", () => {
-    renderAt(<PieceSpotlight />)
+  it("crops the cover into the wide frame when the piece has no landscape photo", () => {
+    const portraitsOnly = { ...qadisha, images: qadisha.images.filter((photo) => photo.height > photo.width) }
+    const { container } = renderAt(<PieceSpotlight piece={portraitsOnly} />)
+    expect(container.querySelectorAll(`img[src="${qadisha.images[0].url}/960.webp"]`).length).toBe(3)
+  })
+
+  it("leads to the collection, never to the piece", () => {
+    renderAt(<PieceSpotlight piece={qadisha} />)
     expect(screen.getByRole("link", { name: "View the collection" })).toHaveAttribute("href", "/collection")
     expect(screen.getAllByRole("link")).toHaveLength(1)
-    expect(document.querySelector('a[href^="/collection/"]')).toBeNull()
-  })
-
-  it("uses the site's own copies of the photos, not product photo addresses", () => {
-    renderAt(<PieceSpotlight />)
-    for (const img of document.querySelectorAll("img")) {
-      expect(img.getAttribute("src")).toMatch(/^\/images\/home\/spotlight-/)
-      expect(img.getAttribute("srcset")).not.toContain("cloudfront")
-    }
-  })
-
-  it("never crops the piece", () => {
-    renderAt(<PieceSpotlight />)
-    for (const img of document.querySelectorAll("img")) expect(img.className).toContain("object-contain")
-  })
-
-  it("composes the landscape close-up with the full piece framed over its corner on desktop", () => {
-    renderAt(<PieceSpotlight />)
-    const frame = document.querySelector(detail)?.parentElement
-    expect(frame?.className).toContain("aspect-3/2")
-    expect(frame?.className).toMatch(/hidden.*lg:block|lg:block.*hidden/)
-    expect(frame?.className).toContain("lg:col-span-8")
-    expect(document.querySelector(detail)).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 41vw, 62vw")
-    // Phones show the full piece; desktop frames the same photo over the close-up's corner.
-    const fulls = [...document.querySelectorAll(full)]
-    expect(fulls.map((img) => img.parentElement?.className.includes("lg:hidden"))).toEqual([true, false])
-    expect(fulls[0]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 67vw, 100vw")
-    expect(fulls[1].parentElement?.className).toContain("lg:col-start-7")
-    expect(fulls[1]).toHaveAttribute("sizes", "(min-resolution: 2.5dppx) 9vw, 13vw")
   })
 })
