@@ -7,7 +7,7 @@ export const HERO_IMAGES = {
 // The piece in the hero scene: Tura (id 5, once Qadisha). The caption names it from the data, whatever Omar's order.
 export const HERO_PIECE_ID = 5
 
-// Photos by others, used under their licence and credited where they show (scripts/image-map.ts, EXTERNAL_MAP).
+// Photos by others, used under their licence and credited in the terms (scripts/image-map.ts, EXTERNAL_MAP).
 export const ABOUT_IMAGES = {
   qadishaValley: {
     key: "about/qadisha-valley",

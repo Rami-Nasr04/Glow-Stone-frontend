@@ -100,6 +100,20 @@ describe("Legal", () => {
     expect(document.getElementById(`section-${headings.length}`)).toHaveTextContent("All designs, photographs and texts on this website belong to Glowstone, except where a photo is credited to its author. Please don't copy or reproduce them without our written permission. Sharing a link to a page is always welcome.")
   })
 
+  // CC BY-SA 4.0 asks for a visible credit: it moved from under the photo to the terms (Rami, 2026-11-02).
+  it("credits the Qadisha Valley photo in the terms, linking to the photo and the licence", () => {
+    renderDoc("terms")
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
+    const section = document.getElementById(`section-${headings.indexOf("Designs, photos and texts") + 1}`)!
+    const credit = [...section.querySelectorAll("p")].at(-1)!
+    expect(credit).toHaveTextContent("The photo of the Qadisha Valley on the About page is by Evan Williams (cropped), licensed under CC BY-SA 4.0.")
+    expect(within(credit).getByRole("link", { name: "Evan Williams" })).toHaveAttribute(
+      "href",
+      "https://commons.wikimedia.org/wiki/File:Qadisha_Valley,_Aerial_View_From_Qannoubine_Monastery.jpg",
+    )
+    expect(within(credit).getByRole("link", { name: "CC BY-SA 4.0" })).toHaveAttribute("href", "https://creativecommons.org/licenses/by-sa/4.0/")
+  })
+
   it("dates the texts, in the page's own colour once the date is real", () => {
     renderDoc("privacy")
     const date = screen.getByText("2 November 2026")
