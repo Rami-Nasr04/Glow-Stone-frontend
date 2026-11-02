@@ -17,5 +17,15 @@ export const HERO_MAP: Record<string, { file: string; widths: readonly number[] 
   "hero/mobile": { file: "hero mobile.png", widths: [480, 768] },
 }
 
+// Photos by other people, used under their licence (credited on the page), generated with:
+// node scripts/build-images.ts --external "<folder with the downloaded originals>". Same widths as the craft photos.
+export const EXTERNAL_MAP: Record<string, { file: string; source: string }> = {
+  // Evan Williams, CC BY-SA 4.0, from Wikimedia Commons (the About page credits it under the photo).
+  "about/qadisha-valley": {
+    file: "Qadisha_Valley_Aerial_View_From_Qannoubine_Monastery.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:Qadisha_Valley,_Aerial_View_From_Qannoubine_Monastery.jpg",
+  },
+}
+
 // WebP quality: high enough to keep chisel marks and stone grain crisp.
 export const WEBP_QUALITY = 82

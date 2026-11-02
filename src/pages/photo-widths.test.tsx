@@ -23,7 +23,7 @@ const PAGES = {
   home: () => <Home products={PRODUCTS} first={productOf(PRODUCTS[0].id)} />,
   collection: () => <Collection products={PRODUCTS} />,
   product: () => <Product piece={productOf(4)} products={PRODUCTS} />,
-  about: () => <About crestName="Arz" />,
+  about: () => <About />,
 }
 
 function photosOf(page: keyof typeof PAGES): HTMLImageElement[] {

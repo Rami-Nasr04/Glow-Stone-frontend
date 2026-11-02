@@ -57,6 +57,8 @@
   /* Per-language values live in variables so the Arabic pass only overrides them under :root:lang(ar). */
   --font-display-family: "Cormorant Garamond", Georgia, serif;
   --font-sans-family: "Jost Variable", system-ui, sans-serif;
+  /* Omar's Arabic on About only; the face loads with that page (src/routes/about.tsx). */
+  --font-arabic-family: "Amiri", "Cormorant Garamond", Georgia, serif;
   --tracking-label-value: 0.3em;
   --tracking-caps-value: 0.26em;
   --text-label-value: 0.6875rem; /* 11px — the minimum text size anywhere */
@@ -97,6 +99,7 @@
 
   --font-display: var(--font-display-family);
   --font-sans: var(--font-sans-family);
+  --font-arabic: var(--font-arabic-family);
 
   --radius-sm: 0;
   --radius-md: 0;

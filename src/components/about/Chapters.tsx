@@ -1,25 +1,39 @@
 import { useEffect, useRef, useState } from "react"
 import Picture from "@/components/media/Picture"
 import { Rule } from "@/components/ui/rule"
-import { CRAFT_IMAGES } from "@/config/images"
+import { ABOUT_IMAGES, CRAFT_IMAGES } from "@/config/images"
 import { interpolate } from "@/i18n/format"
 import { useLocale } from "@/i18n/useLocale"
 import { cn } from "@/lib/utils"
 
-// One craft photo per chapter, in chapter order.
-const PHOTOS = [CRAFT_IMAGES.crest, CRAFT_IMAGES.bore, CRAFT_IMAGES.notch, CRAFT_IMAGES.boreThrough]
+// One photo per chapter, in chapter order: the Qadisha Valley for the stone (Rami, 2026-11-02), then craft photos.
+const PHOTOS = [ABOUT_IMAGES.qadishaValley, CRAFT_IMAGES.bore, CRAFT_IMAGES.notch, CRAFT_IMAGES.boreThrough]
+const valley = ABOUT_IMAGES.qadishaValley
 
 const pad = (n: number) => String(n).padStart(2, "0")
 
-interface ChaptersProps {
-  /** The name of the piece in the crest photo (Arz), or null when it isn't published. */
-  crestName: string | null
+// The valley photo is Evan Williams' (CC BY-SA 4.0): its licence asks for this credit wherever the photo shows.
+function ValleyCredit({ className }: { className?: string }) {
+  const { m } = useLocale()
+  const credit = m.about.valleyCredit
+  const link = "underline underline-offset-2 transition-colors duration-300 hover:text-accent"
+  return (
+    <p data-photo-credit className={cn("text-xs text-muted-foreground", className)}>
+      {credit.place} {credit.photo}{" "}
+      <a href={valley.page} target="_blank" rel="noopener noreferrer" className={link}>
+        {credit.author}
+      </a>
+      ,{" "}
+      <a href={valley.licence} target="_blank" rel="noopener noreferrer license" className={link}>
+        {credit.licence}
+      </a>
+    </p>
+  )
 }
 
-export default function Chapters({ crestName }: ChaptersProps) {
+export default function Chapters() {
   const { m } = useLocale()
-  // The crest photo's alt names its piece (Arz) from the data.
-  const photoAlt = (i: number) => interpolate(m.about.photoAlts[i] ?? "", { name: crestName ?? m.catalog.unnamedPiece })
+  const photoAlt = (i: number) => m.about.photoAlts[i] ?? ""
   const chapters = m.about.chapters
   const listRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
@@ -51,7 +65,8 @@ export default function Chapters({ crestName }: ChaptersProps) {
     <section className="px-gutter pb-[clamp(3rem,5vw,4.5rem)]">
       <div className="mx-auto grid max-w-content items-start gap-x-[clamp(2.5rem,6vw,6rem)] lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
         {/* Desktop: one photo panel that stays in view and follows the chapter being read. */}
-        <div aria-hidden="true" className="sticky top-27 hidden h-[calc(100svh-9rem)] min-h-130 overflow-hidden bg-dark-section lg:block">
+        <div className="sticky top-27 hidden flex-col gap-2 lg:flex">
+        <div aria-hidden="true" className="relative h-[calc(100svh-10.5rem)] min-h-130 overflow-hidden bg-dark-section">
           {PHOTOS.map((photo, i) => (
             <Picture
               key={photo.key}
@@ -66,6 +81,9 @@ export default function Chapters({ crestName }: ChaptersProps) {
             <span className="font-medium text-accent">{pad(active + 1)}</span> {interpolate(m.about.chapterOf, { total: pad(chapters.length), title: activeTitle })}
           </p>
         </div>
+        {/* Under the valley photo while it shows; hidden (and out of the tab order) under the craft photos. */}
+        <ValleyCredit className={cn("text-end", active !== 0 && "invisible")} />
+        </div>
 
         <div ref={listRef} className="flex flex-col">
           {chapters.map((chapter, i) => {
@@ -77,13 +95,11 @@ export default function Chapters({ crestName }: ChaptersProps) {
                 className="flex flex-col justify-center gap-7 border-t border-border py-[clamp(2.5rem,5vw,4rem)] lg:min-h-[70vh]"
               >
                 {photo && (
-                  <div className="aspect-3/2 overflow-hidden bg-dark-section lg:hidden">
-                    <Picture
-                      image={photo}
-                      alt={photoAlt(i)}
-                      sizes="100vw"
-                      fit="cover"
-                    />
+                  <div className="flex flex-col gap-2 lg:hidden">
+                    <div className="aspect-3/2 overflow-hidden bg-dark-section">
+                      <Picture image={photo} alt={photoAlt(i)} sizes="100vw" fit="cover" />
+                    </div>
+                    {photo === valley && <ValleyCredit />}
                   </div>
                 )}
                 <div className="flex items-baseline gap-4">

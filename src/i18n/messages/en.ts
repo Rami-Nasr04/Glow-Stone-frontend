@@ -329,6 +329,25 @@ export const en = {
   // Placeholder biography until Omar sends his story (build notes 3). Shaped like the future `site_content` rows (B6).
   about: {
     metaTitle: "About — Glowstone",
+    // Omar's story opens the page (Rami, 2026-11-02): his Arabic in Rami's approved translation, kept as verse, one
+    // array per stanza. Then his Arabic exactly as he wrote it, in its own block (Rami may remove it later).
+    storyLabel: "Omar's story",
+    story: [
+      ["Here, there is history, and time, and nature."],
+      ["Here are lines that nature drew,", "here rain and sun have passed,", "and spring, and autumn."],
+      ["We take this stone from the earth,", "and shape it into part of a greater story."],
+      ["A piece that carries the history of wine, and its philosophy,", "and carries its story on, from the earth to the glass,", "and from the glass to a piece that lives on in a new place."],
+      ["Each collection carries the spirit of the place it came from,", "and reflects its nature, its identity, and the mark that time has left on it."],
+      ["Glowstone", "The tale of the land, carrying on the story of wine."],
+    ],
+    storyArabic: [
+      ["هون في تاريخ، وزمن، وطبيعة."],
+      ["هون في خطوط رسمتها الطبيعة،", "وهون مرق شتي وشمس،", "وربيع وخريف."],
+      ["نحن مناخد هالصخرة من الأرض،", "ومنحوّلها لتصبح جزءاً من قصة أكبر."],
+      ["قطعة بتحمل تاريخ النبيذ وفلسفته،", "وبتكمّل قصته، من الأرض إلى الكأس،", "ومن الكأس إلى قطعة بتعيش بمكان جديد."],
+      ["وكل Collection بتحمل روح المكان اللي إجت منه،", "وبتعكس طبيعته، هويته، وأثر الزمن عليه."],
+      ["Glow Stone", "حكاية الأرض، بتكمّل قصة النبيذ."],
+    ],
     metaDescription: "Glowstone is the work of one stonemason in the mountains of Lebanon.",
     label: "About",
     title: "Omar, and the patience of",
@@ -365,11 +384,13 @@ export const en = {
       },
     ],
     photoAlts: [
-      "The hand-broken crest of {name}, showing the grain of the stone",
+      "The Qadisha Valley from the air: steep green slopes under bare cliffs, and Qannoubine Monastery on the lower left",
       "The ringed wall of a hole bored through stone",
       "A bottle resting in a hand-cut notch",
       "Light passing through a hole bored in stone",
     ],
+    // The licence (CC BY-SA 4.0) asks for a visible credit linking to the photo and the licence.
+    valleyCredit: { place: "Qadisha Valley.", photo: "Photo:", author: "Evan Williams", licence: "CC BY-SA 4.0" },
     quote: "Stone keeps its own time. My work is to wait for it.",
     quoteBy: "Omar, stonemason",
     closing: "Made in Lebanon.",

@@ -1,14 +1,16 @@
 // Generates responsive WebP variants.
 // Usage: node scripts/build-images.ts "<folder with the original _ADY*.jpg files>"
 //        node scripts/build-images.ts --hero "<folder with hero desktop.png and hero mobile.png>"
-// Output: public/images/<key>-<width>.webp (never upscaled; EXIF orientation applied).
+//        node scripts/build-images.ts --external "<folder with the downloaded photos in EXTERNAL_MAP>"
+// Output: public/images/<key>-<width>.webp (never upscaled; EXIF orientation applied; no metadata kept).
 import { existsSync, mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 import sharp from "sharp"
-import { CRAFT_WIDTHS, HERO_MAP, IMAGE_MAP, WEBP_QUALITY } from "./image-map.ts"
+import { CRAFT_WIDTHS, EXTERNAL_MAP, HERO_MAP, IMAGE_MAP, WEBP_QUALITY } from "./image-map.ts"
 
 const heroMode = process.argv[2] === "--hero"
-const sourceDir = heroMode ? process.argv[3] : process.argv[2]
+const externalMode = process.argv[2] === "--external"
+const sourceDir = heroMode || externalMode ? process.argv[3] : process.argv[2]
 if (!sourceDir || !existsSync(sourceDir)) {
   console.error("Pass the folder that contains the original photos.")
   process.exit(1)
@@ -16,7 +18,9 @@ if (!sourceDir || !existsSync(sourceDir)) {
 
 const jobs = heroMode
   ? Object.entries(HERO_MAP).map(([key, { file, widths }]) => ({ key, source: join(sourceDir, file), widths }))
-  : Object.entries(IMAGE_MAP).map(([key, id]) => ({ key, source: join(sourceDir, `${id}.jpg`), widths: CRAFT_WIDTHS }))
+  : externalMode
+    ? Object.entries(EXTERNAL_MAP).map(([key, { file }]) => ({ key, source: join(sourceDir, file), widths: CRAFT_WIDTHS }))
+    : Object.entries(IMAGE_MAP).map(([key, id]) => ({ key, source: join(sourceDir, `${id}.jpg`), widths: CRAFT_WIDTHS }))
 
 let written = 0
 for (const { key, source, widths } of jobs) {

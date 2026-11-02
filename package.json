@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@fontsource-variable/jost": "5.3.0",
+    "@fontsource/amiri": "5.3.0",
     "@fontsource/cormorant-garamond": "5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "amazon-cognito-identity-js": "6.3.22",

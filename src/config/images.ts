@@ -5,6 +5,17 @@ export const HERO_IMAGES = {
   mobile: { key: "hero/mobile", widths: [480, 768], width: 768, height: 1376 },
 } as const
 
+// Photos by others, used under their licence and credited where they show (scripts/image-map.ts, EXTERNAL_MAP).
+export const ABOUT_IMAGES = {
+  qadishaValley: {
+    key: "about/qadisha-valley",
+    width: 2880,
+    height: 2159,
+    page: "https://commons.wikimedia.org/wiki/File:Qadisha_Valley,_Aerial_View_From_Qannoubine_Monastery.jpg",
+    licence: "https://creativecommons.org/licenses/by-sa/4.0/",
+  },
+} as const
+
 // Craft close-ups get a 2880px variant (scripts/image-map.ts). Sizes are those of that variant.
 export const CRAFT_IMAGES = {
   // The crest close-up is Arz (camera file _ADY1294, from the arz folder): its alt text names the piece from the data.
