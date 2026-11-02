@@ -25,9 +25,10 @@ describe("About sections", () => {
     expect(container.querySelectorAll("article .aspect-3\\/2")).toHaveLength(4)
   })
 
-  it("marks unconfirmed facts as placeholders", () => {
+  it("says how each piece is marked in its edition", () => {
     renderAt(<Chapters crestName="Arz" />)
-    expect(screen.getByText("[Placeholder: how each piece is marked and documented.]")).toHaveClass("text-accent")
+    expect(screen.getByText("Each piece carries its number within its edition.")).toBeInTheDocument()
+    expect(screen.queryByText(/Placeholder/)).not.toBeInTheDocument()
   })
 
   it("labels the photo panel with the chapter in view, following the scroll", () => {

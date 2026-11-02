@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "react-router dev",
     "dev:demo": "react-router dev --mode demo",
     "build": "react-router build",
     "start": "node scripts/serve.ts",
