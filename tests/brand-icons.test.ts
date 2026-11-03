@@ -71,6 +71,8 @@ describe("the site's icons", () => {
     const files = ["index.html", "vercel.json", "react-router.config.ts", ...["src", "scripts", PUBLIC].flatMap((dir) => readdirSync(dir, { recursive: true, encoding: "utf8" }).map((file) => join(dir, file)))]
     const hits = files
       .filter((file) => existsSync(file) && statSync(file).isFile() && /\.(tsx?|json|html|css|svg|webmanifest|md)$/.test(file))
+      // check:pages names favicon.svg only to fail any page that still links it.
+      .filter((file) => file !== join("scripts", "check-pages.ts"))
       .filter((file) => /favicon\.svg|glowstone-monogram/.test(readFileSync(file, "utf8")))
     expect(hits).toEqual([])
   })

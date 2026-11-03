@@ -29,7 +29,7 @@ describe("the studio shell", () => {
     renderShell()
     expect(screen.getByRole("main")).toHaveTextContent("page body")
     const nav = screen.getAllByRole("navigation", { name: s.navLabel })[0]
-    expect(within(nav).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/studio/orders", "/studio/products", "/studio/customers"])
+    expect(within(nav).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/studio/orders", "/studio/products", "/studio/customers", "/studio/announcements"])
     expect(within(nav).getByRole("link", { name: s.products })).toHaveAttribute("aria-current", "page")
     expect(await screen.findAllByText("omar@example.com")).not.toHaveLength(0)
     for (const shop of screen.getAllByRole("link", { name: new RegExp(`^(${s.viewShop}|${s.shop})`) })) {
@@ -103,6 +103,20 @@ describe("the studio shell", () => {
     expect(bar?.tagName).toBe("NAV")
     expect(bar?.className).toContain("h-(--studio-tab-bar)")
     expect(bar?.className).toContain("sm:hidden")
+  })
+
+  // The newsletter is the fourth section (2026-11-03): "Announcements" in the desktop sidebar, "News" in the top bar
+  // and the phone tab bar, where four sections share 640 or 390 px.
+  it("links to Announcements everywhere, named News in the top bar and the phone tab bar", () => {
+    renderShell()
+    const links = screen.getAllByRole("link", { name: s.announcements })
+    expect(links).toHaveLength(1)
+    expect(screen.getAllByRole("link", { name: s.announcementsShort })).toHaveLength(2)
+    for (const link of links) expect(link).toHaveAttribute("href", "/studio/announcements")
+    const bar = document.querySelector<HTMLElement>("[data-studio-tab-bar]")!
+    expect(bar.className).toContain("grid-cols-4")
+    expect(within(bar).getAllByRole("link")).toHaveLength(4)
+    expect(within(bar).getByRole("link", { name: s.announcementsShort })).toHaveAttribute("href", "/studio/announcements")
   })
 
   it("opens the studio's home on Orders from the logo", () => {
