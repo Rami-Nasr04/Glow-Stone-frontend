@@ -402,6 +402,26 @@ if (withShop) {
   else console.log(`  ok /sitemap.xml (${locs.length} pages)`)
 }
 
+// The tab, home-screen and Google icons (Omar's S, 2026-11-03), on the shop and the studio alike: every icon link on the
+// first page answers as a file of its type and stated size, and the starter's purple favicon.svg is never linked.
+const firstPage = await (await fetch(`${base}${withShop ? "/" : studioPath("/")}`)).text()
+const iconLinks = [...firstPage.matchAll(/<link [^>]*rel="(icon|apple-touch-icon|manifest)"[^>]*>/g)].map((match) => ({
+  rel: match[1],
+  href: /href="([^"]+)"/.exec(match[0])?.[1] ?? "",
+  sizes: /sizes="([^"]+)"/.exec(match[0])?.[1],
+}))
+const ICON_TYPES: Record<string, string> = { ".ico": "image/x-icon", ".png": "image/png", ".webmanifest": "application/manifest+json" }
+if (iconLinks.length < 5 || firstPage.includes("favicon.svg")) fail(`icon links: ${JSON.stringify(iconLinks)}${firstPage.includes("favicon.svg") ? " and favicon.svg" : ""}`)
+for (const { href, sizes } of iconLinks) {
+  const res = await fetch(base + href)
+  const data = Buffer.from(await res.arrayBuffer())
+  const wantType = ICON_TYPES[href.slice(href.lastIndexOf("."))]
+  const size = href.endsWith(".png") ? `${data.readUInt32BE(16)}x${data.readUInt32BE(20)}` : null
+  if (res.status !== 200 || !wantType || !res.headers.get("content-type")?.startsWith(wantType)) fail(`${href}: ${res.status} ${res.headers.get("content-type")}`)
+  else if (size && size !== sizes) fail(`${href} is ${size}, its link says ${sizes}`)
+  else console.log(`  ok ${href}${size ? ` (${size})` : ""}`)
+}
+
 if (local) console.log(`  ${answeredCalls} call(s) from the pages to the live API answered here, none sent (local address)`)
 console.log(failures.length === 0 ? "All pages passed." : `${failures.length} problem(s).`)
 process.exitCode = failures.length === 0 ? 0 : 1

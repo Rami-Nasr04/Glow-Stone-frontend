@@ -1,3 +1,4 @@
+import BrandIcon from "@/components/ui/BrandIcon"
 import { cn } from "@/lib/utils"
 
 interface NoPhotoProps {
@@ -8,7 +9,7 @@ interface NoPhotoProps {
 export default function NoPhoto({ className }: NoPhotoProps) {
   return (
     <div data-no-photo className={cn("flex size-full items-center justify-center bg-card", className)}>
-      <img src="/brand/glowstone-monogram.svg" alt="" width={36} height={36} className="size-9 opacity-40" />
+      <BrandIcon className="h-9 opacity-40" />
     </div>
   )
 }

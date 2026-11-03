@@ -40,6 +40,7 @@ const TYPES: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
   ".woff2": "font/woff2",
   ".woff": "font/woff",
 }

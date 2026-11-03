@@ -1,3 +1,4 @@
+import { SITE_LOGO } from "@/config/icons"
 import { CONTACT_EMAIL } from "@/config/site"
 import type { ProductSummary } from "@/features/catalog/types"
 import { interpolate } from "@/i18n/format"
@@ -71,7 +72,7 @@ export function storeJsonLd(siteUrl: string) {
     "@type": "OnlineStore",
     name: "Glowstone",
     url: `${siteUrl}/`,
-    logo: `${siteUrl}/brand/glowstone-monogram.svg`,
+    logo: `${siteUrl}${SITE_LOGO}`,
     email: CONTACT_EMAIL,
     areaServed: { "@type": "Country", name: "Lebanon" },
   }
