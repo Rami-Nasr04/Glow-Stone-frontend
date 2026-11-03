@@ -71,6 +71,7 @@ describe("vercel.json", () => {
     ["/checkout/thanks/7", true],
     ["/account", true],
     ["/account/orders/7", true],
+    ["/unsubscribe", true],
     ["/checkout/thanks/seven", false],
     ["/collection/99", false],
     ["/collection/99/x", false],

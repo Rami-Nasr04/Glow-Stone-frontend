@@ -1,9 +1,10 @@
 // The studio's calls to the admin products API (GET/POST /admin/products, GET/PATCH/DELETE /admin/products/{id}, the
 // photo calls under /admin/products/{id}/photos, and POST /admin/publish) and to the orders and customers routes
-// (/admin/orders…, /admin/customers…), with the admin's access token. Answers are read through the
+// (/admin/orders…, /admin/customers…) and the newsletter (/admin/announcements…), with the admin's access token. Answers are read through the
 // envelope; a 401 is judged by its status alone, because API Gateway answers it with its own {"message":"Unauthorized"}.
 import { readAdminPhoto, readAdminPhotos, readAdminProduct } from "@/features/catalog/api"
 import type { AdminProduct, AdminProductImage, ProductInput } from "@/features/catalog/types"
+import { type Announcement, type AnnouncementDraft, type AnnouncementList, readAnnouncement, readAnnouncementList, readTestSent } from "./announcements"
 import {
   type AdminCustomer,
   type AdminCustomerDetail,
@@ -90,6 +91,12 @@ export interface AdminApi {
   setDeliveryFee(id: number, deliveryFee: number): Promise<AdminOrder>
   listCustomers(): Promise<AdminCustomer[]>
   getCustomer(id: string): Promise<AdminCustomerDetail>
+  /** How many people a send would reach, and what was sent, newest first. */
+  listAnnouncements(): Promise<AnnouncementList>
+  /** The exact email, to the signed-in admin only; nothing is recorded. Answers the address it went to. */
+  sendTestAnnouncement(draft: AnnouncementDraft): Promise<string>
+  /** To every subscriber; the same requestId again sends nothing and answers the first send. Takes up to ~30 s. */
+  sendAnnouncement(requestId: string, draft: AnnouncementDraft): Promise<Announcement>
 }
 
 interface AdminApiOptions {
@@ -256,6 +263,17 @@ export function createAdminApi({ baseUrl, accessToken, onUnauthorized, fetch: se
     },
     async getCustomer(id) {
       return read(readAdminCustomerDetail, (await call("GET", `/admin/customers/${encodeURIComponent(id)}`)).data)
+    },
+    async listAnnouncements() {
+      return read(readAnnouncementList, (await call("GET", "/admin/announcements")).data)
+    },
+    async sendTestAnnouncement(draft) {
+      return read(readTestSent, (await call("POST", "/admin/announcements/test", draft)).data)
+    },
+    async sendAnnouncement(requestId, draft) {
+      const { status, data } = await call("POST", "/admin/announcements", { requestId, ...draft })
+      if (status !== 201) throw unexpected(`POST /admin/announcements answered ${status}, not 201`)
+      return read(readAnnouncement, data)
     },
   }
 }

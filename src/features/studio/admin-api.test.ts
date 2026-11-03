@@ -394,3 +394,53 @@ describe("orders and customers", () => {
     expect(given).toHaveBeenCalledWith(`${BASE}/admin/orders`, expect.objectContaining({ method: "GET" }))
   })
 })
+
+// The newsletter (contract "Announcements", 2026-11-03): the list with the subscriber count, a test to Omar alone, and
+// the send, made safe to repeat by its requestId.
+describe("announcements", () => {
+  const sent = { id: 4, subject: "A new edition", message: "Hello.\n\nTura is back.", productId: 5, recipients: 3, sentAt: "2026-11-03T08:00:00.000Z" }
+  const draft = { subject: "A new edition", message: "Hello.\n\nTura is back.", productId: 5 }
+
+  it("reads how many people a send would reach and what was sent, newest first", async () => {
+    const { api, fetch } = setup(() => ok({ subscribers: 3, announcements: [sent] }))
+    expect(await api.listAnnouncements()).toEqual({ subscribers: 3, announcements: [sent] })
+    expect(fetch.mock.calls[0][0]).toBe(`${BASE}/admin/announcements`)
+  })
+
+  it("sends a test with the draft and gives back where it went", async () => {
+    const { api, fetch } = setup(() => ok({ sentTo: "omar@example.com" }))
+    expect(await api.sendTestAnnouncement(draft)).toBe("omar@example.com")
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/announcements/test`)
+    expect(init?.method).toBe("POST")
+    expect(JSON.parse(String(init?.body))).toEqual(draft)
+  })
+
+  it("sends to everyone with the request id first, and takes the announcement back", async () => {
+    const { api, fetch } = setup(() => ok(sent, 201))
+    expect(await api.sendAnnouncement("8f3c2a4e-1b2d-4c5e-9f6a-7b8c9d0e1f2a", { ...draft, productId: null })).toEqual(sent)
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`${BASE}/admin/announcements`)
+    expect(init?.method).toBe("POST")
+    expect(JSON.parse(String(init?.body))).toEqual({ requestId: "8f3c2a4e-1b2d-4c5e-9f6a-7b8c9d0e1f2a", subject: draft.subject, message: draft.message, productId: null })
+  })
+
+  it("names a send that wasn't 201 instead of saying it went out", async () => {
+    const { api } = setup(() => ok(sent, 200))
+    expect(await caught(api.sendAnnouncement("id", draft))).toMatchObject({ code: "UNEXPECTED" })
+  })
+
+  it.each([
+    [400, "VALIDATION", "Please write a subject (up to 150 characters)."],
+    [400, "VALIDATION", "Choose a published piece to feature, or none."],
+    [409, "CONFLICT", "The list is longer than one send can reach (150)."],
+  ])("keeps the API's words for a %i %s", async (status, code, message) => {
+    const { api } = setup(() => failure(status, code, message))
+    expect(await caught(api.sendAnnouncement("id", draft))).toMatchObject({ status, code, message })
+  })
+
+  it("names a bad list instead of showing half of it", async () => {
+    const { api } = setup(() => ok({ subscribers: "3", announcements: [] }))
+    expect(await caught(api.listAnnouncements())).toMatchObject({ code: "UNEXPECTED", message: expect.stringContaining("subscribers") })
+  })
+})

@@ -20,6 +20,7 @@ function shopRoutes(): RouteConfigEntry[] {
       route("checkout/thanks/:id", "routes/order-placed.tsx"),
       route("account", "routes/account.tsx"),
       route("account/orders/:id", "routes/account-order.tsx"),
+      route("unsubscribe", "routes/unsubscribe.tsx"),
       route("*", "routes/not-found.tsx"),
     ]),
   ]

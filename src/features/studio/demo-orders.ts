@@ -1,11 +1,13 @@
+import type { AdminProduct } from "../catalog/types.ts"
+import { createDemoAnnouncements } from "./demo-announcements.ts"
 import { createDemoProducts, DemoRefusal } from "./demo-products.ts"
 import type { AdminCustomer, AdminOrder, AdminOrderLine, AdminOrderSummary, ForwardStatus, OrderStatus } from "./orders.ts"
 
 // Stand-in for the admin orders and customers routes on `npm run dev:demo`: the backend's shapes, order of checks and
 // words, answered in this browser from made-up orders (every person here is invented). The admin still signs in with
-// the real admin pool; the pieces, photos and publish routes are demo ones too (demo-products.ts), so nothing here
-// reaches the live API, which answers only the live shop and studio (backend 9e28860). Cancelling a demo order only
-// changes the demo.
+// the real admin pool; the pieces, photos and publish routes are demo ones too (demo-products.ts), and so is the
+// newsletter (demo-announcements.ts), so nothing here reaches the live API, which answers only the live shop and
+// studio (backend 9e28860). Cancelling a demo order only changes the demo; no demo announcement is ever emailed.
 
 export const STUDIO_DEMO_KEY = "glowstone.studio-demo"
 /** Set to UNAUTHORIZED to have the next orders or customers call answered with a 401, once. */
@@ -215,12 +217,22 @@ const unauthorized = () => json(401, { message: "Unauthorized" })
 
 interface DemoOptions {
   storage: Storage | null
+  /** How long a demo announcement takes to "send" (tests: 0). */
+  sendDelayMs?: number
 }
 
 const ROUTE = /\/admin\/(orders|customers)(?:\/([^/?]+))?(?:\/(status|cancel))?\/?(?:\?.*)?$/
 
-export function createStudioDemoFetch({ storage }: DemoOptions): typeof fetch {
+export function createStudioDemoFetch({ storage, sendDelayMs = 2500 }: DemoOptions): typeof fetch {
   const products = createDemoProducts(storage)
+  const announcements = createDemoAnnouncements({
+    storage,
+    sendDelayMs,
+    published: async () => {
+      const pieces = (await products.answer("GET", "/admin/products", null))?.data
+      return Array.isArray(pieces) ? (pieces as AdminProduct[]).filter((p) => p.status === "published").map((p) => p.id) : []
+    },
+  })
   let memory: Store | null = null
   const load = (): Store => {
     const saved = storage?.getItem(STUDIO_DEMO_KEY)
@@ -326,7 +338,7 @@ export function createStudioDemoFetch({ storage }: DemoOptions): typeof fetch {
     }
     try {
       if (!match) {
-        const answer = await products.answer(method, path, body)
+        const answer = (await announcements.answer(method, path, body)) ?? (await products.answer(method, path, body))
         if (!answer) throw new Refusal(404, "NOT_FOUND", "Not found")
         return answer.status === 204 ? new Response(null, { status: 204 }) : json(answer.status, { success: true, data: answer.data })
       }

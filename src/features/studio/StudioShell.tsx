@@ -20,11 +20,13 @@ const s = STUDIO_COPY.shell
 const darkLink =
   "flex min-h-11 items-center text-label uppercase tracking-caps text-dark-section-foreground transition-colors duration-500 hover:text-on-photo focus-visible:outline-on-photo"
 
-const SECTIONS = [
+// `short` is the word in the top bar and the phone tab bar, where four sections share 640 or 390 px.
+const SECTIONS: readonly { path: string; label: string; short?: string; counted: boolean }[] = [
   { path: "/orders", label: s.orders, counted: true },
   { path: "/products", label: s.products, counted: false },
   { path: "/customers", label: s.customers, counted: false },
-] as const
+  { path: "/announcements", label: s.announcements, short: s.announcementsShort, counted: false },
+]
 
 const HOME = studioPath("/orders")
 
@@ -79,7 +81,7 @@ export default function StudioShell({ children }: StudioShellProps) {
       {label} <span aria-hidden="true">↗</span>
     </a>
   )
-  const links = (className: (active: boolean) => string) =>
+  const links = (className: (active: boolean) => string, { short = false } = {}) =>
     SECTIONS.map((section) => (
       <NavLink
         key={section.path}
@@ -87,7 +89,7 @@ export default function StudioShell({ children }: StudioShellProps) {
         aria-label={sectionName(section.label, section.counted ? pending : 0)}
         className={({ isActive }) => cn(darkLink, className(isActive))}
       >
-        <SectionLabel label={section.label} pending={section.counted ? pending : 0} />
+        <SectionLabel label={(short && section.short) || section.label} pending={section.counted ? pending : 0} />
       </NavLink>
     ))
 
@@ -123,7 +125,7 @@ export default function StudioShell({ children }: StudioShellProps) {
             <span className="text-label uppercase tracking-label text-dark-section-foreground">{STUDIO_COPY.studio}</span>
           </Link>
           <nav aria-label={s.navLabel} className="hidden items-center gap-6 sm:flex">
-            {links((active) => cn("border-b border-transparent", active && "border-wine-on-dark text-on-photo"))}
+            {links((active) => cn("border-b border-transparent", active && "border-wine-on-dark text-on-photo"), { short: true })}
           </nav>
           <div className="flex items-center gap-5">
             {shopLink(s.shop)}
@@ -142,9 +144,9 @@ export default function StudioShell({ children }: StudioShellProps) {
         <nav
           data-studio-tab-bar
           aria-label={s.navLabel}
-          className="fixed inset-x-0 bottom-0 z-40 grid h-(--studio-tab-bar) grid-cols-3 bg-dark-section sm:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 grid h-(--studio-tab-bar) grid-cols-4 bg-dark-section sm:hidden"
         >
-          {links((active) => cn("justify-center border-t border-transparent", active && "border-wine-on-dark text-on-photo"))}
+          {links((active) => cn("justify-center border-t border-transparent tracking-price", active && "border-wine-on-dark text-on-photo"), { short: true })}
         </nav>
       </div>
     </PendingOrdersContext.Provider>
