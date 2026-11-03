@@ -222,6 +222,9 @@ const accountsOpen = process.env.VITE_ACCOUNTS_OPEN?.trim() === "true"
 // Indexing too: set the same way for the build and this check (the shop's pages, robots.txt and sitemap follow it).
 const indexing = withShop && process.env.VITE_ALLOW_INDEXING?.trim() === "true"
 const notBuilt: Expected[] = accountsOpen ? [] : ["/sign-in", "/checkout", "/account"].map((path) => ({ path, h1: en.notFound.title }))
+// The newsletter's unsubscribe page (2026-11-03), never prerendered: opened without a token it says the link didn't
+// work, without asking the API, and carries noindex like every page that isn't built.
+const unsubscribePage: Expected[] = [{ path: "/unsubscribe", h1: en.unsubscribe.invalidTitle }]
 // Open, the sign-in page is full screen (no header logo to follow), and a signed-out visitor who opens checkout or
 // the account is sent to it, to come back afterwards.
 const accountPages = accountsOpen
@@ -271,7 +274,7 @@ const viewports = [
 
 console.log(`Checking ${pages.length} pages on ${base} (parts: ${SITE_PARTS.join(" + ")})`)
 for (const viewport of viewports) {
-  for (const want of withShop ? [...pages, ...notFound, ...notBuilt] : []) {
+  for (const want of withShop ? [...pages, ...notFound, ...notBuilt, ...unsubscribePage] : []) {
     const label = `${viewport.name} ${want.path}`
     const page = await openPage()
     await page.setViewport(viewport)
@@ -410,14 +413,15 @@ const iconLinks = [...firstPage.matchAll(/<link [^>]*rel="(icon|apple-touch-icon
   href: /href="([^"]+)"/.exec(match[0])?.[1] ?? "",
   sizes: /sizes="([^"]+)"/.exec(match[0])?.[1],
 }))
-const ICON_TYPES: Record<string, string> = { ".ico": "image/x-icon", ".png": "image/png", ".webmanifest": "application/manifest+json" }
+// Vercel sends an .ico as image/vnd.microsoft.icon; the local server as image/x-icon. Both are right.
+const ICON_TYPES: Record<string, readonly string[]> = { ".ico": ["image/x-icon", "image/vnd.microsoft.icon"], ".png": ["image/png"], ".webmanifest": ["application/manifest+json"] }
 if (iconLinks.length < 5 || firstPage.includes("favicon.svg")) fail(`icon links: ${JSON.stringify(iconLinks)}${firstPage.includes("favicon.svg") ? " and favicon.svg" : ""}`)
 for (const { href, sizes } of iconLinks) {
   const res = await fetch(base + href)
   const data = Buffer.from(await res.arrayBuffer())
-  const wantType = ICON_TYPES[href.slice(href.lastIndexOf("."))]
+  const wantTypes = ICON_TYPES[href.slice(href.lastIndexOf("."))] ?? []
   const size = href.endsWith(".png") ? `${data.readUInt32BE(16)}x${data.readUInt32BE(20)}` : null
-  if (res.status !== 200 || !wantType || !res.headers.get("content-type")?.startsWith(wantType)) fail(`${href}: ${res.status} ${res.headers.get("content-type")}`)
+  if (res.status !== 200 || !wantTypes.some((type) => res.headers.get("content-type")?.startsWith(type))) fail(`${href}: ${res.status} ${res.headers.get("content-type")}`)
   else if (size && size !== sizes) fail(`${href} is ${size}, its link says ${sizes}`)
   else console.log(`  ok ${href}${size ? ` (${size})` : ""}`)
 }

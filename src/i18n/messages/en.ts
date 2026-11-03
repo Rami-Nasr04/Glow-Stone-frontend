@@ -43,6 +43,21 @@ export const en = {
     tooMany: "Please try again in a minute.",
     failed: "Something went wrong. Please try again.",
   },
+  // The email's unsubscribe link lands here: /unsubscribe?t=<token> (contract "Announcements", 2026-11-03).
+  unsubscribe: {
+    metaTitle: "Unsubscribe — Glowstone",
+    label: "News",
+    working: "Taking you off the list…",
+    doneTitle: "You've been unsubscribed.",
+    doneLead: "You won't receive news about new editions any more.",
+    changedMind: "Changed your mind?",
+    joinAgain: "Join again",
+    invalidTitle: "This link didn't work.",
+    // The API's own words for a link it can't read; a link with no token gets the same, without asking it.
+    invalid: "This unsubscribe link isn't valid. Write to hello@glowstonelb.com and we'll take you off the list.",
+    failed: "The list couldn't be reached just now. Open the link again in a moment, or write to hello@glowstonelb.com.",
+    home: "Home",
+  },
   edition: EDITION_EN,
   catalog: {
     // Every product photo says what it shows, for screen readers and image search ({stone} in lower case).
@@ -488,7 +503,7 @@ export const en = {
           {
             heading: "How we use it",
             paragraphs: [
-              "To deliver your order, and to contact you about it: Omar's confirmation call, and emails about your order's progress. Your news-list email is used only for news about new editions.",
+              "To deliver your order, and to contact you about it: Omar's confirmation call, and emails about your order's progress. Your news-list email is used only for news about new editions. Every email has an unsubscribe link.",
             ],
           },
           {
