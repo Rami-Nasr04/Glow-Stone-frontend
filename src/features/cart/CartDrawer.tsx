@@ -5,6 +5,7 @@ import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
 import QuantityStepper from "@/components/product/QuantityStepper"
 import { actionVariants } from "@/components/ui/action-link"
+import BrandIcon from "@/components/ui/BrandIcon"
 import { ACCOUNTS_OPEN } from "@/features/auth/client"
 import { listProducts } from "@/features/catalog/catalog"
 import { noBreak, stoneLabel } from "@/features/catalog/format"
@@ -107,7 +108,7 @@ function CartPanel() {
         {notice && <CartNoticeLine notice={notice} />}
         {lines.length === 0 ? (
           <div className="flex flex-col items-start gap-6 py-16">
-            <img src="/brand/glowstone-monogram.svg" alt="" width={36} height={36} className="size-9" />
+            <BrandIcon className="h-9" />
             <p className="font-display text-3xl leading-snug font-light">{m.cart.empty}</p>
             <p className="text-small text-muted-foreground">{m.cart.emptyNote}</p>
             <Link to={to("/collection")} onClick={closeCart} className={actionVariants({ variant: "outline" })}>

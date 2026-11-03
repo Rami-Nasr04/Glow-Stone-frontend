@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, NavLink, useLocation } from "react-router"
+import BrandIcon from "@/components/ui/BrandIcon"
 import { SITE_URL } from "@/config/site"
 import { SITE_PARTS, shopHref, studioPath } from "@/config/studio"
 import { interpolate } from "@/i18n/format"
@@ -118,7 +119,7 @@ export default function StudioShell({ children }: StudioShellProps) {
 
         <header data-studio-header className="sticky top-0 z-30 flex h-(--studio-header) items-center justify-between gap-3 bg-dark-section px-4 lg:hidden">
           <Link to={HOME} aria-label={s.home} className="flex min-h-11 items-center gap-3 focus-visible:outline-on-photo">
-            <img src="/brand/glowstone-monogram-on-dark.svg" alt="" width={26} height={26} className="size-6.5" />
+            <BrandIcon onDark className="h-6.5" />
             <span className="text-label uppercase tracking-label text-dark-section-foreground">{STUDIO_COPY.studio}</span>
           </Link>
           <nav aria-label={s.navLabel} className="hidden items-center gap-6 sm:flex">

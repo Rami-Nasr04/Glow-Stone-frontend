@@ -64,7 +64,7 @@ describe("Gallery", () => {
     for (const img of container.querySelectorAll("img")) expect(img.className).toContain("object-contain")
   })
 
-  it("shows the plain stone frame with the monogram when the piece has no photo yet", () => {
+  it("shows the plain stone frame with the S icon when the piece has no photo yet", () => {
     const { container } = renderAt(<Gallery piece={{ ...qadisha, images: [] }} />)
     expect(container.querySelectorAll("[data-no-photo]")).toHaveLength(2)
     expect(screen.queryByRole("button")).not.toBeInTheDocument()

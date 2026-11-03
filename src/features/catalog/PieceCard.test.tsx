@@ -62,11 +62,11 @@ describe("PieceCard", () => {
     expect(container.querySelectorAll("img")).toHaveLength(1)
   })
 
-  it("shows the plain stone frame with the monogram when the piece has no photo yet", () => {
+  it("shows the plain stone frame with the S icon when the piece has no photo yet", () => {
     const { container } = renderAt(<PieceCard product={{ ...summaryOf(QADISHA), images: [] }} sizes="33vw" />)
     const imgs = container.querySelectorAll("img")
     expect(imgs).toHaveLength(1)
-    expect(imgs[0]).toHaveAttribute("src", "/brand/glowstone-monogram.svg")
+    expect(imgs[0]).toHaveAttribute("src", "/brand/glowstone-icon.webp")
     expect(imgs[0]).toHaveAttribute("alt", "")
     expect(container.querySelector("[data-no-photo]")?.closest(".aspect-2\\/3")).not.toBeNull()
   })

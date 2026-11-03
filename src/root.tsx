@@ -1,6 +1,7 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useParams } from "react-router"
 import RobotsMeta from "@/components/layout/RobotsMeta"
 import Toaster from "@/components/ui/sonner"
+import { ICON_LINKS } from "@/config/icons"
 import { directionOf } from "@/i18n/locales"
 import { pageLocale } from "@/i18n/paths"
 import "./index.css"
@@ -20,7 +21,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        {ICON_LINKS.map((link) => (
+          <link key={link.href} {...link} />
+        ))}
         <RobotsMeta />
         <Meta />
         <Links />

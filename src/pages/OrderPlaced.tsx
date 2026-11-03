@@ -1,5 +1,6 @@
 import { useLocation, useParams } from "react-router"
 import { ActionLink } from "@/components/ui/action-link"
+import BrandIcon from "@/components/ui/BrandIcon"
 import { Rule } from "@/components/ui/rule"
 import { DeliverTo, GiftInfo, OrderItems, OrderTotals } from "@/features/orders/OrderParts"
 import { useOrder } from "@/features/orders/use-order"
@@ -27,7 +28,7 @@ export default function OrderPlaced() {
     <section className="px-gutter pt-[clamp(3.5rem,8vw,7rem)] pb-section">
       <div className="mx-auto flex max-w-275 flex-col gap-[clamp(3.5rem,7vw,6rem)]">
         <div className="flex flex-col items-center gap-6 text-center">
-          <img src="/brand/glowstone-monogram.svg" alt="" width={36} height={36} className="size-9" />
+          <BrandIcon className="h-9" />
           <h1 className="font-display text-display-xl leading-none font-light">{t.thanks}</h1>
           <Rule />
           <p className={caps}>{interpolate(t.orderNumber, { number: order.number })}</p>

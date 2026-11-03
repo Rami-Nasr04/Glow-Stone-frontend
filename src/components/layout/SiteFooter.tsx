@@ -1,4 +1,5 @@
 import { Link } from "react-router"
+import BrandIcon from "@/components/ui/BrandIcon"
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, instagramProfile, WHATSAPP_NUMBER, whatsappLink } from "@/config/site"
 import NewsSignup from "@/features/news/NewsSignup"
 import { useLocale } from "@/i18n/useLocale"
@@ -76,7 +77,7 @@ export default function SiteFooter() {
 
         <div className="flex flex-wrap items-center justify-between gap-5 text-xs text-dark-muted-foreground">
           <span className="flex items-center gap-4">
-            <img src="/brand/glowstone-monogram-on-dark.svg" alt="" width={32} height={32} className="size-8" />
+            <BrandIcon onDark className="h-8" />
             <span className="font-display text-xl italic text-dark-section-foreground">{m.footer.madeInLebanon}</span>
           </span>
           <span className="uppercase tracking-widest">© {new Date().getFullYear()} {m.meta.siteName}</span>

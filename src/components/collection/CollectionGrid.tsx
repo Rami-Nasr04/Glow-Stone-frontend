@@ -2,6 +2,7 @@ import { MoveRight } from "lucide-react"
 import { Link } from "react-router"
 import Picture from "@/components/media/Picture"
 import { actionVariants } from "@/components/ui/action-link"
+import BrandIcon from "@/components/ui/BrandIcon"
 import { Rule } from "@/components/ui/rule"
 import { CRAFT_IMAGES } from "@/config/images"
 import PieceCard from "@/features/catalog/PieceCard"
@@ -72,7 +73,7 @@ function CommissionTile({ count }: CommissionTileProps) {
         LG_SPAN[span.lg],
       )}
     >
-      <img src="/brand/glowstone-monogram.svg" alt="" width={36} height={36} className="size-9" />
+      <BrandIcon className="h-9" />
       <p className="max-w-85 font-display text-lead font-light italic text-balance">{m.collection.bespoke}</p>
       <Link
         to={to("/contact")}
